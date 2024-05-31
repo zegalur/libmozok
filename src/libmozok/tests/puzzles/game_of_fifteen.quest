@@ -1,0 +1,231 @@
+# -= Game of Fifteen =-
+#
+# Description (from the Wikipedia):
+#    The 15 Puzzle is a sliding puzzle. It has 15 square tiles numbered 1 to 15 
+#    in a frame that is 4 tile positions high and 4 tile positions wide, with 
+#    one unoccupied position. Tiles in the same row or column of the open 
+#    position can be moved by sliding them horizontally or vertically, 
+#    respectively. The goal of the puzzle is to place the tiles in numerical 
+#    order (from left to right, top to bottom). 
+# (https://en.wikipedia.org/wiki/15_Puzzle)
+#
+# The code below is subject to the MIT license. 
+# Copyright 2024 Pavlo Savchuk.
+
+version 1 0
+project game_of_fifteen
+
+type Cell # Frame is dividided into 16 cells.
+type Tile # Movable tiles.
+
+# Cells (see the frame scheme below).
+object cell_11 : Cell
+object cell_12 : Cell
+object cell_13 : Cell
+object cell_14 : Cell
+    object cell_21 : Cell
+    object cell_22 : Cell
+    object cell_23 : Cell
+    object cell_24 : Cell
+object cell_31 : Cell
+object cell_32 : Cell
+object cell_33 : Cell
+object cell_34 : Cell
+    object cell_41 : Cell
+    object cell_42 : Cell
+    object cell_43 : Cell
+    object cell_44 : Cell
+
+# Movable tiles.
+object tile_1 : Tile
+object tile_2 : Tile
+object tile_3 : Tile
+object tile_4 : Tile
+object tile_5 : Tile
+object tile_6 : Tile
+object tile_7 : Tile
+object tile_8 : Tile
+object tile_9 : Tile
+object tile_10 : Tile
+object tile_11 : Tile
+object tile_12 : Tile
+object tile_13 : Tile
+object tile_14 : Tile
+object tile_15 : Tile
+
+
+# Sets two cells as adjacent.
+rel Adjacent(Cell,Cell)
+
+# Sets a cell as empty.
+rel Empty(Cell)
+
+# Given tile is at the given cell.
+rel At(Tile, Cell)
+
+
+# Puzzle initial state.
+rlist Initial:
+    #          Cells
+    #  +----+----+----+----+
+    #  | 11 | 12 | 13 | 14 |
+    #  +----+----+----+----+
+    #  | 21 | 22 | 23 | 24 |
+    #  +----+----+----+----+
+    #  | 31 | 32 | 33 | 34 |
+    #  +----+----+----+----+
+    #  | 41 | 42 | 43 | 44 |
+    #  +----+----+----+----+
+
+    Adjacent(cell_11, cell_12)
+    Adjacent(cell_11, cell_21)
+        Adjacent(cell_12, cell_13)
+        Adjacent(cell_12, cell_22)
+    Adjacent(cell_13, cell_14)
+    Adjacent(cell_13, cell_23)
+        Adjacent(cell_14, cell_24)
+    
+    Adjacent(cell_21, cell_22)
+    Adjacent(cell_21, cell_31)
+        Adjacent(cell_22, cell_23)
+        Adjacent(cell_22, cell_32)
+    Adjacent(cell_23, cell_24)
+    Adjacent(cell_23, cell_33)
+        Adjacent(cell_24, cell_34)
+    
+    Adjacent(cell_31, cell_32)
+    Adjacent(cell_31, cell_41)
+        Adjacent(cell_32, cell_33)
+        Adjacent(cell_32, cell_42)
+    Adjacent(cell_33, cell_34)
+    Adjacent(cell_33, cell_43)
+        Adjacent(cell_34, cell_44)
+
+    Adjacent(cell_41, cell_42)
+    Adjacent(cell_42, cell_43)
+    Adjacent(cell_43, cell_44)
+    
+    # Tiles' initial setup is selected to be solvable. Unfortunately, for now, 
+    # libmozok is not powerful enough to solve the puzzle for any permutation.
+    # Libmozok is suitable for planning quests in real-time for games, but it is 
+    # not intended as a universal puzzle-solving library.
+    At(tile_1, cell_11)
+    At(tile_2, cell_12)
+    At(tile_3, cell_13)
+    At(tile_4, cell_14)
+    At(tile_5, cell_21)
+    At(tile_6, cell_22)
+    At(tile_7, cell_23)
+    At(tile_8, cell_24)
+    At(tile_14, cell_31)
+    At(tile_13, cell_32)
+    At(tile_10, cell_33)
+    At(tile_9, cell_34)
+    At(tile_11, cell_41)
+    At(tile_12, cell_42)
+    At(tile_15, cell_43)
+    Empty(cell_44)
+
+# Initializes the Game-of-Fifteen world.
+action Init:
+    pre # none
+    rem # none
+    add Initial()
+
+
+# Moves a tile to the adjacent empty cell. Due to the potentially enormous 
+# search tree, we devised smaller states, but we require two flip actions 
+# instead of one.
+action Flip1:
+    empty : Cell
+    filled : Cell
+    tile : Tile
+    pre Empty(empty)
+        Adjacent(empty, filled)
+        At(tile, filled)
+    rem Empty(empty)
+        At(tile, filled)
+    add Empty(filled)
+        At(tile, empty)
+
+
+# Moves a tile to the adjacent empty cell. Due to the potentially enormous 
+# search tree, we devised smaller states, but we require two flip actions 
+# instead of one.
+action Flip2:
+    empty : Cell
+    filled : Cell
+    tile : Tile
+    pre Empty(empty)
+        Adjacent(filled, empty)
+        At(tile, filled)
+    rem Empty(empty)
+        At(tile, filled)
+    add Empty(filled)
+        At(tile, empty)
+
+
+# The main quest: place the tiles in numerical order.  
+main_quest PlaceTheTiles:
+    options:
+        searchLimit 5000
+        spaceLimit 50000
+        omega 4
+    preconditions:
+        # none
+    goal:
+        At(tile_1, cell_11)
+        At(tile_2, cell_12)
+        At(tile_3, cell_13)
+        At(tile_4, cell_14)
+        At(tile_5, cell_21)
+        At(tile_6, cell_22)
+        At(tile_7, cell_23)
+        At(tile_8, cell_24)
+        At(tile_9, cell_31)
+        At(tile_10, cell_32)
+        At(tile_11, cell_33)
+        At(tile_12, cell_34)
+        At(tile_13, cell_41)
+        At(tile_14, cell_42)
+        At(tile_15, cell_43)
+        Empty(cell_44)
+    actions:
+        Flip1
+        Flip2
+    objects:
+        # cells
+        cell_11
+        cell_12
+        cell_13
+        cell_14
+        cell_21
+        cell_22
+        cell_23
+        cell_24
+        cell_31
+        cell_32
+        cell_33
+        cell_34
+        cell_41
+        cell_42
+        cell_43
+        cell_44
+        # tiles
+        tile_1
+        tile_2
+        tile_3
+        tile_4
+        tile_5
+        tile_6
+        tile_7
+        tile_8
+        tile_9
+        tile_10
+        tile_11
+        tile_12
+        tile_13
+        tile_14
+        tile_15
+    subquests:
+        # none

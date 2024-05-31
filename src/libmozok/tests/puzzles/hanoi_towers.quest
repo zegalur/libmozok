@@ -1,0 +1,225 @@
+# -= Tower of Hanoi =-
+#
+# Description (from the Wikipedia):
+#    The puzzle begins with the disks stacked on one rod in order of decreasing 
+#    size, the smallest at the top, thus approximating a conical shape. The 
+#    objective of the puzzle is to move the entire stack to one of the other 
+#    rods, obeying the following rules:
+#       1. Only one disk may be moved at a time.
+#       2. Each move consists of taking the upper disk from one of the stacks 
+#          and placing it on top of another stack or on an empty rod.
+#       3. No disk may be placed on top of a disk that is smaller than it.
+# (https://en.wikipedia.org/wiki/Tower_of_Hanoi)
+#
+# The code below is subject to the MIT license. 
+# Copyright 2024 Pavlo Savchuk.
+
+version 1 0
+project hanoi_towers
+
+type Rod
+type Disk
+
+object rod_1 : Rod # First rod.
+object rod_2 : Rod # Second rod.
+object rod_3 : Rod # Third rod.
+
+object disk_1 : Disk # Smallest disc.
+object disk_2 : Disk
+object disk_3 : Disk
+object disk_4 : Disk
+object disk_5 : Disk # Largest disc.
+
+
+# Given disk is on the given rod.
+rel On(Disk, Rod)
+
+# The first disk is bigger than the second disk.
+rel BiggerThen(Disk, Disk)
+
+# The first disk is on top of the second disk.
+rel OnTop(Disk, Disk)
+
+# Given disk is the upmost disk of the given rod.
+rel Upper(Disk, Rod)
+
+# Given disk is the bottom disk of the given rod.
+rel Lower(Disk, Rod)
+
+# The rod is free; it has no disks.
+rel Free(Rod)
+
+
+# Puzzle initial state:
+#     [1]         |          |
+#    [_2_]        |          |
+#   [__3__]       |          |
+#  [___4___]      |          |
+# [____5____]     |          |
+# ====(1)========(2)========(3)====
+rlist Initial:
+    # Initially, all 5 disks are on the first rod.
+    On(disk_1, rod_1)
+	On(disk_2, rod_1)
+	On(disk_3, rod_1)
+	On(disk_4, rod_1)
+	On(disk_5, rod_1)
+
+    BiggerThen(disk_2, disk_1)
+	BiggerThen(disk_3, disk_1)
+	BiggerThen(disk_4, disk_1)
+	BiggerThen(disk_5, disk_1)
+	
+	BiggerThen(disk_3, disk_2)
+	BiggerThen(disk_4, disk_2)
+	BiggerThen(disk_5, disk_2)
+	
+	BiggerThen(disk_4, disk_3)
+	BiggerThen(disk_5, disk_3)
+	
+	BiggerThen(disk_5, disk_4)
+	
+	Upper(disk_1, rod_1)
+	Lower(disk_5, rod_1)
+	
+	OnTop(disk_1, disk_2)
+	OnTop(disk_2, disk_3)
+	OnTop(disk_3, disk_4)
+	OnTop(disk_4, disk_5)
+	
+    # Two other rods are free.
+	Free(rod_2)
+	Free(rod_3)
+
+
+# Initializes the Hanoi Towers world.
+# This action is global because it refers to global objects 
+# and uses 0-arity relations in `add` section.
+action Init:
+    pre # none
+    rem # none
+    add Initial()
+
+
+# Moves the topmost disk A from rod X to the free rod Y. 
+# There is at least one other disk B on rod X.
+action Move1:
+    disc_A : Disk
+    disc_B : Disk
+    rod_X : Rod
+    rod_Y : Rod
+    pre On(disc_A, rod_X)
+        On(disc_B, rod_X)
+        OnTop(disc_A, disc_B)
+        Free(rod_Y)
+        Upper(disc_A, rod_X)
+    rem On(disc_A, rod_X)
+        OnTop(disc_A, disc_B)
+        Free(rod_Y)
+        Upper(disc_A, rod_X)
+    add On(disc_A, rod_Y)
+        Upper(disc_A, rod_Y)
+        Lower(disc_A, rod_Y)
+        Upper(disc_B, rod_X)
+
+
+# Moves the topmost disk A from rod X to the rod Y with topmost disk C. 
+# Disk A is smaller then disk C, and there is at least one other disk B on rod X.
+action Move2:
+    disc_A : Disk
+    disc_B : Disk
+    disc_C : Disk
+    rod_X : Rod
+    rod_Y : Rod
+    pre On(disc_A, rod_X)
+        On(disc_B, rod_X)
+        On(disc_C, rod_Y)
+        OnTop(disc_A, disc_B)
+        Upper(disc_A, rod_X)
+        Upper(disc_C, rod_Y)
+        BiggerThen(disc_C, disc_A)
+    rem On(disc_A, rod_X)
+        OnTop(disc_A, disc_B)
+        Upper(disc_A, rod_X)
+        Upper(disc_C, rod_Y)
+    add On(disc_A, rod_Y)
+        Upper(disc_A, rod_Y)
+        Upper(disc_B, rod_X)
+        OnTop(disc_A, disc_C)
+
+
+# Moves disk A from rod X to the free rod Y. 
+# There are no other disks on rod X.
+action Move3:
+    disc_A : Disk
+    rod_X : Rod
+    rod_Y : Rod
+    pre On(disc_A, rod_X)
+        Free(rod_Y)
+        Upper(disc_A, rod_X)
+        Lower(disc_A, rod_X)
+    rem On(disc_A, rod_X)
+        Free(rod_Y)
+        Upper(disc_A, rod_X)
+        Lower(disc_A, rod_X)
+    add On(disc_A, rod_Y)
+        Free(rod_X)
+        Upper(disc_A, rod_Y)
+        Lower(disc_A, rod_Y)
+
+
+# Moves the topmost disk A from rod X to the rod Y with topmost disk B. 
+# Disk A is smaller then disk B, and there are no other disks on rod X.
+action Move4:
+    disc_A : Disk
+    disc_B : Disk
+    rod_X : Rod
+    rod_Y : Rod
+    pre On(disc_A, rod_X)
+        On(disc_B, rod_Y)
+        Upper(disc_A, rod_X)
+        Lower(disc_A, rod_X)
+        Upper(disc_B, rod_Y)
+        BiggerThen(disc_B, disc_A)
+    rem On(disc_A, rod_X)
+        Upper(disc_A, rod_X)
+        Lower(disc_A, rod_X)
+        Upper(disc_B, rod_Y)
+    add On(disc_A, rod_Y)
+        Free(rod_X)
+        Upper(disc_A, rod_Y)
+        OnTop(disc_A, disc_B)
+
+
+# Main quest: Move all disks from rod_1 to rod_3.
+main_quest MoveTheTower:
+    # The main quest will automatically activate once the preconditions are met.
+    preconditions:
+        On(disk_1, rod_1)
+        On(disk_2, rod_1)
+        On(disk_3, rod_1)
+        On(disk_4, rod_1)
+        On(disk_5, rod_1)
+    goal:
+        On(disk_1, rod_3)
+        On(disk_2, rod_3)
+        On(disk_3, rod_3)
+        On(disk_4, rod_3)
+        On(disk_5, rod_3)
+    actions:
+        # Only local actions can be listed as quest actions.
+        Move1
+        Move2
+        Move3
+        Move4
+    objects:
+        rod_1
+        rod_2
+        rod_3
+        disk_1
+        disk_2
+        disk_3
+        disk_4
+        disk_5
+    subquests:
+        # none

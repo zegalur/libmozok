@@ -1,0 +1,25 @@
+{
+  "name": "libmozok-vscode-highlight-support",
+  "displayName": "LibMozok VSCode Highlight Support",
+  "description": "Adds the libmozok .quest files highlight support.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.89.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "mozok-quest",
+      "aliases": ["LibMozok Quest File", "mozok-quest"],
+      "extensions": [".quest"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "mozok-quest",
+      "scopeName": "source.quest",
+      "path": "./syntaxes/mozok-quest.tmLanguage.json"
+    }]
+  }
+}

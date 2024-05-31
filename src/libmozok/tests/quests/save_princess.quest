@@ -1,0 +1,211 @@
+# Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+#
+# -= Save The Princess =-
+#
+# This is an example of a simple quest with one goal and no subquests.
+# Story:
+#
+#  "While journeying to visit a distant relative, the princess has been captured 
+#  by trolls in the forest. You are a brave knight who must find and save the 
+#  princess. You are in the town now. You need to go to the castle, take your 
+#  sword, travel to the forest, free the princess, and guide her back to the 
+#  castle."
+#
+
+version 1 0
+project save_princess
+
+type Object
+
+type Sword : Object
+type Character : Object
+    type Player : Character
+        type Knight : Player
+    type Friend : Character
+        type Princess : Friend
+    type Enemy : Character
+        type Troll : Enemy
+
+type Location
+
+
+object knight : Knight
+object princess : Princess
+object bigSword : Sword
+
+# Usually, it is better to group enemies together. 
+# But here, we use three separate enemy objects
+object troll_1 : Troll
+object troll_2 : Troll
+object troll_3 : Troll
+
+object castle : Location
+object town : Location
+object forest : Location
+
+
+# The given object is at the given location.
+rel At(Object, Location)
+
+# There is a road from the first to the second location.
+rel Road(Location, Location)
+
+# The given character is alive.
+rel Alive(Character)
+
+# The given character is dead.
+rel Dead(Character)
+
+# The given friend can move.
+rel CanMove(Friend)
+
+# A friend is the hostage of an enemy.
+rel Hostage(Friend, Enemy)
+
+# A character has an object.
+rel Has(Character, Object)
+
+
+# Quest initial state.
+rlist Initial:
+    # All characters are alive.
+    Alive(knight)
+    Alive(princess)
+    Alive(troll_1)
+    Alive(troll_2)
+    Alive(troll_3)
+
+    # Roads between the places:
+    # [ Forest ] <-=-> [ Town ] <-=-> [ Castle ]
+    Road(forest, town)
+    Road(town, forest)
+    Road(town, castle)
+    Road(castle, town)
+
+    # Initial locations.
+    At(knight, town)
+    At(bigSword, castle)
+    At(princess, forest)
+    At(troll_1, forest)
+    At(troll_2, forest)
+    At(troll_3, forest)
+
+    # Initial state.
+    Hostage(princess, troll_1)
+    Hostage(princess, troll_2)
+    Hostage(princess, troll_3)
+
+
+# Initializes the quest.
+action Init:
+    pre # none
+    rem # none
+    add Initial()
+
+
+# Player takes a sword.
+action TakeSword:
+    player : Player
+    sword : Sword
+    location : Location
+    pre At(player, location)
+        At(sword, location)
+        Alive(player)
+    rem At(sword, location)
+    add Has(player, sword)
+
+
+# Kill the enemy at the given location.
+action KillEnemy:
+    player : Player
+    sword : Sword
+    enemy : Enemy
+    location : Location
+    pre Has(player, sword)
+        At(player, location)
+        At(enemy, location)
+        Alive(enemy)
+        Alive(player)
+    rem Alive(enemy)
+    add Dead(enemy)
+
+
+# Travel from place A to place B by the road.
+action TravelTo:
+    player : Player
+    location_A : Location
+    location_B : Location
+    pre At(player, location_A)
+        Road(location_A, location_B)
+        Alive(player)
+    rem At(player, location_A)
+    add At(player, location_B)
+
+
+# Guide a friend from place A to place B by the road.
+action Guide:
+    player : Player
+    friend : Friend
+    location_A : Location
+    location_B : Location
+    pre At(player, location_A)
+        At(friend, location_A)
+        Road(location_A, location_B)
+        Alive(player)
+        Alive(friend)
+        CanMove(friend)
+    rem At(player, location_A)
+        At(friend, location_A)
+    add At(player, location_B)
+        At(friend, location_B)
+
+
+# Free a friend that was captured by three enemies.
+action Free_3:
+    player : Player
+    friend : Friend
+    enemy_1 : Enemy
+    enemy_2 : Enemy
+    enemy_3 : Enemy
+    location : Location
+    pre At(player, location)
+        At(friend, location)
+        Alive(player)
+        Alive(friend)
+        Dead(enemy_1)
+        Dead(enemy_2)
+        Dead(enemy_3)
+        Hostage(friend, enemy_1)
+        Hostage(friend, enemy_2)
+        Hostage(friend, enemy_3)
+    rem Hostage(friend, enemy_1)
+        Hostage(friend, enemy_2)
+        Hostage(friend, enemy_3)
+    add CanMove(friend)
+
+
+# One main quest.
+main_quest SaveThePrincess:
+    preconditions:
+        # none
+    goal:
+        At(princess, castle)
+    actions:
+        KillEnemy
+        TravelTo
+        Guide
+        Free_3
+        TakeSword
+    objects:
+        knight
+        bigSword
+        princess
+        troll_1
+        troll_2
+        troll_3
+        castle
+        town
+        forest
+    subquests:
+        # none
+

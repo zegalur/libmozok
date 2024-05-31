@@ -1,0 +1,142 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "LibMozok Quest File",
+	"scopeName": "source.quest",
+	"patterns": [
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#parentheses"
+		},
+		{
+			"include": "#type_def"
+		},
+		{
+			"include": "#object_def"
+		},
+		{
+			"include": "#relation_def"
+		},
+		{
+			"include": "#rlist_def"
+		},
+		{
+			"include": "#arg_def"
+		},
+		{
+			"include": "#call"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#variable"
+		}
+	],
+	"repository": {
+		"comment": {
+			"match": "#.*$",
+			"name": "comment.line.number-sign.quest"
+		},
+		"keywords": {
+			"match": "\\b(type|object|objects|version|project|include|rel|rlist|action|pre|add|rem|quest|main_quest|preconditions|goal|actions|subquests|status|ACTIVE|INACTIVE|DONE|N/A|options|searchLimit|spaceLimit|omega)\\b",
+			"name": "keyword.quest"
+		},
+		"parentheses": {
+			"match": "[()]",
+			"name": "punctuation.definition.parentheses.quest"
+		},
+		"type_def": {
+            "match": "^\\s*(type)\\s*([A-Z][a-zA-Z0-9\\_]*)(\\s*:\\s*([A-Z][a-zA-Z0-9\\_]*)(\\s*,\\s*([A-Z][a-zA-Z0-9\\_]*))*)?",
+            "captures": {
+				"1": {
+					"name": "keyword.quest"
+				},
+                "2": {
+                    "name": "entity.name.type.quest"
+                },
+				"4": {
+					"name": "entity.name.type.quest"
+				},
+				"6": {
+					"name": "entity.name.type.quest"
+				}
+            }
+		},
+		"object_def": {
+            "match": "^\\s*(object)\\s*([a-z\\_][a-zA-Z0-9\\_]*)\\s*:\\s*([A-Z][a-zA-Z0-9\\_]*)(\\s*,\\s*([A-Z][a-zA-Z0-9\\_]*))*",
+            "captures": {
+				"1": {
+					"name": "keyword.quest"
+				},
+                "2": {
+                    "name": "variable.quest"
+                },
+				"3": {
+					"name": "entity.name.type.quest"
+				},
+				"5": {
+					"name": "entity.name.type.quest"
+				}
+            }
+		},
+		"relation_def": {
+            "match": "^\\s*(rel)\\s*([A-Z][a-zA-Z0-9\\_]*)\\s*\\(\\s*(([A-Z][a-zA-Z0-9\\_]*)(\\s*,\\s*([A-Z][a-zA-Z0-9\\_]*))*)?\\s*\\)",
+            "captures": {
+				"1": {
+					"name": "keyword.quest"
+				},
+                "2": {
+                    "name": "entity.name.function.quest"
+                },
+				"4": {
+					"name": "entity.name.type.quest"
+				},
+				"6": {
+					"name": "entity.name.type.quest"
+				}
+            }
+		},
+		"rlist_def": {
+            "match": "^\\s*(rlist)\\s*([A-Z][a-zA-Z0-9\\_]*)\\s*:",
+            "captures": {
+				"1": {
+					"name": "keyword.quest"
+				},
+                "2": {
+                    "name": "entity.name.function.quest"
+                }
+            }
+		},
+		"arg_def": {
+            "match": "^\\s+([a-z\\_][a-zA-Z0-9\\_]*)\\s*:\\s*([A-Z][a-zA-Z0-9\\_]*)(\\s*,\\s*([A-Z][a-zA-Z0-9\\_]*))*",
+            "captures": {
+                "1": {
+                    "name": "variable.quest"
+                },
+				"2": {
+                    "name": "entity.name.type.quest"
+                },
+				"4": {
+                    "name": "entity.name.type.quest"
+                }
+            }
+		},
+		"call": {
+			"match": "^\\s+(pre\\s*|rem\\s*|add\\s*)?([A-Z][a-zA-Z0-9\\_]*)\\s*\\(",
+            "captures": {
+                "1": {
+					"name": "keyword.quest"
+				},
+				"2": {
+					"name": "entity.name.function.quest"
+				}
+			}
+		},
+		"variable": {
+			"match": "\\b([a-z\\_][a-zA-Z0-9\\_]*)\\b",
+			"name": "variable.quest"
+		}
+	}	
+}

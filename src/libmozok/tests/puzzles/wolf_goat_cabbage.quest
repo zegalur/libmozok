@@ -1,0 +1,197 @@
+# -= Wolf Goat Cabbage puzzle quest =-
+#
+# Description (from the Wikipedia):
+#    A farmer with a wolf, a goat, and a cabbage must cross a river by boat. 
+#    The boat can carry only the farmer and a single item. If left unattended 
+#    together, the wolf would eat the goat, or the goat would eat the cabbage. 
+#    How can they cross the river without anything being eaten?
+# (https://en.wikipedia.org/wiki/Wolf,_goat_and_cabbage_problem#The_story)
+#
+# The code below is subject to the MIT license. 
+# Copyright 2024 Pavlo Savchuk.
+
+version 1 0
+project wolf_goat_cabbage
+
+type Side # River bank side (left or right).
+type Object # Objects, movable by the boat.
+    type Human : Object # Human object.
+    type Load : Object # Load object.
+
+object left : Side # Left bank.
+object right : Side # Right bank.
+object human : Human # Human who controls the boat.
+object wolf : Load # Wolf, would eat the goat if left unattended.
+object goat : Load # Goat, would eat the cabbage if left unattended.
+object cabbage : Load # The cabbage.
+
+
+# Sets Object's position (Side).
+rel At(Object, Side) 
+
+# Sets that any of two objects don't wants to eat the other.
+rel Neutral(Load, Load)
+
+# Puzzle initial state.
+rlist Initial:
+    # A relation list can have arguments just like an action:
+    # var : Type1, Type2
+    At(human, left)
+	At(wolf, left)
+	At(goat, left)
+	At(cabbage, left)
+	Neutral(wolf, cabbage)
+	Neutral(cabbage, wolf)
+
+
+# Initializes the Wolf-Goat-Cabbage world.
+# This action is global because it refers to global objects 
+# and uses 0-arity relations in `add` section.
+action Init:
+    pre # none
+    rem # none
+    add Initial()
+
+
+# If `human` and load `a` are on `human_side` and loads `b` and `c` are 
+# on the `other_side`, then we can move the `human` to the `other_side`.
+action MoveFree1:
+    humanObj : Human
+    human_side : Side
+    other_side : Side
+    a : Load
+    b : Load
+    c : Load
+    pre At(humanObj, human_side)
+        At(a, human_side)
+        At(b, other_side)
+        At(c, other_side)
+    rem At(humanObj, human_side)
+    add At(humanObj, other_side)
+
+
+# If `human` and loads `a` and `b` on `human_side`, load `c` is on the 
+# `other_side`, and `a` and `b` are neutral, then we can move the `human` 
+# to the other_side.
+action MoveFree2:
+    humanObj : Human
+    human_side : Side
+    other_side : Side
+    a : Load
+    b : Load
+    c : Load
+    pre At(humanObj, human_side)
+        At(a, human_side)
+        At(b, human_side)
+        At(c, other_side)
+        Neutral(a, b)
+    rem At(humanObj, human_side)
+    add At(humanObj, other_side)
+
+
+# If all objects are on the `human_side` and loads `b` and `c` are neutral, 
+# then we can move `human` and load `a` to the `other_side`.
+action MoveLoad1:
+    humanObj : Human
+    human_side : Side
+    other_side : Side
+    a : Load
+    b : Load
+    c : Load
+    pre At(humanObj, human_side)
+        At(a, human_side)
+        At(b, human_side)
+        At(c, human_side)
+        Neutral(b, c)
+    rem At(humanObj, human_side)
+        At(a, human_side)
+    add At(humanObj, other_side)
+        At(a, other_side)
+
+
+# If all objects except load `c` are on the `human_side`, then we can move 
+# `human` and load `a` to the `other_side`.
+action MoveLoad2:
+    humanObj : Human
+    human_side : Side
+    other_side : Side
+    a : Load
+    b : Load
+    c : Load
+    pre At(humanObj, human_side)
+        At(a, human_side)
+        At(b, human_side)
+        At(c, other_side)
+    rem At(humanObj, human_side)
+        At(a, human_side)
+    add At(humanObj, other_side)
+        At(a, other_side)
+
+
+# If `human` and load `a` are on the `human_side` but loads `b` and `c` are on 
+# the `other_side`, then we can move `human` and load `a` to the `other_side`.
+action MoveLoad3:
+    humanObj : Human
+    human_side : Side
+    other_side : Side
+    a : Load
+    b : Load
+    c : Load
+    pre At(humanObj, human_side)
+        At(a, human_side)
+        At(b, other_side)
+        At(c, other_side)
+    rem At(humanObj, human_side)
+        At(a, human_side)
+    add At(humanObj, other_side)
+        At(a, other_side)
+
+
+# The main quest: How to move all objects from the left bank 
+# to the right bank of the river?
+main_quest CrossTheRiver:
+    # The main quest will automatically activate once the preconditions are met.
+    preconditions:
+        At(human, left)
+        At(wolf, left)
+        At(goat, left)
+        At(cabbage, left)
+    goal:
+        At(human, right)
+        At(wolf, right)
+        At(goat, right)
+        At(cabbage, right)
+    actions:
+        # Only local actions can be listed as quest actions.
+        MoveFree1
+        MoveFree2
+        MoveLoad1
+        MoveLoad2
+        MoveLoad3
+    objects:
+        left
+        right
+        human
+        wolf
+        goat
+        cabbage
+    subquests:
+        # none
+
+
+# An example of a Load action.
+action Load:
+    # Quest status change command.
+    status CrossTheRiver INACTIVE 0
+    pre # none
+    rem # none
+    add # ...state here...
+
+
+# An example of a not applicable action.
+# N/A actions cannot be applied. They are used for splitting hard quests into 
+# manageable parts.
+action N/A NotApplicableAction:
+    pre # none
+    rem # none
+    add # none

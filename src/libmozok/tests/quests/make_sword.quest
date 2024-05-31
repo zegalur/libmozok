@@ -1,0 +1,440 @@
+# Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+#
+# -= Forge a Sword =-
+# 
+# Work, sleep, collect the money, buy items, and forge the sword of your dreams. 
+# Sounds simple, but it is actually a complex quest.
+# Here it comes in two flavors: with and without subquests.
+
+version 1 0
+project forge_a_sword
+
+type Object
+    type Hammer : Object
+    type Anvil : Object
+    type Forge : Object
+    type Steel : Object
+    type Sword : Object
+type Location
+    type Home : Location
+    type Town : Location
+    type Work : Location
+    type Store : Location
+type Time
+    type Day : Time
+    type Night : Time
+type Money
+type Price
+
+
+object hammer : Hammer
+object anvil : Anvil
+object forge : Forge
+object steel : Steel
+object sword : Sword
+object ring : Object
+
+object home : Home
+object town : Town
+object work : Work
+object store : Store
+
+object day : Day
+object night : Night
+
+object money_0 : Money
+object money_100 : Money
+object money_200 : Money
+object money_300 : Money
+
+object price_100 : Price
+object price_200 : Price
+object price_300 : Price
+
+# The player is at the given location.
+rel At(Location)
+
+# There is a road from the first to the second location.
+rel Road(Location, Location)
+
+# Player has a given object.
+rel HasObject(Object)
+
+# Player has a given amount of money.
+rel HasMoney(Money)
+
+# A - B = C.
+rel Spend(Money, Price, Money)
+
+# First + 100 = Second.
+rel Plus100(Money, Money)
+
+# Is day/night.
+rel Is(Time)
+
+# The price of an object.
+rel Price(Object, Price)
+
+# 0-arity relations are used here to serve as #ifdef directives.
+rel NoSubQuests()
+rel WithSubQuests()
+
+
+# Quest initial state.
+rlist Initial:
+    # Roads between the places
+    Road(home, town)
+    Road(town, home)
+        Road(town, work)
+        Road(work, town)
+    Road(town, store)
+    Road(store, town)
+
+    # Money:
+    Plus100(money_0, money_100)
+    Plus100(money_100, money_200)
+    Plus100(money_200, money_300)
+        Spend(money_100, price_100, money_0)
+    Spend(money_200, price_100, money_100)
+    Spend(money_200, price_200, money_0)
+        Spend(money_300, price_100, money_200)
+        Spend(money_300, price_200, money_100)
+        Spend(money_300, price_300, money_0)
+
+    # Prices:
+    Price(hammer, price_100)
+    Price(anvil, price_300)
+    Price(forge, price_200)
+    Price(steel, price_100)
+
+    # Other:
+    At(home)
+    HasMoney(money_0)
+    Is(day)
+
+
+# Without subquests.
+action NoSQ:
+    pre # none
+    rem # none
+    add Initial()
+        # By adding this statement we will activate the main_quest without 
+        # the subquests.
+        NoSubQuests()
+
+# With subquests.
+action WithSQ:
+    pre # none
+    rem # none
+    add Initial()
+        # By adding this statement we will activate the main_quest with the 
+        # subquests.
+        WithSubQuests()
+
+
+# Travel from place A to place B by the road.
+action TravelTo:
+    location_A : Location
+    location_B : Location
+    pre At(location_A)
+        Road(location_A, location_B)
+    rem At(location_A)
+    add At(location_B)
+
+
+# Sleep at home throughout the night.
+action Sleep:
+    homeLoc : Home
+    nightTime : Night
+    dayTime : Day
+    pre At(homeLoc)
+        Is(nightTime)
+    rem Is(nightTime)
+    add Is(dayTime)
+
+
+# Work all day to make 100 coins.
+action Work:
+    workLoc : Work
+    nightTime : Night
+    dayTime : Day
+    moneyBefore : Money
+    moneyAfter : Money
+    pre At(workLoc)
+        Is(dayTime)
+        HasMoney(moneyBefore)
+        Plus100(moneyBefore, moneyAfter)
+    rem Is(dayTime)
+        HasMoney(moneyBefore)
+    add Is(nightTime)
+        HasMoney(moneyAfter)
+
+
+# Buy an object.
+action Buy:
+    storeLoc : Store
+    obj : Object
+    dayTime : Day
+    moneyBefore : Money
+    price : Price
+    moneyAfter : Money
+    pre At(storeLoc)
+        Is(dayTime)
+        Price(obj, price)
+        HasMoney(moneyBefore)
+        Spend(moneyBefore, price, moneyAfter)
+    rem HasMoney(moneyBefore)
+    add HasMoney(moneyAfter)
+        HasObject(obj)
+
+
+# Player takes a sword.
+action MakeSword:
+    homeLoc : Home
+    hammerObj : Hammer
+    anvilObj : Anvil
+    forgeObj : Forge
+    steelObj : Steel
+    swordObj : Sword
+    pre At(homeLoc)
+        HasObject(hammerObj)
+        HasObject(anvilObj)
+        HasObject(forgeObj)
+        HasObject(steelObj)
+    rem HasObject(steelObj)
+    add HasObject(swordObj)
+
+
+# One main quest without subquests.
+main_quest MakeSword_NoSubQuests:
+    preconditions:
+        NoSubQuests()
+    goal:
+        HasObject(sword)
+    actions:
+        TravelTo
+        Sleep
+        Work
+        Buy
+        MakeSword
+    objects:
+        hammer
+        anvil
+        forge
+        steel
+        sword
+        home
+        town
+        work
+        store
+        day
+        night
+        money_0
+        money_100
+        money_200
+        money_300
+        price_100
+        price_200
+        price_300
+    subquests:
+        # none
+
+# ==========================
+
+quest BuyHammer:
+    preconditions:
+        # none
+    goal:
+        HasObject(hammer)
+    actions:
+        TravelTo
+        Sleep
+        Work
+        Buy
+    objects:
+        hammer
+        home
+        town
+        work
+        store
+        day
+        night
+        money_0
+        money_100
+        money_200
+        money_300
+        price_100
+    subquests:
+        # none
+
+action N/A BuyHammer:
+    hammerObj : Hammer
+    pre
+    rem
+    add HasObject(hammerObj)
+
+
+quest BuyAnvil:
+    preconditions:
+        # none
+    goal:
+        HasObject(anvil)
+    actions:
+        TravelTo
+        Sleep
+        Work
+        Buy
+    objects:
+        anvil
+        home
+        town
+        work
+        store
+        day
+        night
+        money_0
+        money_100
+        money_200
+        money_300
+        price_300
+    subquests:
+        # none
+
+action N/A BuyAnvil:
+    anvilObj : Anvil
+    pre
+    rem
+    add HasObject(anvilObj)
+
+
+quest BuyForge:
+    preconditions:
+        # none
+    goal:
+        HasObject(forge)
+    actions:
+        TravelTo
+        Sleep
+        Work
+        Buy
+    objects:
+        forge
+        home
+        town
+        work
+        store
+        day
+        night
+        money_0
+        money_100
+        money_200
+        money_300
+        price_200
+    subquests:
+        # none
+
+action N/A BuyForge:
+    forgeObj : Forge
+    pre
+    rem
+    add HasObject(forgeObj)
+
+
+quest BuySteel:
+    preconditions:
+        # none
+    goal:
+        HasObject(steel)
+    actions:
+        TravelTo
+        Sleep
+        Work
+        Buy
+    objects:
+        steel
+        home
+        town
+        work
+        store
+        day
+        night
+        money_0
+        money_100
+        money_200
+        money_300
+        price_100
+    subquests:
+        # none
+
+action N/A BuySteel:
+    steelObj : Steel
+    pre
+    rem
+    add HasObject(steelObj)
+
+
+quest MakeSwordAtHome:
+    preconditions:
+        HasObject(hammer)
+        HasObject(anvil)
+        HasObject(forge)
+        HasObject(steel)
+    goal:
+        HasObject(sword)
+    actions:
+        TravelTo
+        MakeSword
+    objects:
+        sword
+        hammer
+        anvil
+        forge
+        steel
+        home
+        town
+        work
+        store
+    subquests:
+        # none
+
+action N/A MakeSwordAtHome:
+    hammerObj : Hammer
+    anvilObj : Anvil
+    forgeObj : Forge
+    steelObj : Steel
+    swordObj : Sword
+    pre HasObject(hammerObj)
+        HasObject(anvilObj)
+        HasObject(forgeObj)
+        HasObject(steelObj)
+    rem HasObject(steelObj)
+    add HasObject(swordObj)
+
+
+# One main quest.
+main_quest MakeSword_WithSubQuests:
+    preconditions:
+        WithSubQuests()
+    goal:
+        HasObject(ring)
+    goal:
+        HasObject(sword)
+    actions:
+        BuyHammer
+        BuyAnvil
+        BuyForge
+        BuySteel
+        MakeSwordAtHome
+    objects:
+        hammer
+        anvil
+        forge
+        steel
+        sword
+        ring
+    subquests:
+        BuyHammer
+        BuyAnvil
+        BuyForge
+        BuySteel
+        MakeSwordAtHome

@@ -1,0 +1,287 @@
+# This is the copy-past from the LibMozok Godot DEMO (Puzzle Tutorial)
+# The puzzle is for demonstration purposes only.
+# LibMozok was not intended to be a puzzle-solving library.
+
+version 1 0
+project push_blocks
+
+type Tutorial
+rel TutorialFinished(Tutorial)
+
+##############
+
+type PuzzleTutorial : Tutorial
+object puzzleTutorial : PuzzleTutorial
+
+type PTut_Cell # Cell from the grid
+    type PTut_Finish : PTut_Cell # Destination cell
+type PTut_Block # Movable block
+
+type TMLF # Move Left From
+type TMLT # Move Left To
+    type TMRF # Move Right From
+    type TMRT # Move Right To
+type TMUF # Move Up From
+type TMUT # Move Up To
+    type TMDF # Move Down From
+    type TMDT # Move Down To
+type TPLF # Push Left From
+type TPRF # Push Right From
+type TPUF # Push Up From
+type TPDF # Push Down From
+
+# Puzzle grid:
+#   00 01 02 03 04
+#   10 11 12 13 14
+#   20 21 22 23 24
+#   30 31 32 33 34
+#   40 41 42 43 44
+object pt_cell_00 : PTut_Finish,TMLT,TMRF,TMUT,TMDF,TPRF,TPDF
+object pt_cell_01 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUT,TMDF,TPRF,TPDF
+object pt_cell_02 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUT,TMDF,TPLF,TPDF
+object pt_cell_03 : PTut_Cell,TMLF,TMRT,TMUT,TMDF,TPLF,TPDF
+    object pt_cell_10 : PTut_Cell,TMLT,TMRF,TMUT,TMUF,TMDF,TMDT,TPRF,TPDF
+    object pt_cell_11 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUT,TMUF,TMDF,TMDT,TPRF,TPDF
+    object pt_cell_12 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUT,TMUF,TMDF,TMDT,TPLF,TPDF
+    object pt_cell_13 : PTut_Cell,TMLF,TMRT,TMUT,TMUF,TMDF,TMDT,TPLF,TPDF
+object pt_cell_20 : PTut_Cell,TMLT,TMRF,TMUT,TMUF,TMDF,TMDT,TPRF,TPUF
+object pt_cell_21 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUT,TMUF,TMDF,TMDT,TPRF,TPUF
+object pt_cell_22 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUT,TMUF,TMDF,TMDT,TPLF,TPUF
+object pt_cell_23 : PTut_Cell,TMLF,TMRT,TMUT,TMUF,TMDF,TMDT,TPLF,TPUF
+    object pt_cell_30 : PTut_Cell,TMLT,TMRF,TMUF,TMDT,TPRF,TPUF
+    object pt_cell_31 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUF,TMDT,TPRF,TPUF
+    object pt_cell_32 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUF,TMDT,TPLF,TPUF
+    object pt_cell_33 : PTut_Cell,TMLF,TMRT,TMUF,TMDT,TPLF,TPUF
+
+# Horizontically adjacent cells (left, right).
+rel PTut_Adjacent_H(PTut_Cell, PTut_Cell)
+
+# Vertically adjacent cells (top, bottom).
+rel PTut_Adjacent_V(PTut_Cell, PTut_Cell)
+
+# Player is at the given cell.
+rel PTut_PlayerAt(PTut_Cell)
+
+# Movable block ia at the given cell.
+rel PTut_BlockAt(PTut_Cell)
+
+# The given cell is empty.
+rel PTut_Free(PTut_Cell)
+
+# Initializes the Puzzle Tutorial.
+rlist PTut_Init:
+    # Horizontally adjacent cells (left to right)
+    PTut_Adjacent_H(pt_cell_00, pt_cell_01)
+    PTut_Adjacent_H(pt_cell_01, pt_cell_02)
+    PTut_Adjacent_H(pt_cell_02, pt_cell_03)
+        PTut_Adjacent_H(pt_cell_10, pt_cell_11)
+        PTut_Adjacent_H(pt_cell_11, pt_cell_12)
+        PTut_Adjacent_H(pt_cell_12, pt_cell_13)
+    PTut_Adjacent_H(pt_cell_20, pt_cell_21)
+    PTut_Adjacent_H(pt_cell_21, pt_cell_22)
+    PTut_Adjacent_H(pt_cell_22, pt_cell_23)
+        PTut_Adjacent_H(pt_cell_30, pt_cell_31)
+        PTut_Adjacent_H(pt_cell_31, pt_cell_32)
+        PTut_Adjacent_H(pt_cell_32, pt_cell_33)
+
+    # Vertically adjacent cells (top to bottom)
+    PTut_Adjacent_V(pt_cell_00, pt_cell_10)
+    PTut_Adjacent_V(pt_cell_10, pt_cell_20)
+    PTut_Adjacent_V(pt_cell_20, pt_cell_30)
+        PTut_Adjacent_V(pt_cell_01, pt_cell_11)
+        PTut_Adjacent_V(pt_cell_11, pt_cell_21)
+        PTut_Adjacent_V(pt_cell_21, pt_cell_31)
+    PTut_Adjacent_V(pt_cell_02, pt_cell_12)
+    PTut_Adjacent_V(pt_cell_12, pt_cell_22)
+    PTut_Adjacent_V(pt_cell_22, pt_cell_32)
+        PTut_Adjacent_V(pt_cell_03, pt_cell_13)
+        PTut_Adjacent_V(pt_cell_13, pt_cell_23)
+        PTut_Adjacent_V(pt_cell_23, pt_cell_33)
+
+    # Initial configuration:
+    #   ..O.
+    #   .O.O
+    #   O.O.
+    #   ...P
+    PTut_Free(pt_cell_00)
+    PTut_Free(pt_cell_01)
+    PTut_BlockAt(pt_cell_02)
+    PTut_Free(pt_cell_03)
+        PTut_Free(pt_cell_10)
+        PTut_BlockAt(pt_cell_11)
+        PTut_Free(pt_cell_12)
+        PTut_BlockAt(pt_cell_13)
+    PTut_BlockAt(pt_cell_20)
+    PTut_Free(pt_cell_21)
+    PTut_BlockAt(pt_cell_22)
+    PTut_Free(pt_cell_23)
+        PTut_Free(pt_cell_30)
+        PTut_Free(pt_cell_31)
+        PTut_Free(pt_cell_32)
+        PTut_Free(pt_cell_33)
+    
+    PTut_PlayerAt(pt_cell_33)
+
+# Player moved left.
+action PTut_MoveLeft:
+    a : PTut_Cell,TMLF # from
+    b : PTut_Cell,TMLT # to
+    pre PTut_Adjacent_H(b,a)
+        PTut_PlayerAt(a)
+        PTut_Free(b)
+    rem PTut_PlayerAt(a)
+    add PTut_PlayerAt(b)
+
+# Player moved right.
+action PTut_MoveRight:
+    a : PTut_Cell,TMRF # from
+    b : PTut_Cell,TMRT # to
+    pre PTut_Adjacent_H(a,b)
+        PTut_PlayerAt(a)
+        PTut_Free(b)
+    rem PTut_PlayerAt(a)
+    add PTut_PlayerAt(b)
+
+# Player moved up.
+action PTut_MoveUp:
+    a : PTut_Cell,TMUF # from
+    b : PTut_Cell,TMUT # to
+    pre PTut_Adjacent_V(b,a)
+        PTut_PlayerAt(a)
+        PTut_Free(b)
+    rem PTut_PlayerAt(a)
+    add PTut_PlayerAt(b)
+
+# Player moved down.
+action PTut_MoveDown:
+    a : PTut_Cell,TMDF # from
+    b : PTut_Cell,TMDT # to
+    pre PTut_Adjacent_V(a,b)
+        PTut_PlayerAt(a)
+        PTut_Free(b)
+    rem PTut_PlayerAt(a)
+    add PTut_PlayerAt(b)
+
+# A movable block was pushed left.
+action PTut_PushLeft:
+    a : PTut_Cell,TPLF # player
+    b : PTut_Cell,TMLF # block
+    c : PTut_Cell,TMLT # free
+    pre PTut_Adjacent_H(b,a)
+        PTut_Adjacent_H(c,b)
+        PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    rem PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    add PTut_PlayerAt(a)
+        PTut_BlockAt(c)
+        PTut_Free(b)
+
+# A movable block was pushed right.
+action PTut_PushRight:
+    a : PTut_Cell,TPRF # player
+    b : PTut_Cell,TMRF # block
+    c : PTut_Cell,TMRT # free
+    pre PTut_Adjacent_H(a,b)
+        PTut_Adjacent_H(b,c)
+        PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    rem PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    add PTut_PlayerAt(a)
+        PTut_BlockAt(c)
+        PTut_Free(b)
+
+# A movable block was pushed up.
+action PTut_PushUp:
+    a : PTut_Cell,TPUF # player
+    b : PTut_Cell,TMUF # block
+    c : PTut_Cell,TMUT # free
+    pre PTut_Adjacent_V(c,b)
+        PTut_Adjacent_V(b,a)
+        PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    rem PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    add PTut_PlayerAt(a)
+        PTut_BlockAt(c)
+        PTut_Free(b)
+
+# A movable block was pushed down.
+action PTut_PushDown:
+    a : PTut_Cell,TPDF # player
+    b : PTut_Cell,TMDF # block
+    c : PTut_Cell,TMDT # free
+    pre PTut_Adjacent_V(a,b)
+        PTut_Adjacent_V(b,c)
+        PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    rem PTut_PlayerAt(a)
+        PTut_BlockAt(b)
+        PTut_Free(c)
+    add PTut_PlayerAt(a)
+        PTut_BlockAt(c)
+        PTut_Free(b)
+
+# Finish the puzzle tutorial.
+# Call this when player pick-up the big heart.
+action PTut_Finish:
+    player_cell : PTut_Finish
+    tutorial : PuzzleTutorial
+    pre PTut_PlayerAt(player_cell)
+    rem # none
+    add TutorialFinished(tutorial)
+
+
+# The puzzle tutorial subquest.
+main_quest PuzzleTutorial:
+    options:
+        searchLimit 5000
+    preconditions:
+        # none
+    goal:
+        TutorialFinished(puzzleTutorial)
+    actions:
+        PTut_MoveLeft
+        PTut_MoveRight
+        PTut_MoveUp
+        PTut_MoveDown
+        PTut_PushLeft
+        PTut_PushRight
+        PTut_PushUp
+        PTut_PushDown
+        PTut_Finish
+    objects:
+        puzzleTutorial
+        pt_cell_00
+        pt_cell_01
+        pt_cell_02
+        pt_cell_03
+            pt_cell_10
+            pt_cell_11
+            pt_cell_12
+            pt_cell_13
+        pt_cell_20
+        pt_cell_21
+        pt_cell_22
+        pt_cell_23
+            pt_cell_30
+            pt_cell_31
+            pt_cell_32
+            pt_cell_33
+    subquests:
+        # none
+
+##############
+
+action Init:
+    pre # none
+    rem # none
+    add PTut_Init()
