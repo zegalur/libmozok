@@ -6,7 +6,7 @@
     </picture>
 </p>
 
-**LibMozok** is a universal, dynamic, nondeterministic quest engine. This library implements a system heavily inspired by ["Hierarchical generation of dynamic and nondeterministic quests in games"](https://www.researchgate.net/publication/286454232_Hierarchical_Generation_of_Dynamic_and_Nondeterministic_Quests_in_Games).
+**LibMozok** is a universal quest engine for games. This library implements a system heavily inspired by ["Hierarchical generation of dynamic and nondeterministic quests in games"](https://www.researchgate.net/publication/286454232_Hierarchical_Generation_of_Dynamic_and_Nondeterministic_Quests_in_Games).
 
 *Mozok, derived from the Ukrainian word "мозок" meaning "brain."*
 
@@ -181,7 +181,7 @@ How to build and install **libmozok** (Release):
 `cmake --build . --config Release`
 4. Install the project:<br /> 
 `cmake --install . --config Release`
-5. You should now have the non-empty `lib/` and `include/libmozok/` directories inside the inside the `install` directory.
+5. You should now have the non-empty `lib/` and `include/libmozok/` directories inside the `install` directory.
 
 # References
 
