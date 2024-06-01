@@ -30,6 +30,7 @@ Libmozok TODO list.
 
 - [ ] Basic documentation
     - [x] Doxygen generated documentation
+    - [x] .quest format reference page
     - [ ] First Tutorial
 
 ### Done ✓

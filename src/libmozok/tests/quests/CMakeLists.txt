@@ -15,6 +15,7 @@ function(solve_quest quest init)
         PROPERTIES PASS_REGULAR_EXPRESSION "MOZOK_OK")
 endfunction()
 
+solve_quest(cursed_cave Init)
 solve_quest(save_princess Init)
 solve_quest(make_sword NoSQ)
 solve_quest(make_sword WithSQ)
