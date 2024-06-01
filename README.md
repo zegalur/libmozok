@@ -15,6 +15,7 @@
 - [Introduction](#introduction)
     - [Example #1](#example-1)
     - [Example #2](#example-2)
+- [Further Reading](#further-reading)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [References](#references)
@@ -156,6 +157,17 @@ MoveLoad3 ( human, left, right, goat, wolf, cabbage )
 ```
 
 Unfortunately, for now, libmozok is not powerful enough to solve more combinatorically complex puzzles. Libmozok is suitable for planning quests in real-time for games, but it is not intended to be a universal puzzle-solving library. An example of almost too complex puzzle is [game_of_fifteen.quest](./src/libmozok/tests/puzzles/game_of_fifteen.quest).
+
+# Further Reading
+
+- Getting Started:
+    - *Under Construction*
+- Manual:
+    - [`.quest` Format Reference](docs/quest-format-reference.md)
+    - Doxygen auto-generated reference
+- Other:
+    - [Hierarchical generation of dynamic and nondeterministic quests in games](https://www.researchgate.net/publication/286454232_Hierarchical_Generation_of_Dynamic_and_Nondeterministic_Quests_in_Games)
+    - [STRIPS](https://en.wikipedia.org/wiki/Stanford_Research_Institute_Problem_Solver)
 
 # Prerequisites
 
