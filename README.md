@@ -13,6 +13,7 @@
 # Table of contents
 
 - [Introduction](#introduction)
+    - [Showcase](#showcase) 
     - [Example #1](#example-1)
     - [Example #2](#example-2)
 - [Further Reading](#further-reading)
@@ -28,6 +29,13 @@
 Quests are modeled as a set of preconditions, goals, and actions. Players start in an initial state and, through actions applied to the world, work to achieve (or fail) the quest goals. Depending on the current state of the world, the library determines if a quest goal is achievable, builds a quest plan (a list of actions to achieve the goal), and, if necessary, automatically triggers sub-quests.
 
 To assist with world-building tasks, **LibMozok** introduces a specially designed `.quest` format for quest projects and very simple API to handle quest-related problems.
+
+## Showcase
+
+LibMozok generates a plan for a quest in real-time and detects when the quest becomes unsolvable:
+![zegalur/libmozok-godot/docs/imgs/demo-01.gif](https://github.com/zegalur/libmozok-godot/blob/139a335af3f4eeff1eae35585b3aa9f9f33acbf9/docs/imgs/demo-01.gif)
+
+From: https://github.com/zegalur/libmozok-godot
 
 ## Example #1
 
@@ -162,6 +170,8 @@ Unfortunately, for now, libmozok is not powerful enough to solve more combinator
 
 - Getting Started:
     - *Under Construction*
+- Demo Projects:
+    - https://github.com/zegalur/libmozok-godot
 - Manual:
     - [`.quest` Format Reference](docs/quest-format-reference.md)
     - Doxygen auto-generated reference
