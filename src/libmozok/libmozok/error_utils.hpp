@@ -72,11 +72,14 @@ Result errorActionArgError_InvalidArity(const Str& actionName, const int expecte
 Result errorActionArgError_InvalidType(const Str& actionName, const int indx, const Str& argObjName, const StrVec& argObjType, const StrVec& expectedType) noexcept;
 Result errorActionPreconditionsFailed(const Str& serverWorldName, const Str& actionName) noexcept;
 Result errorActionSetStatusGoalError(const Str& serverWorldName, const Str& actionName, const Str& questName, const int errorGoalIndx) noexcept;
+Result errorActionSetStatusParentGoalError(const Str& serverWorldName, const Str& actionName, const Str& questName, const int errorGoalIndx) noexcept;
 
 // Quest
 Result errorQuestAlreadyExists(const Str& serverWorldName, const Str& actionName) noexcept;
 Result errorQuestCantDefine(const Str& serverWorldName, const Str& questName) noexcept;
 Result errorUndefinedQuest(const Str& serverWorldName, const Str& questName) noexcept;
+Result errorUndefinedSubQuest(const Str& serverWorldName, const Str& subquestName) noexcept;
+Result errorUndefinedMainQuest(const Str& serverWorldName, const Str& questName) noexcept;
 Result errorQuestPreconditionsError() noexcept;
 Result errorQuestGoalError(const int goalIndx) noexcept;
 Result errorQuestActionsError() noexcept;

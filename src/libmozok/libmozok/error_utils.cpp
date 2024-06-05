@@ -143,7 +143,7 @@ Result errorExpectingClosePar(const Str& fileName, int line, int col) noexcept {
 
 Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept {
     return errorParserError(fileName, line, col, 
-            "Invalid status. Expecting DONE, INACTIVE or ACTIVE keyword.");
+            "Invalid status. Expecting DONE, INACTIVE, UNREACHABLE or ACTIVE keyword.");
 }
 
 
@@ -372,6 +372,18 @@ Result errorActionSetStatusGoalError(
             + questName + "` is invalid");
 }
 
+Result errorActionSetStatusParentGoalError(
+        const Str& serverWorldName, 
+        const Str& actionName, 
+        const Str& questName, 
+        const int errorGoalIndx
+        ) noexcept {
+    return errorActionError(serverWorldName, 
+            "Action `" + actionName + "` set status command goal index `"
+            + Str(std::to_string(errorGoalIndx)) + "` of parent quest `"
+            + questName + "` is invalid");
+}
+
 
 // ================================ Quest =================================== //
 
@@ -387,6 +399,16 @@ Result errorQuestAlreadyExists(const Str& serverWorldName, const Str& questName)
 Result errorUndefinedQuest(const Str& serverWorldName, const Str& questName) noexcept {
     return errorQuestError(
         serverWorldName, "Quest `" + questName + "` is undefined.");
+}
+
+Result errorUndefinedSubQuest(const Str& serverWorldName, const Str& subquestName) noexcept {
+    return errorQuestError(
+        serverWorldName, "Subquest `" + subquestName + "` is undefined.");
+}
+
+Result errorUndefinedMainQuest(const Str& serverWorldName, const Str& questName) noexcept {
+    return errorQuestError(
+        serverWorldName, "Main quest `" + questName + "` is undefined.");
 }
 
 Result errorQuestCantDefine(const Str& serverWorldName, const Str& questName) noexcept {

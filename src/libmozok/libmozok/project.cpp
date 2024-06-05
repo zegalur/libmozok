@@ -28,9 +28,11 @@ namespace {
     const char* KEYWORD_ACTIONS = "actions";
     const char* KEYWORD_SUBQUESTS = "subquests";
     const char* KEYWORD_STATUS = "status";
+    const char* KEYWORD_PARENT = "PARENT";
     const char* KEYWORD_INACTIVE = "INACTIVE";
     const char* KEYWORD_ACTIVE = "ACTIVE";
     const char* KEYWORD_DONE = "DONE";
+    const char* KEYWORD_UNREACHABLE = "UNREACHABLE";
     const char* KEYWORD_NA = "N/A";
     const char* KEYWORD_OPTIONS = "options";
     const char* KEYWORD_SEARCH_LIMIT = "searchLimit";
@@ -673,6 +675,8 @@ public:
         StrVec quests;
         Vector<QuestStatus> statusList;
         Vector<int> goals;
+        UnorderedMap<Str, Str> parentQuests;
+        UnorderedMap<Str, int> parentGoals;
         res <<= empty_lines();
         res <<= space(0);
         while(keyword(KEYWORD_STATUS).isOk()) {
@@ -684,13 +688,33 @@ public:
             int statusCol = _col;
             int statusLine = _line;
             res <<= name(status, UPPER);
+            if((status == KEYWORD_ACTIVE) || (status == KEYWORD_DONE)) {
+                res <<= space(0);
+                res <<= pos_int(goal);
+            }
             res <<= space(0);
-            res <<= pos_int(goal);
-            res <<= space(0);
-            res <<= next_line();
+            if(next_line().isError()) {
+                // Maybe this is a subquest?
+                int parentCol = _col;
+                int parentLine = _line;
+                if(keyword(KEYWORD_PARENT).isOk()) {
+                    // It is a subquest.
+                    res <<= space(0);
+                    Str parentQuestName;
+                    int parentQuestGoal;
+                    res <<= name(parentQuestName, UPPER);
+                    res <<= space(0);
+                    res <<= pos_int(parentQuestGoal);
+                    res <<= space(0);
+                    res <<= empty_lines();
+                    parentQuests[questName] = parentQuestName;
+                    parentGoals[questName] = parentQuestGoal;
+                } else
+                    return errorParserError(
+                            _file, parentLine, parentCol, 
+                            "Expecting a new line or `PARENT`");
+            }
             res <<= empty_lines();
-            if(res.isError())
-                return res;
             quests.push_back(questName);
             goals.push_back(goal);
             if(status == KEYWORD_INACTIVE)
@@ -699,8 +723,13 @@ public:
                 statusList.push_back(MOZOK_QUEST_STATUS_UNKNOWN);
             else if(status == KEYWORD_DONE)
                 statusList.push_back(MOZOK_QUEST_STATUS_DONE);
+            else if(status == KEYWORD_UNREACHABLE)
+                statusList.push_back(MOZOK_QUEST_STATUS_UNREACHABLE);
             else
                 return errorActionInvalidStatus(_file, statusLine, statusCol);
+            res <<= space(0);
+            if(res.isError())
+                return res;
         }
         _pos -= _col;
         _col = 0;
@@ -730,8 +759,16 @@ public:
                 actionName, isNotApplicable, arguments, preList, remList, addList);
 
         for(StrVec::size_type i = 0; i < quests.size(); ++i)
-            res <<= _world->addActionQuestStatusChange(
-                    actionName, quests[i], statusList[i], goals[i]);
+            if(parentQuests.find(quests[i]) == parentQuests.end()) {
+                // status change command without PARENT
+                res <<= _world->addActionQuestStatusChange(
+                        actionName, quests[i], statusList[i], goals[i]);
+            } else {
+                // status change command with PARENT
+                res <<= _world->addActionQuestStatusChange(
+                        actionName, quests[i], statusList[i], goals[i],
+                        parentQuests[quests[i]], parentGoals[quests[i]]);
+            }
 
         if(res.isError())
             res <<= errorParserWorldError(

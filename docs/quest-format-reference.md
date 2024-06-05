@@ -1,4 +1,4 @@
-# Quest format reference (v.0.1.0)
+# Quest format reference (v.0.1.1)
 
 To assist with world-building tasks, **LibMozok** introduces a specially designed `.quest` format for quest projects. This format is a type-safe, hierarchical, and quest-oriented version of [STRIPS](https://en.wikipedia.org/wiki/Stanford_Research_Institute_Problem_Solver).
 
@@ -271,9 +271,13 @@ An action can be equipped with a list of status change commands. These commands 
 action Load:
     # Status change commands:
     # status <QuestName> <STATUS> <GoalIndex>
-    status Quest_1 INACTIVE 0
-    status Quest_2 ACTIVE 0
-    status Quest_3 DONE 2
+    status Quest_1 INACTIVE # set a quest as inactive
+    status Quest_2 ACTIVE 0 # set a main quest as active (with current goal 0)
+    status Quest_3 DONE 2 # set a main quest as finished (goal 2 finished)
+    status Quest_4 UNREACHABLE # set a main quest as unreachable
+    # Set a subquest as active with goal 3 
+    # (parent quest is Quest_2 with the corresponding goal 0)
+    status SubQuest_1 ACTIVE 3 PARENT Quest_2 0
     pre # none
     rem # none
     add # Current state statements list

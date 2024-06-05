@@ -174,6 +174,10 @@ class World {
         const QuestStatus status;
         /// @brief A new goal.
         const int goal;
+        /// @brief Parent quest name (non-empty for subquests)
+        const QuestManagerPtr parentQuest;
+        /// @brief Parent quest goal associated with this subquest.
+        const int parentGoal;
     };
     using QuestStatusChangeCommandMap = 
                 UnorderedMap<ID, Vector<QuestStatusChangeCommand>>;
@@ -334,12 +338,16 @@ public:
     /// @param questName The name of the quest whose status will be changed.
     /// @param status A new status.
     /// @param goal A new goal.
+    /// @param parentQuestName Parent quest name (empty for main quests)
+    /// @param parentQuestGoal Parent quest goal, associated with the subquest.
     /// @return Returns the status of the operation.
     Result addActionQuestStatusChange(
             const Str& actionName,
-            const Str& questName, 
+            const Str& questName,
             const QuestStatus status,
-            int goal
+            int goal,
+            const Str& parentQuestName = "",
+            int parentQuestGoal = 0
             ) noexcept;
 
     // =============================== QUEST ================================ //

@@ -10,8 +10,7 @@ Libmozok TODO list.
     - [ ] Add: `rel(arr[i,j], arr[i+1, j])` -> `rel(arr_0_0, arr_1_0)` for all pairs of `(i,j)` that are consistent with the array size.
 - [ ] Add: onNewQuestGoal
 - [ ] Add: Error: The same object appears twice or more in the same statement.
-- [ ] Add: Error: Action argument was not used.
-- [ ] A quest can be a sub-quest for only one parent quest at most.
+- [ ] Add: Warning: Action argument was not used.
 - [ ] Add: error codes for `libmozok::Result`
 - [ ] Add: a better heuristic function(s) for the quest planner
 - [ ] In the `World::performPlanning` function, update only the quests that are activated but not yet completed. This can be achieved by creating a set of quests that need to be planned.
@@ -21,10 +20,8 @@ Libmozok TODO list.
     - [ ] A tool for verifying the completeness of the narration
 - [ ] Migrate to C++17 (`[[nodiscard]]`, `<string_view>` etc.)
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
-- [ ] Logical consistency of the messages
-    - [ ] Add: `PARENT [parentQuestName]` to the `status` commands of sub-quests.
-    - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Fix the highlighting for relation definitions with three or more arguments.
+- [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 
 ### In Progress
 
@@ -50,6 +47,12 @@ Libmozok TODO list.
 
 - [x] Multithreading
     - [x] Introduce basic multithreading in the server by incorporating a worker sub-thread
+
+- [x] Logical consistency of the messages
+    - [x] Add: `UNREACHABLE` to the `status` command
+    - [x] Remove: the quest goal index from `INACTIVE` `status` command
+    - [x] Add: `PARENT [parentQuestName]` to the `status` commands of sub-quests
+    - [x] Ensure logical consistency of the status change command messages
 
 - [x] Other
     - [x] Check the quality of the hash function used for the StatementSet

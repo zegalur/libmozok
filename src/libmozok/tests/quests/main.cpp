@@ -271,6 +271,12 @@ int main(int argc, char **argv) {
     if(msgProcessor.isAllQuestsDone() == false)
         status <<= Result::Error("Oops. The quest wasn't completed.");
 
+    // Generate a savefile.
+    const Str saveFile = server->generateSaveFile(quest_name);
+    cout << "\nSave file:" << endl;
+    cout << saveFile << endl;
+    cout << "END OF SAVE FILE" << endl;
+
     // Explicitly delete the quests server.
     status <<= server->deleteWorld(quest_name);
     server.release();
