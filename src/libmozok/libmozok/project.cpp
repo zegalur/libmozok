@@ -42,7 +42,7 @@ namespace {
 
 
 /// @brief Recursive descent parser for .quest files.
-class RecursiveDecentParser {
+class RecursiveDescentParser {
     World* _world;
 
     /// @brief The project file name.
@@ -73,7 +73,7 @@ class RecursiveDecentParser {
     Str _projectName;
 
 public:
-    RecursiveDecentParser(
+    RecursiveDescentParser(
             World* world, 
             const Str& file, 
             const Str& projectSrc) noexcept : 
@@ -1002,7 +1002,7 @@ Result parseQuestFile(
         const Str& file, 
         const Str& projectSrc
         ) noexcept {
-    RecursiveDecentParser parser(world, file, projectSrc);
+    RecursiveDescentParser parser(world, file, projectSrc);
     return parser.parse();
 }
 
