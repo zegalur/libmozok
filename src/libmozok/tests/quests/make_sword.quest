@@ -441,7 +441,7 @@ main_quest MakeSword_WithSubQuests:
 
 
 # Test Load function
-action Load:
+action LoadTst:
     status MakeSword_NoSubQuests INACTIVE
     status MakeSword_WithSubQuests ACTIVE 0
     status BuyHammer DONE 0 PARENT MakeSword_WithSubQuests 0 
