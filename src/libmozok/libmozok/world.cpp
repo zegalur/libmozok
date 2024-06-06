@@ -70,7 +70,9 @@ Str World::generateSaveFile() noexcept {
         }
     res << "    pre # none" << std::endl;
     res << "    rem # none" << std::endl;
-    res << "    add ";
+    res << "    add # Current State:" << std::endl;
+    // Add the offset to lineup the statements for readability.
+    res << "        ";
     for(const StatementPtr& st : stateCopy->getStatementSet()) {
         res << st->getRelation()->getName() << "(";
         for(ObjectVec::size_type i=0; i<st->getArguments().size(); ++i) {
@@ -78,7 +80,9 @@ Str World::generateSaveFile() noexcept {
             if(i != st->getArguments().size()-1)
                 res << ", ";
         }
-        res << ")" << std::endl << "        ";
+        res << ")" << std::endl;
+        // Add the offset to lineup the statements for readability.
+        res << "        ";
     }
     return res.str();
 }
@@ -460,6 +464,8 @@ Result World::applyAction(
                 // This quest is a subquest
                 if(cmd.quest->getStatus() == MOZOK_QUEST_STATUS_INACTIVE)
                     if(cmd.status != MOZOK_QUEST_STATUS_INACTIVE) {
+                        cmd.quest->setParentQuest(
+                                cmd.parentQuest->getQuest(), cmd.parentGoal);
                         // add `onNewSubQuest` message
                         messageProcessor.onNewSubQuest(
                                 _worldName, cmd.quest->getQuest()->getName(),

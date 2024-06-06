@@ -557,6 +557,23 @@ public:
     Result change_list(Vector<StrVec> &out) noexcept {
         Result res;
 
+        // (Checking for the next scenario):
+        // <some_text>[cursor] # Comment or an empty space
+        //      ChangeListItem1(...)
+        //      ChangeListItem2(...)
+        //      ...
+        int line = _line;
+        int col = _col;
+        int pos = _pos;
+        res <<= empty_lines();
+        if(_line == line) {
+            // If the current line is the same as the initial line,
+            // it means there was no empty line after the cursor.
+            // In this case, return the previous state.
+            _col = col;
+            _pos = pos;
+        }
+
         while(true) {
             Str commandName;
             StrVec commandWithArguments;
