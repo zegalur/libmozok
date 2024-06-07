@@ -458,11 +458,12 @@ Result World::applyAction(
     const auto& it = _actionStatusChangeCommands.find(action->getId());
     if(it != _actionStatusChangeCommands.end())
         for(QuestStatusChangeCommand& cmd : it->second) {
+            const QuestStatus prevStatus = cmd.quest->getStatus();
             // Ensure that `onNewMainQuest` and `onNewSubQuest` is always before
             // the `onNewQuestStatus` message.
             if(cmd.parentQuest) {
                 // This quest is a subquest
-                if(cmd.quest->getStatus() == MOZOK_QUEST_STATUS_INACTIVE)
+                if(prevStatus == MOZOK_QUEST_STATUS_INACTIVE)
                     if(cmd.status != MOZOK_QUEST_STATUS_INACTIVE) {
                         cmd.quest->setParentQuest(
                                 cmd.parentQuest->getQuest(), cmd.parentGoal);
@@ -474,7 +475,7 @@ Result World::applyAction(
                     }
             } else {
                 // This quest is a main quest
-                if(cmd.quest->getStatus() == MOZOK_QUEST_STATUS_INACTIVE)
+                if(prevStatus == MOZOK_QUEST_STATUS_INACTIVE)
                     if(cmd.status != MOZOK_QUEST_STATUS_INACTIVE) {
                         // add `onNewMainQuest` message
                         messageProcessor.onNewMainQuest(
@@ -483,10 +484,13 @@ Result World::applyAction(
             }
             // Status change command increases the substate id
             cmd.quest->increaseCurrentSubstateId();
-
             cmd.quest->setQuestStatus(cmd.status, cmd.goal);
-            messageProcessor.onNewQuestStatus(
-                    _worldName, cmd.quest->getQuest()->getName(), cmd.status);
+            // Do not send `onNewQuestStatus` if the quest was `INACTIVE` 
+            // and remains `INACTIVE`.
+            if((prevStatus == MOZOK_QUEST_STATUS_INACTIVE 
+                    && cmd.status == MOZOK_QUEST_STATUS_INACTIVE) == false)
+                messageProcessor.onNewQuestStatus(
+                        _worldName, cmd.quest->getQuest()->getName(), cmd.status);
         }
 
     // Change the substate IDs of relevant quests
