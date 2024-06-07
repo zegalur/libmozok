@@ -60,6 +60,12 @@ class QuestManager {
     /// @brief Quest's omega value for the planner.
     int _omega;
 
+    /// @brief nullptr for a main quest, parent quest for a subquest.
+    QuestPtr _parentQuest;
+
+    /// @brief Main quest goal index.
+    int _parentQuestGoal;
+
 public:
     QuestManager(const QuestPtr& quest) noexcept;
     const QuestPtr& getQuest() const noexcept;
@@ -108,6 +114,20 @@ public:
             const QuestOption option, 
             const int value
             ) noexcept;
+
+    /// @brief Sets the parent quest.
+    /// @param parentQuest Parent quest.
+    /// @param parentGoal Parent quest goal that initiates this quest.
+    void setParentQuest(
+            const QuestPtr& parentQuest,
+            const int parentGoal
+            ) noexcept;
+    
+    /// @return nullptr for main quests, parent quest for activated subquests.
+    const QuestPtr& getParentQuest() const noexcept;
+
+    /// @return -1 for main quests, parent quest goal for activated subquests.
+    int getParentQuestGoal() const noexcept;
 
     /// @brief Performs planning for the quest.
     /// @param worldName The name of the world where quest lives.

@@ -182,7 +182,7 @@ main_quest CrossTheRiver:
 # An example of a Load action.
 action Load:
     # Quest status change command.
-    status CrossTheRiver INACTIVE 0
+    status CrossTheRiver INACTIVE
     pre # none
     rem # none
     add # ...state here...

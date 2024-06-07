@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <memory>
-#include <string.h>
+#include <string>
 #include <sstream>
 #include <fstream>
 #include <chrono>
@@ -271,7 +271,12 @@ int main(int argc, char **argv) {
     if(msgProcessor.isAllQuestsDone() == false)
         status <<= Result::Error("Oops. The quest wasn't completed.");
 
-    // Explicitly delete the quests server.
+    // Generate the first savefile.
+    const Str saveFile = server->generateSaveFile(quest_name);
+    cout << "\nSave file #1:" << endl << saveFile << endl;
+    cout << "END OF SAVE FILE #1\n" << endl;
+
+    // Explicitly delete the first quests server.
     status <<= server->deleteWorld(quest_name);
     server.release();
 
@@ -281,6 +286,70 @@ int main(int argc, char **argv) {
         cout << status.getDescription() << endl;
         return 0;
     }
+
+    // Testing the `generateSaveFile()` method.
+
+    cout << endl;
+    cout << "LOADING..." << endl;
+
+    auto server2 = createServerFromFile("quest_solver", quest_name, fname, status);
+
+    // Load the state from the generated save file.
+    status <<= server2->addProject(quest_name, "saveFile", saveFile);
+    server2->applyAction(quest_name, "Load", {});
+    server2->performPlanning();
+
+    // Process all the messages.
+    DebugMessageProcessor debugMsgProcessor;
+    while(server2->processNextMessage(debugMsgProcessor));
+
+    // Generate the second save file.
+    const Str saveFile2 = server2->generateSaveFile(quest_name);
+
+    // Delete the second server.
+    status <<= server2->deleteWorld(quest_name);
+    server2.release();
+
+    // Check the current status.
+    if(status.isError()) {
+        // An error has occurred.
+        cout << status.getDescription() << endl;
+        return 0;
+    }
+
+    // Now, check if two save files have identical states.
+    // The states are considered identical if every line from the first file
+    // is present in the second file and vice versa.
+    stringstream firstSaveFile(saveFile);
+    stringstream secondSaveFile(saveFile2);
+    Str textLine;
+    bool hasSaveFileError = false;
+    while(getline(firstSaveFile, textLine, '\n')) {
+        if(saveFile2.find(textLine) == Str::npos) {
+            cout << "SAVE_FILE_ERROR: ";
+            cout << "A text line from the first save file is not present in ";
+            cout << "the second save file." << endl;
+            cout << "Text line: `" << textLine << "`." << endl;
+            hasSaveFileError = true;
+        }
+    }
+    while(getline(secondSaveFile, textLine, '\n')) {
+        if(saveFile.find(textLine) == Str::npos) {
+            cout << "SAVE_FILE_ERROR: ";
+            cout << "A text line from the second save file is not present in ";
+            cout << "the first save file." << endl;
+            cout << "Text line: `" << textLine << "`." << endl;
+            hasSaveFileError = true;
+        }
+    }
+    if(hasSaveFileError) {
+        cout << "\nSave file #2:" << endl << saveFile2 << endl;
+        cout << "END OF SAVE FILE #2\n" << endl;
+        return 0;
+    }
+
+    // Save files have identical states.
+    cout << "\nSave files have identical states.\n" << endl;
 
     cout << "MOZOK_OK" << endl;
     return 0;

@@ -47,19 +47,32 @@ Str World::generateSaveFile() noexcept {
     res << std::endl;
     res << "action Load:" << std::endl;
     for(const QuestManagerVec* quests : {&_mainQuests, &_subquests})
-        for(const QuestManagerPtr& quest : (*quests)) {
+        for(QuestManagerVec::size_type rIndx=0; rIndx<(*quests).size(); ++rIndx) {
+            // To ensure that any parent quest is always listed before its 
+            // subquests, we output the quest status commands in the reverse 
+            // order of their definitions. This works, because `subquests:` 
+            // can only reference subquests that have been previously defined.
+            const QuestManagerPtr& quest = (*quests)[(*quests).size()-rIndx-1];
             res << "    status " << quest->getQuest()->getName() << " ";
             if(quest->getStatus() == MOZOK_QUEST_STATUS_INACTIVE)
-                res << "INACTIVE";
+                res << "INACTIVE ";
+            else if(quest->getStatus() == MOZOK_QUEST_STATUS_UNREACHABLE)
+                res << "UNREACHABLE ";
             else if(quest->getStatus() == MOZOK_QUEST_STATUS_DONE)
-                res << "DONE";
+                res << "DONE " << quest->getLastActiveGoalIndx();
             else
-                res << "ACTIVE";
-            res << " " << quest->getLastActiveGoalIndx() << std::endl;
+                res << "ACTIVE " << quest->getLastActiveGoalIndx();
+            if(quest->getStatus() != MOZOK_QUEST_STATUS_INACTIVE
+                    && quest->getParentQuest())
+                res << " PARENT " << quest->getParentQuest()->getName()
+                    << " " << quest->getParentQuestGoal();
+            res << std::endl;
         }
     res << "    pre # none" << std::endl;
     res << "    rem # none" << std::endl;
-    res << "    add ";
+    res << "    add # Current State:" << std::endl;
+    // Add the offset to lineup the statements for readability.
+    res << "        ";
     for(const StatementPtr& st : stateCopy->getStatementSet()) {
         res << st->getRelation()->getName() << "(";
         for(ObjectVec::size_type i=0; i<st->getArguments().size(); ++i) {
@@ -67,7 +80,9 @@ Str World::generateSaveFile() noexcept {
             if(i != st->getArguments().size()-1)
                 res << ", ";
         }
-        res << ")" << std::endl << "        ";
+        res << ")" << std::endl;
+        // Add the offset to lineup the statements for readability.
+        res << "        ";
     }
     return res.str();
 }
@@ -443,9 +458,39 @@ Result World::applyAction(
     const auto& it = _actionStatusChangeCommands.find(action->getId());
     if(it != _actionStatusChangeCommands.end())
         for(QuestStatusChangeCommand& cmd : it->second) {
+            const QuestStatus prevStatus = cmd.quest->getStatus();
+            // Ensure that `onNewMainQuest` and `onNewSubQuest` is always before
+            // the `onNewQuestStatus` message.
+            if(cmd.parentQuest) {
+                // This quest is a subquest
+                if(prevStatus == MOZOK_QUEST_STATUS_INACTIVE)
+                    if(cmd.status != MOZOK_QUEST_STATUS_INACTIVE) {
+                        cmd.quest->setParentQuest(
+                                cmd.parentQuest->getQuest(), cmd.parentGoal);
+                        // add `onNewSubQuest` message
+                        messageProcessor.onNewSubQuest(
+                                _worldName, cmd.quest->getQuest()->getName(),
+                                cmd.parentQuest->getQuest()->getName(),
+                                cmd.parentGoal);
+                    }
+            } else {
+                // This quest is a main quest
+                if(prevStatus == MOZOK_QUEST_STATUS_INACTIVE)
+                    if(cmd.status != MOZOK_QUEST_STATUS_INACTIVE) {
+                        // add `onNewMainQuest` message
+                        messageProcessor.onNewMainQuest(
+                            _worldName, cmd.quest->getQuest()->getName());
+                    }
+            }
+            // Status change command increases the substate id
+            cmd.quest->increaseCurrentSubstateId();
             cmd.quest->setQuestStatus(cmd.status, cmd.goal);
-            messageProcessor.onNewQuestStatus(
-                    _worldName, cmd.quest->getQuest()->getName(), cmd.status);
+            // Do not send `onNewQuestStatus` if the quest was `INACTIVE` 
+            // and remains `INACTIVE`.
+            if((prevStatus == MOZOK_QUEST_STATUS_INACTIVE 
+                    && cmd.status == MOZOK_QUEST_STATUS_INACTIVE) == false)
+                messageProcessor.onNewQuestStatus(
+                        _worldName, cmd.quest->getQuest()->getName(), cmd.status);
         }
 
     // Change the substate IDs of relevant quests
@@ -493,25 +538,57 @@ Result World::addActionQuestStatusChange(
         const Str& actionName,
         const Str& questName, 
         const QuestStatus status,
-        int goal
+        int goal,
+        const Str& parentQuestName,
+        int parentQuestGoal
         ) noexcept {
     if(hasAction(actionName) == false)
         return errorUndefinedAction(_serverWorldName, actionName);
     if(hasMainQuest(questName) == false && hasSubquest(questName) == false)
         return errorUndefinedQuest(_serverWorldName, questName);
+    
+    // If this is a subquest status command.
+    if(parentQuestName.length() > 0) {
+        if(hasMainQuest(parentQuestName) == false 
+                && hasSubquest(parentQuestName) == false) {
+            // Undefined parent quest
+            return errorUndefinedQuest(_serverWorldName, parentQuestName);
+        }
+        if(hasSubquest(questName) == false) {
+            // This quest must be a subquest.
+            return errorUndefinedSubQuest(_serverWorldName, questName);
+        }
+    }
 
     const ID actionId = getAction(actionName)->getId();
+
+    // Get quest manager
     QuestManagerPtr& quest = (hasMainQuest(questName) 
             ? getMainQuest(questName) 
             : getSubquest(questName));
+    
+    // Get parent quest manager
+    QuestManagerPtr& parentQuest = (parentQuestName.length() == 0
+            ? nullQuest
+            : (hasMainQuest(parentQuestName) 
+                ? getMainQuest(parentQuestName) 
+                : getSubquest(parentQuestName)));
 
     // Check if goal index is correct.
-    if(goal < 0 || GoalVec::size_type(goal) > quest->getQuest()->getGoals().size())
+    if(goal < 0 || GoalVec::size_type(goal) >= quest->getQuest()->getGoals().size())
         return errorActionSetStatusGoalError(
-                _serverWorldName, actionName, 
-                quest->getQuest()->getName(), goal);
+                _serverWorldName, actionName, questName, goal);
     
-    _actionStatusChangeCommands[actionId].push_back({quest, status, goal});
+    // Check if parent quest goal is correct.
+    const GoalVec::size_type pGoal = GoalVec::size_type(parentQuestGoal);
+    if(parentQuest)
+        if(pGoal < 0 || pGoal >= parentQuest->getQuest()->getGoals().size())
+            return errorActionSetStatusParentGoalError(
+                    _serverWorldName, actionName, parentQuestName, parentQuestGoal);
+    
+    _actionStatusChangeCommands[actionId].push_back(
+            {quest, status, goal, parentQuest, parentQuestGoal});
+    
     return Result::OK();
 }
 
@@ -741,6 +818,7 @@ void World::findNewSubquest(
             if(post->hasSubstate(goal)) {
                 // New subquest has been found.
                 // Activate the subquest.
+                subquestManager->setParentQuest(quest, plan->goalIndx);
                 subquestManager->activate();
                 messageProcessor.onNewSubQuest(
                     _worldName, 

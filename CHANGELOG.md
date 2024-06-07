@@ -4,6 +4,19 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
+## [0.1.1] - 2024-06-05
+
+### Added
+
+- `status <questName> UNREACHABLE`
+- `status ... PARENT <parentQuestName> <parentQuestGoal>` for subquests
+
+### Changed
+
+- Removed goal index from the `status <questName> INACTIVE` command
+- Improved the `generateSaveFile()` function to ensure that a subquest's `status` command always after its parent quest's `status` command
+- Improved logical consistency of the `onNewQuestStatus` message
+
 ## [0.1.0] - 2024-05-31
 
 ### Added

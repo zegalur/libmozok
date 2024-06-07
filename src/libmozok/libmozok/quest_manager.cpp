@@ -19,7 +19,9 @@ QuestManager::QuestManager(
     _lastActiveGoal(0),
     _searchLimit(DEFAULT_SEARCH_LIMIT),
     _spaceLimit(DEFAULT_SPACE_LIMIT),
-    _omega(DEFAULT_OMEGA)
+    _omega(DEFAULT_OMEGA),
+    _parentQuest(nullptr),
+    _parentQuestGoal(-1)
 { /* empty */ }
 
 const QuestPtr& QuestManager::getQuest() const noexcept {
@@ -91,6 +93,22 @@ void QuestManager::setOption(
         // skip
         break;
     }
+}
+
+void QuestManager::setParentQuest(
+        const QuestPtr& parentQuest,
+        const int parentGoal
+        ) noexcept {
+    _parentQuest = parentQuest;
+    _parentQuestGoal = parentGoal;
+}
+
+const QuestPtr& QuestManager::getParentQuest() const noexcept {
+    return _parentQuest;
+}
+
+int QuestManager::getParentQuestGoal() const noexcept {
+    return _parentQuestGoal;
 }
 
 bool QuestManager::performPlanning(

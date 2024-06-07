@@ -438,3 +438,14 @@ main_quest MakeSword_WithSubQuests:
         BuyForge
         BuySteel
         MakeSwordAtHome
+
+
+# Test Load function
+action LoadTst:
+    status MakeSword_NoSubQuests INACTIVE
+    status MakeSword_WithSubQuests ACTIVE 0
+    status BuyHammer DONE 0 PARENT MakeSword_WithSubQuests 0 
+    status BuyAnvil ACTIVE 0 PARENT MakeSword_WithSubQuests 0 
+    pre # none
+    rem # none
+    add # none
