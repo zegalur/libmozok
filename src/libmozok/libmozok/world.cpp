@@ -575,14 +575,14 @@ Result World::addActionQuestStatusChange(
                 : getSubquest(parentQuestName)));
 
     // Check if goal index is correct.
-    if(goal < 0 || GoalVec::size_type(goal) > quest->getQuest()->getGoals().size())
+    if(goal < 0 || GoalVec::size_type(goal) >= quest->getQuest()->getGoals().size())
         return errorActionSetStatusGoalError(
                 _serverWorldName, actionName, questName, goal);
     
     // Check if parent quest goal is correct.
     const GoalVec::size_type pGoal = GoalVec::size_type(parentQuestGoal);
     if(parentQuest)
-        if(pGoal < 0 || pGoal > parentQuest->getQuest()->getGoals().size())
+        if(pGoal < 0 || pGoal >= parentQuest->getQuest()->getGoals().size())
             return errorActionSetStatusParentGoalError(
                     _serverWorldName, actionName, parentQuestName, parentQuestGoal);
     
