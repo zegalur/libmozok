@@ -20,7 +20,6 @@ Libmozok TODO list.
     - [ ] A tool for verifying the completeness of the narration
 - [ ] Migrate to C++17 (`[[nodiscard]]`, `<string_view>` etc.)
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
-- [ ] Fix the highlighting for relation definitions with three or more arguments.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 
 ### In Progress
@@ -65,4 +64,4 @@ Libmozok TODO list.
     - [x] Complete the quest solver utility
     - [x] Add: MIT license
     - [x] Add: onNewQuestState
-
+    - [x] Fix the highlighting for relation definitions with three or more arguments.
