@@ -175,6 +175,8 @@ Unfortunately, for now, libmozok is not powerful enough to solve more combinator
 - Manual:
     - [`.quest` Format Reference](docs/quest-format-reference.md)
     - Doxygen auto-generated reference
+- Editor support:
+    - [Vim/NeoVim Support Manual](.vim/README.md)
 - Other:
     - [Hierarchical generation of dynamic and nondeterministic quests in games](https://www.researchgate.net/publication/286454232_Hierarchical_Generation_of_Dynamic_and_Nondeterministic_Quests_in_Games)
     - [STRIPS](https://en.wikipedia.org/wiki/Stanford_Research_Institute_Problem_Solver)
