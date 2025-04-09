@@ -1,5 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/quest_manager.hpp>
 #include <libmozok/project.hpp>
 #include <libmozok/world.hpp>
 #include <libmozok/error_utils.hpp>
@@ -38,6 +39,9 @@ namespace {
     const char* KEYWORD_SEARCH_LIMIT = "searchLimit";
     const char* KEYWORD_SPACE_LIMIT = "spaceLimit";
     const char* KEYWORD_OMEGA = "omega";
+    const char* KEYWORD_HEURISTIC = "heuristic";
+    const char* KEYWORD_SIMPLE = "SIMPLE";
+    const char* KEYWORD_HSP = "HSP";
 }
 
 
@@ -841,6 +845,8 @@ public:
         int spaceLimit = -1;
         int searchLimit = -1;
         int omega = -1;
+        bool setHeuristic = false;
+        QuestHeuristic heuristic = QuestHeuristic::SIMPLE;
         res <<= empty_lines();
         res <<= space(1);
         if(keyword(KEYWORD_OPTIONS).isOk()) {
@@ -863,6 +869,17 @@ public:
                 } else if(optionName == KEYWORD_OMEGA) {
                     res <<= space(1);
                     res <<= pos_int(omega);
+                } else if(optionName == KEYWORD_HEURISTIC) {
+                    res <<= space(1);
+                    Str heuristicName;
+                    res <<= name(heuristicName, UPPER);
+                    if(heuristicName == KEYWORD_SIMPLE) {
+                        heuristic = QuestHeuristic::SIMPLE;
+                        setHeuristic = true;
+                    } else if (heuristicName == KEYWORD_HSP) {
+                        heuristic = QuestHeuristic::HSP;
+                        setHeuristic = true;
+                    }
                 } else if(optionName == KEYWORD_PRECONDITIONS) {
                     // This is the end of options list.
                     _pos -= _col;
@@ -950,6 +967,9 @@ public:
         if(omega >= 0)
             res <<= _world->setQuestOption(
                     questName, QUEST_OPTION_OMEGA, omega);
+        if(setHeuristic)
+            res <<= _world->setQuestOption(
+                    questName, QUEST_OPTION_HEURISTIC, heuristic);
 
         if(res.isError())
             res <<= errorParserWorldError(

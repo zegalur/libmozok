@@ -64,7 +64,8 @@
         "ctime": "cpp",
         "mutex": "cpp",
         "thread": "cpp",
-        "condition_variable": "cpp"
+        "condition_variable": "cpp",
+        "xlocbuf": "cpp"
     },
     "cmake.configureOnOpen": true,
     "cSpell.words": [

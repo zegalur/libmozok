@@ -1,12 +1,34 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include "libmozok/action.hpp"
+#include "libmozok/public_types.hpp"
+#include <cstdio>
+#include <libmozok/quest_manager.hpp>
+#include <libmozok/private_types.hpp>
+#include <libmozok/quest.hpp>
+#include <libmozok/state.hpp>
+#include <libmozok/statement.hpp>
 #include <libmozok/quest_planner.hpp>
+
+#include <limits>
+#include <utility>
 
 namespace mozok {
 
+namespace {
+
+struct StateNode;
+struct StateNodeCmp;
+
+using StateNodePtr = SharedPtr<StateNode>;
+using StateNodeQueue = PriorityQueue<StateNodePtr, StateNodeCmp>;
+
+class QuestPlannerActionsIterator;
+class QuestHSPRelaxedActionsIterator;
+
 
 /// @brief A state node in the state graph.
-struct QuestPlanner::StateNode {
+struct StateNode {
     /// @brief Node state.
     const StatePtr state;
 
@@ -41,11 +63,334 @@ struct QuestPlanner::StateNode {
 };
 
 
-struct QuestPlanner::StateNodeCmp {
+struct StateNodeCmp {
     bool operator() (const StateNodePtr& a, const StateNodePtr& b) noexcept {
         return a->fScore > b->fScore;
     }
 } const stateNodeCmp;
+
+
+/// @brief A callback class for the `Quest::iterateOverApplicableActions(...)`. 
+/// This auxiliary actions iterator is used to find a heuristics distance from
+/// the current state to the result state for the HSP algorithm.
+class QuestHSPRelaxedActionsIterator :
+        public QuestApplicableActionsIterator {
+
+    /// @brief Current state of the "relaxed" world.
+    StatePtr _relaxedState;
+
+    /// @brief Contains the current values of the statement difficulty 
+    /// estimates.
+    StatementMap<int> _statementDifficulties;
+
+    /// @brief Indicates if difficulty measurements was changed.
+    bool _measurementsChanged;
+
+    /// @brief A set of all currently applied actions (with arguments).
+    UnorderedSet<SIZE_T> _applied_actions;
+
+
+    int getStatementDifficulty(const StatementPtr& statement) const noexcept {
+        const auto& it = _statementDifficulties.find(statement);
+        if(it == _statementDifficulties.cend())
+            return infinity();
+        return it->second;
+    }
+
+    /// @brief Tries to update the current minimum value of the statement 
+    /// difficulty. 
+    /// @return Returns `true` only if difficulty value was changed.
+    bool proposeStatementDifficulty(
+            const StatementPtr& statement, 
+            const int newDifficulty) noexcept {
+        auto it = _statementDifficulties.find(statement);
+        if(it == _statementDifficulties.end()) {
+            _statementDifficulties[statement] = newDifficulty;
+            return true;
+        }
+        if(it->second > newDifficulty) {
+            it->second = newDifficulty;
+            return true;
+        }
+        return false;
+    }
+
+public:
+
+    QuestHSPRelaxedActionsIterator(
+            const StatePtr& currentState
+            ) noexcept :
+        _relaxedState(currentState->duplicate()),
+        _measurementsChanged(true) {
+        for(const auto& initialStatement : _relaxedState->getStatementSet())
+            _statementDifficulties[initialStatement] = 0;
+    }
+
+    bool actionCallback(
+            const ActionPtr& action, 
+            const ObjectVec& arguments,
+            const SIZE_T combinedIndx
+            ) noexcept {
+
+        if(_applied_actions.find(combinedIndx) != _applied_actions.cend())
+            // This action has been applied previously.
+            return true;
+        
+        _applied_actions.insert(combinedIndx);
+
+        const auto addList = action->getAddList().substitute(arguments);
+        const auto preList = action->getPreconditions().substitute(arguments);
+
+        // Calculate the action "difficulty".
+        int actionDifficulty = 1;
+        for(const auto& precondition : preList)
+            actionDifficulty += getStatementDifficulty(precondition); 
+
+        // Update the difficulties for the statements added by the action.
+        for(const auto& added: addList)
+            _measurementsChanged |= proposeStatementDifficulty(
+                    added, actionDifficulty);
+        
+        // Apply only the 'add' part of the action.
+        _relaxedState->addStatements(addList);
+
+        return true; // continue the search
+    }
+
+    /// @brief Returns the value used as the infinity.
+    static int infinity() noexcept {
+        return std::numeric_limits<int>::max();
+    }
+
+    /// @brief Begins a new round of measurement updates.
+    void beginMeasurementUpdates() noexcept {
+        _measurementsChanged = false;
+    }
+
+    /// @brief Ends a round of measurement updates.
+    /// @return Returns `true` if any measurement have been updated.
+    bool endMeasurementUpdates() const noexcept {
+        return _measurementsChanged;
+    }
+
+    int getGoalDifficulty(const Goal& goal) const noexcept {
+        int h = 0;
+        for(const auto& goalStatement : goal) {
+            const int val = getStatementDifficulty(goalStatement);
+            if(val == infinity())
+                return infinity();
+            h += val;
+        }
+        return h;
+    }
+
+    const StatePtr& getCurrentRelaxedState() const noexcept {
+        return _relaxedState;
+    }
+
+};
+
+
+/// @brief A callback class for the `Quest::iterateOverApplicableActions(...)`.
+/// This one is the main iterator, used to find a plan for the initial
+/// planning problem.
+class QuestPlannerActionsIterator : 
+        public QuestApplicableActionsIterator {
+    const QuestPtr _quest;
+    Vector<StatementVec> &_actionPreBuffers;
+    /// @brief A node from which we iterate trough the possible substitutions.
+    const StateNodePtr _node;
+    StateSet& _knownStates;
+    const Goal& _goal;
+    StateNodeQueue& _openSet;
+    const QuestSettings& _settings;
+
+    /// @brief Calculates simple but surprisingly effective `h()` value.
+    inline int calcSimpleHeuristic(const StatePtr& state) const noexcept {
+        int h_simp = 0;
+        for(const StatementPtr& goalStatement : _goal)
+            if(state->hasSubstate({goalStatement}) == false)
+                h_simp += int(goalStatement->getArguments().size()) 
+                        + _settings.omega;
+        return h_simp;
+    }
+
+    /// @brief Calculates heuristic from the HSP (Heuristic Search Planner)
+    ///        Estimates using the "relaxed" problem with actions without 
+    ///        using the `rem` parts.
+    inline int calcHSPHeuristic(const StatePtr& state) const noexcept {
+        int h_value = 0;
+        if(state->hasSubstate(_goal) == false) {
+            QuestHSPRelaxedActionsIterator relaxedIterator(state);
+            do {
+                relaxedIterator.beginMeasurementUpdates();
+                _quest->iterateOverApplicableActions(
+                        relaxedIterator.getCurrentRelaxedState()->duplicate(), 
+                        relaxedIterator, _actionPreBuffers);
+            } while(relaxedIterator.endMeasurementUpdates());
+            h_value = relaxedIterator.getGoalDifficulty(_goal);
+        }
+        return h_value;
+    }
+
+    const int INF = std::numeric_limits<int>::max();
+    Vector<int> _tab;
+    HashMap<const StatementPtr, int, StatementHash, StatementEqual> _difficulties;
+
+    inline int calcHSPHeuristic_Fast(
+            const StatePtr& state,
+            const Goal& goal
+            ) noexcept {
+        //if(state->hasSubstate(goal))
+        //    return 0;
+
+        const Quest::PossibleActionVec actions = _quest->getPossibleActions();
+        SIZE_T applied_from = _tab.size();
+
+        for(auto &it : _difficulties)
+            it.second = INF;
+        for(const auto& statement : state->getStatementSet())
+            _difficulties[statement] = 0;
+
+        StatePtr relaxedState = state->duplicate();
+        SIZE_T actionCount = _quest->getActions().size();
+
+        while(true) {
+            bool modified = false;
+
+            for(SIZE_T i=0; i<applied_from; ) {
+                const Quest::ActionWithArgs& aa = actions[_tab[i]];
+                // check action preconditions
+                StatementVec& stvec = _actionPreBuffers[aa.combinedIndx % actionCount];
+                if(aa.action->checkActionPreconditions(
+                        aa.arguments, relaxedState, stvec) == false) {
+                    ++i;
+                    continue;
+                }
+                // `stvec` now contains `preList`
+                //const auto preList = aa.action->getPreconditions().substitute(aa.arguments);
+                const auto addList = aa.action->getAddList().substitute(aa.arguments);
+                // Apply only the 'add' part of the action.
+                relaxedState->addStatements(addList);
+                
+                // Calculate the action "difficulty".
+                int actionDifficulty = 1;
+                for(const auto& precondition : stvec) //preList)// stvec)
+                    actionDifficulty += _difficulties[precondition];
+
+                // Mark this action as applied
+                std::swap(_tab[i], _tab[--applied_from]);
+
+                // Update the difficulties for the statements added by the action.
+                for(const auto& added: addList) {
+                    auto it = _difficulties.find(added);
+                    if(it == _difficulties.end()) {
+                        modified = true;
+                        _difficulties[added] = actionDifficulty;
+                    } else if(it->second > actionDifficulty) {
+                        modified = true;
+                        it->second = actionDifficulty;
+                    }
+                }
+            }
+
+            if(modified == false)
+                break;
+
+            if(relaxedState->hasSubstate(goal))
+               break;
+        }
+
+        // Get goal difficulty
+        int h = 0;
+        for(const auto& goalStatement : goal) {
+            const auto it = _difficulties.find(goalStatement);
+            if(it == _difficulties.cend())
+                return INF;
+            h += it->second;
+        }
+        return h;
+    }
+
+public:
+    QuestPlannerActionsIterator(
+            const QuestPtr& quest,
+            Vector<StatementVec> &actionPreBuffers,
+            const StateNodePtr& node,
+            StateSet& knownStates, 
+            const Goal& goal,
+            StateNodeQueue& openSet,
+            const QuestSettings& settings
+            ) noexcept :
+        _quest(quest),
+        _actionPreBuffers(actionPreBuffers),
+        _node(node),
+        _knownStates(knownStates),
+        _goal(goal),
+        _openSet(openSet),
+        _settings(settings)
+    { 
+        const Quest::PossibleActionVec actions = _quest->getPossibleActions();
+        _tab.resize(actions.size());
+        for(SIZE_T i=0; i<actions.size(); ++i)
+            _tab[i] = int(i);
+    }
+
+    bool actionCallback(
+            const ActionPtr& action, 
+            const ObjectVec& arguments,
+            const SIZE_T combinedIndx
+            ) noexcept {
+        if(_openSet.size() > StateNodeQueue::size_type(_settings.spaceLimit))
+            return false;
+        
+        StatePtr newState = _node->state->duplicate();
+        
+        // We can apply the action unsafely because the arguments were selected
+        // in such a way that they are fully compatible with the action and with
+        // the state.
+        action->applyActionUnsafe(arguments, newState); 
+        
+        // Save the resulting state into a new node.
+        StatementVec emptySVec;
+        ActionPtr nodeAction = makeShared<Action>(
+                action->getName(), action->getId(), action->isNotApplicable(), 
+                arguments, emptySVec, emptySVec, emptySVec);
+        StateNodePtr newNode = makeShared<StateNode>(newState, _node, nodeAction);
+
+        if(_knownStates.find(newState) != _knownStates.end())
+            // A StateNode with such a state already present in the tree.
+            return true;
+        
+        int h_value = 0;
+        /*switch(_settings.heuristic) {
+            case QuestHeuristic::SIMPLE:
+                h_value = calcSimpleHeuristic(newState);
+                break;
+            case QuestHeuristic::HSP:*/
+                h_value = calcHSPHeuristic_Fast(newState, _goal);
+                /*break;
+            default:
+                break;
+        }*/
+
+        // Goal is unreachable from this state.
+        if(h_value == INF)
+            return true;
+
+        newNode->gScore = _node->gScore + 1;
+        newNode->fScore = newNode->gScore + h_value; 
+        
+        // Insert the new node into the graph and into the open set.
+        _knownStates.insert(newState);
+        if(_openSet.size() <= StateNodeQueue::size_type(_settings.spaceLimit))
+            _openSet.push(newNode);
+        
+        return true;
+    }
+};
+
+} // namespace
 
 
 QuestPlanner::QuestPlanner(
@@ -78,9 +423,7 @@ const QuestManagerPtr& QuestPlanner::getQuest() const noexcept {
 QuestPlanPtr QuestPlanner::findQuestPlan(
         const Str& worldName,
         MessageProcessor& messageProcessor,
-        const int searchLimit,
-        const int spaceLimit,
-        const int omega
+        const QuestSettings& settings
         ) noexcept {
     const GoalVec& goals = _quest->getQuest()->getGoals();
     QuestPlanPtr lastPlan;
@@ -88,8 +431,7 @@ QuestPlanPtr QuestPlanner::findQuestPlan(
             goalIndx < goals.size(); 
             ++goalIndx) {
         lastPlan = findGoalPlan(
-                ID(goalIndx), worldName, messageProcessor, 
-                searchLimit, spaceLimit, omega);
+                ID(goalIndx), worldName, messageProcessor, settings);
         if(lastPlan->status != MOZOK_QUEST_STATUS_UNREACHABLE)
             break;
     }
@@ -100,9 +442,7 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
         const ID goalIndx,
         const Str& worldName,
         MessageProcessor& messageProcessor,
-        const int searchLimit,
-        const int spaceLimit,
-        const int omega
+        const QuestSettings& settings
         ) noexcept {
     const Goal& goal = _quest->getQuest()->getGoals().at(goalIndx);
     if(_givenState->hasSubstate(goal))
@@ -127,15 +467,19 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
 
     while(openSet.size() > 0) {
         ++searchStep;
-        const bool isSearchLimitReached = searchStep > searchLimit;
-        const bool isSpaceLimitReached = int(openSet.size()) > spaceLimit;
+        const bool isSearchLimitReached = 
+                searchStep > settings.searchLimit;
+        const bool isSpaceLimitReached = 
+                int(openSet.size()) > settings.spaceLimit;
         if(isSearchLimitReached || isSpaceLimitReached) {
             if(isSearchLimitReached)
                 messageProcessor.onSearchLimitReached(
-                    worldName, _quest->getQuest()->getName(), searchLimit);
+                    worldName, _quest->getQuest()->getName(), 
+                    settings.searchLimit);
             if(isSpaceLimitReached)
                 messageProcessor.onSpaceLimitReached(
-                    worldName, _quest->getQuest()->getName(), spaceLimit);
+                    worldName, _quest->getQuest()->getName(), 
+                    settings.spaceLimit);
             // We reach the search limit.
             return makeShared<QuestPlan>(
                     _givenSubstateId, _givenState, _quest->getQuest(), goalIndx, 
@@ -153,8 +497,12 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
             break;
         }
 
-        // Get all neighboring states.
-        findSubstitutions(node, knownStates, goal, openSet, spaceLimit, omega);
+        // Get all neighboring states using an actions iterator.
+        QuestPlannerActionsIterator it(
+            _quest->getQuest(), _actionPreBuffers, 
+            node, knownStates, goal, openSet, settings);
+        _quest->getQuest()->iterateOverApplicableActions(
+                node->state, it, _actionPreBuffers);
     }
 
     if(finalNode.get() == nullptr)
@@ -177,90 +525,6 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
             MOZOK_QUEST_STATUS_REACHABLE, plan);
 }
 
-/// @brief A callback class for the `Quest::iterateOverApplicableActions(...)`.
-class QuestPlanner::QuestPlannerActionsIterator : 
-        public QuestApplicableActionsIterator {
-    /// @brief A node from which we iterate trough the possible substitutions.
-    const StateNodePtr _node;
-    StateSet& _knownStates;
-    const Goal& _goal;
-    StateNodeQueue& _openSet;
-    int _spaceLimit;
-    int _omega;
-
-public:
-    QuestPlannerActionsIterator(
-            const StateNodePtr& node,
-            StateSet& knownStates, 
-            const Goal& goal,
-            StateNodeQueue& openSet,
-            const int spaceLimit,
-            const int omega
-            ) noexcept :
-        _node(node),
-        _knownStates(knownStates),
-        _goal(goal),
-        _openSet(openSet),
-        _spaceLimit(spaceLimit),
-        _omega(omega)
-    { /*empty*/ }
-
-    bool actionCallback(
-            const ActionPtr& action, 
-            const ObjectVec& arguments
-            ) noexcept {
-        if(_openSet.size() > StateNodeQueue::size_type(_spaceLimit))
-            return false;
-        
-        StatePtr newState = _node->state->duplicate();
-        
-        // We can apply the action unsafely because the arguments were selected
-        // in such a way that they are fully compatible with the action and with
-        // the state.
-        action->applyActionUnsafe(arguments, newState); 
-        
-        // Save the resulting state into a new node.
-        StatementVec emptySVec;
-        ActionPtr nodeAction = makeShared<Action>(
-                action->getName(), action->getId(), action->isNotApplicable(), 
-                arguments, emptySVec, emptySVec, emptySVec);
-        StateNodePtr newNode = makeShared<StateNode>(newState, _node, nodeAction);
-
-        if(_knownStates.find(newState) != _knownStates.end())
-            // A StateNode with such a state already present in the three.
-            return true;
-        
-        // Simple heuristic.
-        int h_simp = 0;
-        for(const StatementPtr& goalStatement : _goal)
-            if(newState->hasSubstate({goalStatement}) == false)
-                h_simp += int(goalStatement->getArguments().size()) + _omega;
-
-        newNode->gScore = _node->gScore + 1;
-        newNode->fScore = newNode->gScore + h_simp;
-        
-        // Insert the new node into the graph and into the open set.
-        _knownStates.insert(newState);
-        if(_openSet.size() <= StateNodeQueue::size_type(_spaceLimit))
-            _openSet.push(newNode);
-        
-        return true;
-    }
-};
-
-void QuestPlanner::findSubstitutions(
-            const StateNodePtr& node, 
-            StateSet& knownStates,
-            const Goal& goal,
-            StateNodeQueue& openSet,
-            const int spaceLimit,
-            const int omega
-            ) noexcept {
-    QuestPlannerActionsIterator it(
-        node, knownStates, goal, openSet, spaceLimit, omega);
-    _quest->getQuest()->iterateOverApplicableActions(
-            node->state, it, _actionPreBuffers);
-}
 
 
 }

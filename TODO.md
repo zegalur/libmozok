@@ -12,7 +12,6 @@ Libmozok TODO list.
 - [ ] Add: Error: The same object appears twice or more in the same statement.
 - [ ] Add: Warning: Action argument was not used.
 - [ ] Add: error codes for `libmozok::Result`
-- [ ] Add: a better heuristic function(s) for the quest planner
 - [ ] In the `World::performPlanning` function, update only the quests that are activated but not yet completed. This can be achieved by creating a set of quests that need to be planned.
 - [ ] Narration Engine
     - [ ] Implementation of multiple language support
@@ -28,6 +27,9 @@ Libmozok TODO list.
     - [x] Doxygen generated documentation
     - [x] .quest format reference page
     - [ ] First Tutorial
+- [ ] Add: other heuristic function(s) for the quest planner
+    - [x] Add `heuristic` setting to quest definition
+    - [ ] Implement HSP (Heuristic Search Planner) algorithm
 
 ### Done ✓
 

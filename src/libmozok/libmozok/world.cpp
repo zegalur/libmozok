@@ -824,7 +824,7 @@ void World::findNewSubquest(
                     _worldName, 
                     subquest->getName(), 
                     quest->getName(),
-                    goalIndx);
+                    plan->goalIndx);
                 // Perform planning for the new subquest.
                 performQuestPlanning(subquestManager, messageProcessor);
                 break;

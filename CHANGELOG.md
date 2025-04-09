@@ -4,6 +4,13 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-04-10
+
+### Added
+
+- `heuristic` option for quests
+- Added basic support for HSP heuristic function.
+
 ## [0.1.1] - 2024-06-05
 
 ### Added

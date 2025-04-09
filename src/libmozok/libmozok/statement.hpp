@@ -22,6 +22,8 @@ struct StatementEqual {
     bool operator()(const StatementPtr& a, const StatementPtr& b) const noexcept;
 };
 
+template<typename T>
+using StatementMap = HashMap<StatementPtr, T, StatementHash, StatementEqual>;
 using StatementSet = HashSet<StatementPtr, StatementHash, StatementEqual>;
 
 

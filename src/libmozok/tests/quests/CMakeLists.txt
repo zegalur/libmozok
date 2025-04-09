@@ -8,6 +8,7 @@ set_property(TARGET quest_solver PROPERTY
              MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 function(solve_quest quest init)
+    configure_file(${quest}.quest ${quest}.quest COPYONLY)
     add_test(NAME quest_${quest}_${init}
         COMMAND quest_solver ${quest} ${init}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

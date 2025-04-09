@@ -8,6 +8,7 @@ namespace mozok {
 const int DEFAULT_SEARCH_LIMIT = 1000;
 const int DEFAULT_SPACE_LIMIT = 10000;
 const int DEFAULT_OMEGA = 0;
+const QuestHeuristic DEFAULT_HEURISTIC = QuestHeuristic::SIMPLE;
 
 QuestManager::QuestManager(
         const QuestPtr& quest
@@ -17,9 +18,12 @@ QuestManager::QuestManager(
     _lastSubstateId(ID(-1)),
     _currentSubstateId(ID(0)),
     _lastActiveGoal(0),
-    _searchLimit(DEFAULT_SEARCH_LIMIT),
-    _spaceLimit(DEFAULT_SPACE_LIMIT),
-    _omega(DEFAULT_OMEGA),
+    _settings({
+        /*.searchLimit = */DEFAULT_SEARCH_LIMIT,
+        /*.spaceLimit = */DEFAULT_SPACE_LIMIT,
+        /*.omega = */DEFAULT_OMEGA,
+        /*.heuristic = */DEFAULT_HEURISTIC
+    }),
     _parentQuest(nullptr),
     _parentQuestGoal(-1)
 { /* empty */ }
@@ -81,13 +85,16 @@ void QuestManager::setOption(
         ) noexcept {
     switch (option) {
     case QUEST_OPTION_SEARCH_LIMIT:
-        _searchLimit = value;
+        _settings.searchLimit = value;
         break;
     case QUEST_OPTION_SPACE_LIMIT:
-        _spaceLimit = value;
+        _settings.spaceLimit = value;
         break;
     case QUEST_OPTION_OMEGA:
-        _omega = value;
+        _settings.omega = value;
+        break;
+    case QUEST_OPTION_HEURISTIC:
+        _settings.heuristic = QuestHeuristic(value);
         break;
     default:
         // skip
@@ -138,11 +145,7 @@ bool QuestManager::performPlanning(
     const QuestPtr quest = questManager->getQuest();
     QuestPlanner planner(substateId, state, questManager);
     QuestPlanPtr plan = planner.findQuestPlan(
-            worldName, 
-            messageProcessor, 
-            questManager->_searchLimit, 
-            questManager->_spaceLimit, 
-            questManager->_omega);
+            worldName, messageProcessor, questManager->_settings);
     
     const QuestStatus oldStatus = questManager->getStatus();
 

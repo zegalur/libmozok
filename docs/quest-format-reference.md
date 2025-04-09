@@ -155,6 +155,7 @@ main_quest FinishYourMission:
         searchLimit 100 # Sets a search limit (positive integer)
         spaceLimit 100 # Sets a space limit (positive integer)
         omega 1 # Sets omega value to a given positive integer value
+        heuristic SIMPLE # Sets the search heuristic to `SIMPLE`
     preconditions:
         # none
     goal:
@@ -243,7 +244,10 @@ Keywords are reserved words and must not be used in naming.
 | `options` | Quest options block.
 | `searchLimit` | Sets the search limit.
 | `spaceLimit` | Sets the space limit.
-| `omega` | Sets the omega value of the search heuristic.
+| `omega` | Sets the omega value of the `SIMPLE` heuristic.
+| `heuristic` | Sets the quest heuristic function (default `SIMPLE`)
+| `SIMPLE` | Simple heuristic (used in `heuristic`).
+| `HSP` | Heuristic from HSP algorithm (used in `heuristic`).
 
 ### Statement
 
