@@ -70,127 +70,6 @@ struct StateNodeCmp {
 } const stateNodeCmp;
 
 
-/// @brief A callback class for the `Quest::iterateOverApplicableActions(...)`. 
-/// This auxiliary actions iterator is used to find a heuristics distance from
-/// the current state to the result state for the HSP algorithm.
-class QuestHSPRelaxedActionsIterator :
-        public QuestApplicableActionsIterator {
-
-    /// @brief Current state of the "relaxed" world.
-    StatePtr _relaxedState;
-
-    /// @brief Contains the current values of the statement difficulty 
-    /// estimates.
-    StatementMap<int> _statementDifficulties;
-
-    /// @brief Indicates if difficulty measurements was changed.
-    bool _measurementsChanged;
-
-    /// @brief A set of all currently applied actions (with arguments).
-    UnorderedSet<SIZE_T> _applied_actions;
-
-
-    int getStatementDifficulty(const StatementPtr& statement) const noexcept {
-        const auto& it = _statementDifficulties.find(statement);
-        if(it == _statementDifficulties.cend())
-            return infinity();
-        return it->second;
-    }
-
-    /// @brief Tries to update the current minimum value of the statement 
-    /// difficulty. 
-    /// @return Returns `true` only if difficulty value was changed.
-    bool proposeStatementDifficulty(
-            const StatementPtr& statement, 
-            const int newDifficulty) noexcept {
-        auto it = _statementDifficulties.find(statement);
-        if(it == _statementDifficulties.end()) {
-            _statementDifficulties[statement] = newDifficulty;
-            return true;
-        }
-        if(it->second > newDifficulty) {
-            it->second = newDifficulty;
-            return true;
-        }
-        return false;
-    }
-
-public:
-
-    QuestHSPRelaxedActionsIterator(
-            const StatePtr& currentState
-            ) noexcept :
-        _relaxedState(currentState->duplicate()),
-        _measurementsChanged(true) {
-        for(const auto& initialStatement : _relaxedState->getStatementSet())
-            _statementDifficulties[initialStatement] = 0;
-    }
-
-    bool actionCallback(
-            const ActionPtr& action, 
-            const ObjectVec& arguments,
-            const SIZE_T combinedIndx
-            ) noexcept {
-
-        if(_applied_actions.find(combinedIndx) != _applied_actions.cend())
-            // This action has been applied previously.
-            return true;
-        
-        _applied_actions.insert(combinedIndx);
-
-        const auto addList = action->getAddList().substitute(arguments);
-        const auto preList = action->getPreconditions().substitute(arguments);
-
-        // Calculate the action "difficulty".
-        int actionDifficulty = 1;
-        for(const auto& precondition : preList)
-            actionDifficulty += getStatementDifficulty(precondition); 
-
-        // Update the difficulties for the statements added by the action.
-        for(const auto& added: addList)
-            _measurementsChanged |= proposeStatementDifficulty(
-                    added, actionDifficulty);
-        
-        // Apply only the 'add' part of the action.
-        _relaxedState->addStatements(addList);
-
-        return true; // continue the search
-    }
-
-    /// @brief Returns the value used as the infinity.
-    static int infinity() noexcept {
-        return std::numeric_limits<int>::max();
-    }
-
-    /// @brief Begins a new round of measurement updates.
-    void beginMeasurementUpdates() noexcept {
-        _measurementsChanged = false;
-    }
-
-    /// @brief Ends a round of measurement updates.
-    /// @return Returns `true` if any measurement have been updated.
-    bool endMeasurementUpdates() const noexcept {
-        return _measurementsChanged;
-    }
-
-    int getGoalDifficulty(const Goal& goal) const noexcept {
-        int h = 0;
-        for(const auto& goalStatement : goal) {
-            const int val = getStatementDifficulty(goalStatement);
-            if(val == infinity())
-                return infinity();
-            h += val;
-        }
-        return h;
-    }
-
-    const StatePtr& getCurrentRelaxedState() const noexcept {
-        return _relaxedState;
-    }
-
-};
-
-
 /// @brief A callback class for the `Quest::iterateOverApplicableActions(...)`.
 /// This one is the main iterator, used to find a plan for the initial
 /// planning problem.
@@ -204,6 +83,9 @@ class QuestPlannerActionsIterator :
     const Goal& _goal;
     StateNodeQueue& _openSet;
     const QuestSettings& _settings;
+    const int INF = std::numeric_limits<int>::max();
+    Vector<int> _tab;
+    HashMap<const StatementPtr, int, StatementHash, StatementEqual> _difficulties;
 
     /// @brief Calculates simple but surprisingly effective `h()` value.
     inline int calcSimpleHeuristic(const StatePtr& state) const noexcept {
@@ -214,28 +96,6 @@ class QuestPlannerActionsIterator :
                         + _settings.omega;
         return h_simp;
     }
-
-    /// @brief Calculates heuristic from the HSP (Heuristic Search Planner)
-    ///        Estimates using the "relaxed" problem with actions without 
-    ///        using the `rem` parts.
-    inline int calcHSPHeuristic(const StatePtr& state) const noexcept {
-        int h_value = 0;
-        if(state->hasSubstate(_goal) == false) {
-            QuestHSPRelaxedActionsIterator relaxedIterator(state);
-            do {
-                relaxedIterator.beginMeasurementUpdates();
-                _quest->iterateOverApplicableActions(
-                        relaxedIterator.getCurrentRelaxedState()->duplicate(), 
-                        relaxedIterator, _actionPreBuffers);
-            } while(relaxedIterator.endMeasurementUpdates());
-            h_value = relaxedIterator.getGoalDifficulty(_goal);
-        }
-        return h_value;
-    }
-
-    const int INF = std::numeric_limits<int>::max();
-    Vector<int> _tab;
-    HashMap<const StatementPtr, int, StatementHash, StatementEqual> _difficulties;
 
     inline int calcHSPHeuristic_Fast(
             const StatePtr& state,
@@ -268,14 +128,13 @@ class QuestPlannerActionsIterator :
                     continue;
                 }
                 // `stvec` now contains `preList`
-                //const auto preList = aa.action->getPreconditions().substitute(aa.arguments);
                 const auto addList = aa.action->getAddList().substitute(aa.arguments);
                 // Apply only the 'add' part of the action.
                 relaxedState->addStatements(addList);
                 
                 // Calculate the action "difficulty".
                 int actionDifficulty = 1;
-                for(const auto& precondition : stvec) //preList)// stvec)
+                for(const auto& precondition : stvec)
                     actionDifficulty += _difficulties[precondition];
 
                 // Mark this action as applied
@@ -363,16 +222,16 @@ public:
             return true;
         
         int h_value = 0;
-        /*switch(_settings.heuristic) {
+        switch(_settings.heuristic) {
             case QuestHeuristic::SIMPLE:
                 h_value = calcSimpleHeuristic(newState);
                 break;
-            case QuestHeuristic::HSP:*/
+            case QuestHeuristic::HSP:
                 h_value = calcHSPHeuristic_Fast(newState, _goal);
-                /*break;
+                break;
             default:
                 break;
-        }*/
+        }
 
         // Goal is unreachable from this state.
         if(h_value == INF)

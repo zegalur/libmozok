@@ -244,6 +244,7 @@ action PTut_Finish:
 main_quest PuzzleTutorial:
     options:
         searchLimit 5000
+        heuristic HSP
     preconditions:
         # none
     goal:
