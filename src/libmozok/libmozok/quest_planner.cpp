@@ -26,6 +26,9 @@ using StateNodeQueue = PriorityQueue<StateNodePtr, StateNodeCmp>;
 class QuestPlannerActionsIterator;
 class QuestHSPRelaxedActionsIterator;
 
+using ActionTable = Vector<int>;
+using DifficultyMap = 
+    HashMap<const StatementPtr, int, StatementHash, StatementEqual>;
 
 /// @brief A state node in the state graph.
 struct StateNode {
@@ -83,9 +86,10 @@ class QuestPlannerActionsIterator :
     const Goal& _goal;
     StateNodeQueue& _openSet;
     const QuestSettings& _settings;
+    ActionTable &_tab;
+    DifficultyMap &_difficulties;
+
     const int INF = std::numeric_limits<int>::max();
-    Vector<int> _tab;
-    HashMap<const StatementPtr, int, StatementHash, StatementEqual> _difficulties;
 
     /// @brief Calculates simple but surprisingly effective `h()` value.
     inline int calcSimpleHeuristic(const StatePtr& state) const noexcept {
@@ -179,7 +183,9 @@ public:
             StateSet& knownStates, 
             const Goal& goal,
             StateNodeQueue& openSet,
-            const QuestSettings& settings
+            const QuestSettings& settings,
+            ActionTable &tab,
+            DifficultyMap &difficulties
             ) noexcept :
         _quest(quest),
         _actionPreBuffers(actionPreBuffers),
@@ -187,13 +193,10 @@ public:
         _knownStates(knownStates),
         _goal(goal),
         _openSet(openSet),
-        _settings(settings)
-    { 
-        const Quest::PossibleActionVec actions = _quest->getPossibleActions();
-        _tab.resize(actions.size());
-        for(SIZE_T i=0; i<actions.size(); ++i)
-            _tab[i] = int(i);
-    }
+        _settings(settings),
+        _tab(tab),
+        _difficulties(difficulties)
+    { /* empty */ }
 
     bool actionCallback(
             const ActionPtr& action, 
@@ -324,6 +327,17 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
     StateNodePtr finalNode(nullptr);
     int searchStep = 0;
 
+    // Data tables for HSP heuristic.
+    ActionTable tab;
+    DifficultyMap difficulties;
+    if(settings.heuristic == QuestHeuristic::HSP) {
+        const Quest::PossibleActionVec actions = 
+                _quest->getQuest()->getPossibleActions();
+        tab.resize(actions.size());
+        for(SIZE_T i=0; i<actions.size(); ++i)
+            tab[i] = int(i);
+    }
+
     while(openSet.size() > 0) {
         ++searchStep;
         const bool isSearchLimitReached = 
@@ -358,8 +372,8 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
 
         // Get all neighboring states using an actions iterator.
         QuestPlannerActionsIterator it(
-            _quest->getQuest(), _actionPreBuffers, 
-            node, knownStates, goal, openSet, settings);
+            _quest->getQuest(), _actionPreBuffers, node, knownStates, goal,
+            openSet, settings, tab, difficulties);
         _quest->getQuest()->iterateOverApplicableActions(
                 node->state, it, _actionPreBuffers);
     }
