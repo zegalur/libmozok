@@ -20,6 +20,8 @@ Libmozok TODO list.
 - [ ] Migrate to C++17 (`[[nodiscard]]`, `<string_view>` etc.)
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
+- [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
+- [ ] Optimize `Quest::iterateOverApplicableActions` by splitting all possible actions using a tree structure, with precondition statements as nodes and action subsets as leaves. The root contains the statement that splits the set most effectively (ideally in half), followed by additional statements at each level that continue to divide the set.
 
 ### In Progress
 
@@ -29,7 +31,8 @@ Libmozok TODO list.
     - [ ] First Tutorial
 - [ ] Add: other heuristic function(s) for the quest planner
     - [x] Add `heuristic` setting to quest definition
-    - [ ] Implement HSP (Heuristic Search Planner) algorithm
+    - [x] Implement HSP (Heuristic Search Planner) algorithm
+    - [ ] Implement GraphPlan algorithm
 
 ### Done ✓
 
