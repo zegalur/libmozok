@@ -98,11 +98,13 @@ rlist PTut_Init:
         PTut_Adjacent_V(pt_cell_13, pt_cell_23)
         PTut_Adjacent_V(pt_cell_23, pt_cell_33)
 
-    # Initial configuration:
-    #   ..O.
-    #   .O.O
-    #   O.O.
-    #   ...P
+# Initial configurations:
+
+#   ..O.
+#   .O.O
+#   O.O.
+#   ...P
+rlist Reachable:
     PTut_Free(pt_cell_00)
     PTut_Free(pt_cell_01)
     PTut_BlockAt(pt_cell_02)
@@ -119,7 +121,29 @@ rlist PTut_Init:
         PTut_Free(pt_cell_31)
         PTut_Free(pt_cell_32)
         PTut_Free(pt_cell_33)
-    
+    PTut_PlayerAt(pt_cell_33)
+
+#   ..OO
+#   OO.O
+#   ..O.
+#   ...P
+rlist Unreachable:
+    PTut_Free(pt_cell_00)
+    PTut_Free(pt_cell_01)
+    PTut_BlockAt(pt_cell_02)
+    PTut_BlockAt(pt_cell_03)
+        PTut_BlockAt(pt_cell_10)
+        PTut_BlockAt(pt_cell_11)
+        PTut_Free(pt_cell_12)
+        PTut_BlockAt(pt_cell_13)
+    PTut_Free(pt_cell_20)
+    PTut_Free(pt_cell_21)
+    PTut_BlockAt(pt_cell_22)
+    PTut_Free(pt_cell_23)
+        PTut_Free(pt_cell_30)
+        PTut_Free(pt_cell_31)
+        PTut_Free(pt_cell_32)
+        PTut_Free(pt_cell_33)
     PTut_PlayerAt(pt_cell_33)
 
 # Player moved left.
@@ -244,7 +268,7 @@ action PTut_Finish:
 main_quest PuzzleTutorial:
     options:
         searchLimit 5000
-        heuristic HSP
+        #heuristic HSP
     preconditions:
         # none
     goal:
@@ -282,7 +306,14 @@ main_quest PuzzleTutorial:
 
 ##############
 
-action Init:
+action Init_Reachable:
     pre # none
     rem # none
     add PTut_Init()
+        Reachable()
+
+action Init_Unreachable:
+    pre # none
+    rem # none
+    add PTut_Init()
+        Unreachable()

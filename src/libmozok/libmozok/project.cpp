@@ -42,6 +42,7 @@ namespace {
     const char* KEYWORD_HEURISTIC = "heuristic";
     const char* KEYWORD_SIMPLE = "SIMPLE";
     const char* KEYWORD_HSP = "HSP";
+    const char* KEYWORD_USE_ATREE = "use_atree";
 }
 
 
@@ -846,6 +847,7 @@ public:
         int searchLimit = -1;
         int omega = -1;
         bool setHeuristic = false;
+        bool useActionTree = false;
         QuestHeuristic heuristic = QuestHeuristic::SIMPLE;
         res <<= empty_lines();
         res <<= space(1);
@@ -880,6 +882,8 @@ public:
                         heuristic = QuestHeuristic::HSP;
                         setHeuristic = true;
                     }
+                } else if (optionName == KEYWORD_USE_ATREE) {
+                    useActionTree = true;
                 } else if(optionName == KEYWORD_PRECONDITIONS) {
                     // This is the end of options list.
                     _pos -= _col;
@@ -955,7 +959,7 @@ public:
 
         res <<= _world->addQuest(
                 questName, isMainQuest, preconditions, goals, 
-                actions, objects, subquests);
+                actions, objects, subquests, useActionTree);
         
         // Setup quest options.
         if(searchLimit >= 0)

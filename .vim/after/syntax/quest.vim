@@ -52,7 +52,7 @@ syn keyword questHeuristic SIMPLE HSP
 syn keyword questKeywordQuest quest
 syn keyword questQuestParam preconditions goal actions objects subquests 
 syn keyword questQuestParam options searchLimit spaceLimit omega status 
-syn keyword questQuestParam heuristic
+syn keyword questQuestParam heuristic use_atree
 syn keyword questActionBlock pre add rem
 
 

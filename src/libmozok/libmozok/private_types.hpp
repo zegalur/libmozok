@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <functional>
 #include <libmozok/public_types.hpp>
 
 #include <utility>
@@ -35,7 +36,10 @@ using Queue = std::queue<T>;
 template<typename K, typename V, typename H, typename E> 
 using HashMap = std::unordered_map<K, V, H, E>;
 
-template<typename T, typename H, typename E> 
+template<
+    typename T, 
+    typename H = std::hash<T>, 
+    typename E = std::equal_to<T>> 
 using HashSet = std::unordered_set<T, H, E>;
 
 template<typename K, typename V> 

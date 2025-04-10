@@ -4,13 +4,13 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
-## [0.2.0] - 2024-04-10
+## [0.2.0] - 2024-04-11
 
 ### Added
 
-- `heuristic` option for quests
-- Added support for `HSP` heuristic function.
-- Overall increase in planning speed.
+- `HSP` heuristic function and action trees support  
+- `heuristic` and `use_atree` options for quests
+- Overall increase in planning speed
 
 ## [0.1.1] - 2024-06-05
 

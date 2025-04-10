@@ -63,6 +63,8 @@ rel Empty(Cell)
 # Given tile is at the given cell.
 rel At(Tile, Cell)
 
+rel Use_SIMPLE()
+rel Use_HSP()
 
 # Puzzle initial state.
 rlist Initial:
@@ -105,10 +107,14 @@ rlist Initial:
     Adjacent(cell_42, cell_43)
     Adjacent(cell_43, cell_44)
     
+
     # Tiles' initial setup is selected to be solvable. Unfortunately, for now, 
     # libmozok is not powerful enough to solve the puzzle for any permutation.
     # Libmozok is suitable for planning quests in real-time for games, but it is 
     # not intended as a universal puzzle-solving library.
+
+# Easily solvable
+rlist Easy:
     At(tile_1, cell_11)
     At(tile_2, cell_12)
     At(tile_3, cell_13)
@@ -125,12 +131,98 @@ rlist Initial:
     At(tile_12, cell_42)
     At(tile_15, cell_43)
     Empty(cell_44)
+    Use_SIMPLE()
+
+# From Wikipedia.
+# Solvable, but took some time to solve.
+rlist Medium:
+    At(tile_12, cell_11)
+    At(tile_1, cell_12)
+    At(tile_2, cell_13)
+    At(tile_15, cell_14)
+    At(tile_11, cell_21)
+    At(tile_6, cell_22)
+    At(tile_5, cell_23)
+    At(tile_8, cell_24)
+    At(tile_7, cell_31)
+    At(tile_10, cell_32)
+    At(tile_9, cell_33)
+    At(tile_4, cell_34)
+    Empty(cell_41)
+    At(tile_13, cell_42)
+    At(tile_14, cell_43)
+    At(tile_3, cell_44)
+    Use_HSP()
+
+# Much harder to solve.
+# Solvable, but took a long time to solve (~10 minutes).
+# This test is disabled by default.
+rlist Hard:
+    At(tile_14, cell_11)
+    At(tile_10, cell_12)
+    At(tile_6, cell_13)
+    At(tile_3, cell_14)
+    At(tile_13, cell_21)
+    At(tile_9, cell_22)
+    At(tile_5, cell_23)
+    At(tile_1, cell_24)
+    At(tile_11, cell_31)
+    At(tile_15, cell_32)
+    At(tile_4, cell_33)
+    At(tile_8, cell_34)
+    At(tile_12, cell_41)
+    At(tile_7, cell_42)
+    At(tile_2, cell_43)
+    Empty(cell_44)
+    Use_HSP()
+
+# This one is provably unsolvable.
+# You can use this puzzle as a benchmark for detecting unsolvable puzzles.
+rlist Impossible:
+    At(tile_1, cell_11)
+    At(tile_2, cell_12)
+    At(tile_3, cell_13)
+    At(tile_4, cell_14)
+    At(tile_5, cell_21)
+    At(tile_6, cell_22)
+    At(tile_7, cell_23)
+    At(tile_8, cell_24)
+    At(tile_9, cell_31)
+    At(tile_10, cell_32)
+    At(tile_11, cell_33)
+    At(tile_12, cell_34)
+    At(tile_13, cell_41)
+    At(tile_15, cell_42)
+    At(tile_14, cell_43)
+    Empty(cell_44)
+    Use_SIMPLE()
+
 
 # Initializes the Game-of-Fifteen world.
-action Init:
+
+action Init_Easy:
     pre # none
     rem # none
     add Initial()
+        Easy()
+
+action Init_Medium:
+    pre # none
+    rem # none
+    add Initial()
+        Medium()
+
+action Init_Hard:
+    pre # none
+    rem # none
+    add Initial()
+        Hard()
+
+action Init_Impossible:
+    pre # none
+    rem # none
+    add Initial()
+        Impossible()
 
 
 # Moves a tile to the adjacent empty cell. Due to the potentially enormous 
@@ -166,13 +258,86 @@ action Flip2:
 
 
 # The main quest: place the tiles in numerical order.  
-main_quest PlaceTheTiles:
+
+# Uses SIMPLE heuristic. 
+# Works better for simple cases.
+main_quest PlaceTheTiles_H_SIMPLE:
     options:
         searchLimit 5000
         spaceLimit 50000
         omega 4
+        use_atree # use action tree for better performance
     preconditions:
+        Use_SIMPLE()
+    goal:
+        At(tile_1, cell_11)
+        At(tile_2, cell_12)
+        At(tile_3, cell_13)
+        At(tile_4, cell_14)
+        At(tile_5, cell_21)
+        At(tile_6, cell_22)
+        At(tile_7, cell_23)
+        At(tile_8, cell_24)
+        At(tile_9, cell_31)
+        At(tile_10, cell_32)
+        At(tile_11, cell_33)
+        At(tile_12, cell_34)
+        At(tile_13, cell_41)
+        At(tile_14, cell_42)
+        At(tile_15, cell_43)
+        Empty(cell_44)
+    actions:
+        Flip1
+        Flip2
+    objects:
+        # cells
+        cell_11
+        cell_12
+        cell_13
+        cell_14
+        cell_21
+        cell_22
+        cell_23
+        cell_24
+        cell_31
+        cell_32
+        cell_33
+        cell_34
+        cell_41
+        cell_42
+        cell_43
+        cell_44
+        # tiles
+        tile_1
+        tile_2
+        tile_3
+        tile_4
+        tile_5
+        tile_6
+        tile_7
+        tile_8
+        tile_9
+        tile_10
+        tile_11
+        tile_12
+        tile_13
+        tile_14
+        tile_15
+    subquests:
         # none
+
+# Same quest, but uses HSP heuristic. 
+# Can handle some hard combinations.
+# Still can't handle impossible cases efficiently.
+main_quest PlaceTheTiles_H_HSP:
+    options:
+        searchLimit 50000
+        spaceLimit 50000
+        omega 4
+        heuristic HSP
+        use_atree # use action tree for better performance
+    preconditions:
+        Use_HSP()
     goal:
         At(tile_1, cell_11)
         At(tile_2, cell_12)

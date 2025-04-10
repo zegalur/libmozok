@@ -91,11 +91,13 @@ int main(int argc, char **argv) {
     cout << "CTEST_FULL_OUTPUT" << endl;
 
     // Read the arguments.
-    if(argc < 2) {
-        cout << "Expecting: > puzzle_solver [puzzle_name]" << endl;
+    if(argc < 3) {
+        cout << "Expecting: > puzzle_solver [puzzle_name] [init_action]" 
+             << endl;
         return 0;
     }
     const Str puzzle_name = argv[1];
+    const Str init_action = argv[2];
     const Str fname = puzzle_name + ".quest";
     Result status = Result::OK();
 
@@ -107,7 +109,12 @@ int main(int argc, char **argv) {
 
     // Initialize the puzzle.
     // Puzzle project must contain Init() action.
-    status <<= server->applyAction(puzzle_name, "Init", {});
+    status <<= server->applyAction(puzzle_name, init_action, {});
+    
+    if(status.isError()) {
+        cout << status.getDescription() << endl;
+        return 0;
+    }
 
     // Perform planning and read all the messages.
     performPlanning(server);

@@ -364,6 +364,7 @@ public:
     /// @param questActionNames The list of previously defined allowed actions.
     /// @param questObjectNames The list of previously defined relevant objects.
     /// @param questSubquestNames The list of previously defined subquest names.
+    /// @param useActionTree If `true`, force to use action tree.
     /// @return Returns the status of the operation.
     Result addQuest(
             const Str& questName,
@@ -375,7 +376,8 @@ public:
             const Vector<Vector<StrVec>> &goals,
             const StrVec& questActionNames,
             const StrVec& questObjectNames,
-            const StrVec& questSubquestNames
+            const StrVec& questSubquestNames,
+            const bool useActionTree
             ) noexcept;
 
     bool hasSubquest(const Str& questName) const noexcept;

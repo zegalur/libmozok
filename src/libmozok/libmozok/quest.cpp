@@ -1,5 +1,7 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/action.hpp>
+#include <libmozok/private_types.hpp>
 #include <libmozok/public_types.hpp>
 #include <libmozok/statement.hpp>
 #include <libmozok/quest.hpp>
@@ -52,7 +54,8 @@ Quest::Quest(
         const GoalVec& goals,
         const ActionVec& actions,
         const ObjectVec& objects,
-        const QuestVec& subquests
+        const QuestVec& subquests,
+        const bool useActionTree
         ) noexcept :
     _name(name),
     _id(id),
@@ -67,7 +70,16 @@ Quest::Quest(
     _relevantObjects(buildRelevantObjects(objects)),
     _relevantRelations(buildRelevantRelations(actions)),
     _possibleActions(buildPossibleActions())
-{ /* empty */ }
+{
+    // Build the action tree.
+    if(useActionTree) {
+        HashSet<int> all;
+        for(SIZE_T i=0; i<_possibleActions.size(); ++i)
+            all.insert(int(i));
+        StatementSet empty;
+        _actionTree = buildActionTree(empty, nullptr, all);
+    }
+}
 
 Quest::ActionArgObjects Quest::buildActionArgObjects() const noexcept {
     Vector<Vector<ObjectVec>> result;
@@ -204,11 +216,122 @@ void Quest::iterateOverApplicableActions_Slow(
     }
 }
 
+namespace {
+class PopularityCmp {
+    StatementMap<HashSet<int>> &_reverseIndx;
+public:
+    PopularityCmp(StatementMap<HashSet<int>> &reverseIndx)
+    : _reverseIndx(reverseIndx)
+    { /* empty */ }
+
+    bool operator()(const StatementPtr& a, const StatementPtr& b) const noexcept {
+        return _reverseIndx[a].size() < _reverseIndx[b].size();
+    }
+}; 
+}
+
+struct Quest::ActionNode {
+    StatementPtr precondition; // can be `nullptr`
+    Vector<ActionNodePtr> children; // empty for leaf nodes
+    Vector<int> actions;
+};
+
+Quest::ActionNodePtr Quest::buildActionTree(
+        StatementSet &all,
+        const StatementPtr& last,
+        HashSet<int> &actions
+        ) const noexcept {
+    ActionNodePtr node = makeShared<ActionNode>();
+    node->precondition = last;
+
+    // reverseIndx[precondition] = {actions with the precondition}
+    StatementMap<HashSet<int>> reverseIndx;
+
+    for(const int actionIndx : actions) {
+        const auto& pa = _possibleActions[actionIndx];
+        const auto& pre = pa.action->getPreconditions();
+        StatementVec preStatements = pre.substitute(pa.arguments);
+        for(const auto &st : preStatements) {
+            if(all.find(st) != all.end())
+                continue;
+            reverseIndx[st].insert(actionIndx);
+        }
+    }
+
+    // Create a queue of popular precondition statements.
+    PopularityCmp popularityCmp(reverseIndx);
+    PriorityQueue<StatementPtr, PopularityCmp> popularPreconditions(popularityCmp);
+    for(const auto& pre : reverseIndx)
+        popularPreconditions.push(pre.first);
+
+    // Split the set of all selected actions into disjoint groups.
+    while(popularPreconditions.empty() == false) {
+        if(actions.empty())
+            break;
+        const StatementPtr &pre = popularPreconditions.top();
+        auto& selected = reverseIndx[pre];
+        for(const int actionIndx : selected)
+            actions.erase(actionIndx);
+        all.insert(pre);
+        node->children.push_back(buildActionTree(all, pre, selected));
+        all.erase(pre);
+        popularPreconditions.pop();
+    }
+
+    if(actions.empty() == false)
+        // Copy the rest of actions as node's own actions.
+        node->actions = Vector<int>(actions.begin(), actions.end());
+
+    return node;
+}
+
+bool Quest::iterateNext(
+            const ActionNodePtr& node,
+            const StatePtr& state,
+            QuestApplicableActionsIterator& it,
+            Vector<StatementVec>& actionPreBuffers
+            ) const noexcept {
+    // Check node precondition.
+    if(node->precondition)
+        if(state->hasSubstate({node->precondition}) == false)
+            return true;
+    
+    // Iterate trough the actions without additional preconditions.
+    for(const int actionIndx : node->actions) {
+        const ActionWithArgs aa = _possibleActions[actionIndx];
+        if(it.actionCallback(
+                aa.action, aa.arguments, aa.combinedIndx) == false)
+            return false;
+    }
+
+    // Iterate trough actions with preconditions.
+    for(const auto& child : node->children)
+        if(iterateNext(child, state, it, actionPreBuffers) == false)
+            return false;
+
+    return true;
+}
+
+void Quest::iterateOverApplicableActions_AT(
+            const StatePtr& state,
+            QuestApplicableActionsIterator& it,
+            Vector<StatementVec>& actionPreBuffers
+            ) const noexcept {
+    iterateNext(_actionTree, state, it, actionPreBuffers);
+}
+
 void Quest::iterateOverApplicableActions(
             const StatePtr& state,
             QuestApplicableActionsIterator& it,
             Vector<StatementVec>& actionPreBuffers
             ) const noexcept {
+    // If enabled, use the action tree.
+    if(_actionTree) {
+        iterateOverApplicableActions_AT(state, it, actionPreBuffers);
+        return;
+    }
+
+    // Otherwise, use the _possibleActions array.
     for(const ActionWithArgs& aa : _possibleActions) {
         // Objects were selected in such a way that they are suitable by types,
         // but we need to verify if they also satisfy the action preconditions.

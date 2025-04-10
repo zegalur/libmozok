@@ -123,6 +123,36 @@ private:
             Vector<StatementVec>& actionPreBuffers
             ) const noexcept;
 
+
+    // ActionTree segment
+
+    struct ActionNode;
+    using ActionNodePtr = SharedPtr<ActionNode>;
+    ActionNodePtr _actionTree;
+
+    ActionNodePtr buildActionTree(
+            StatementSet &all,
+            const StatementPtr& last,
+            HashSet<int> &actions
+            ) const noexcept;
+
+    bool iterateNext(
+            const ActionNodePtr& node,
+            const StatePtr& state,
+            QuestApplicableActionsIterator& it,
+            Vector<StatementVec>& actionPreBuffers
+            ) const noexcept;
+
+    /// @brief Iterate, using the action tree. 
+    /// Action tree take some additional time and space to make.
+    /// Can dramatically improves the planning speed for complex tasks.
+    void iterateOverApplicableActions_AT(
+            const StatePtr& state,
+            QuestApplicableActionsIterator& it,
+            Vector<StatementVec>& actionPreBuffers
+            ) const noexcept;
+
+
     /// @brief Iterates trough all allowed objects for a given allowed action.
     /// @param state The state from which the search occurs. If `state` is 
     ///         `nullptr` then it will skip checking the action preconditions.
@@ -158,7 +188,8 @@ public:
         const GoalVec& goals,
         const ActionVec& actions,
         const ObjectVec& objects,
-        const QuestVec& subquests
+        const QuestVec& subquests,
+        const bool useActionTree
         ) noexcept;
 
     const Str& getName() const noexcept;

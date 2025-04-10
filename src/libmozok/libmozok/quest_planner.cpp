@@ -1,8 +1,7 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
-#include "libmozok/action.hpp"
-#include "libmozok/public_types.hpp"
-#include <cstdio>
+#include <libmozok/action.hpp>
+#include <libmozok/public_types.hpp>
 #include <libmozok/quest_manager.hpp>
 #include <libmozok/private_types.hpp>
 #include <libmozok/quest.hpp>

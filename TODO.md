@@ -21,7 +21,6 @@ Libmozok TODO list.
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
-- [ ] Optimize `Quest::iterateOverApplicableActions` by splitting all possible actions using a tree structure, with precondition statements as nodes and action subsets as leaves. The root contains the statement that splits the set most effectively (ideally in half), followed by additional statements at each level that continue to divide the set.
 
 ### In Progress
 
@@ -57,6 +56,10 @@ Libmozok TODO list.
     - [x] Remove: the quest goal index from `INACTIVE` `status` command
     - [x] Add: `PARENT [parentQuestName]` to the `status` commands of sub-quests
     - [x] Ensure logical consistency of the status change command messages
+
+- [x] Optimize `Quest::iterateOverApplicableActions` by splitting all possible actions using a tree structure, with precondition statements as nodes and action subsets as leaves. The root contains the statement that splits the set most effectively (ideally in half), followed by additional statements at each level that continue to divide the set.
+    - [x] Basic implementation.
+    - [x] Make it optional?
 
 - [x] Other
     - [x] Check the quality of the hash function used for the StatementSet
