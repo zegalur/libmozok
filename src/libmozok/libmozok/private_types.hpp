@@ -4,6 +4,7 @@
 
 #include <libmozok/public_types.hpp>
 
+#include <functional>
 #include <utility>
 #include <atomic>
 #include <memory>
@@ -22,15 +23,23 @@ namespace mozok {
 // IMPORTANT! ID type must support negative values!
 using ID = int;
 
+using SIZE_T = std::size_t;
+
 // =============================== Containers =============================== //
+
+template<typename F, typename S>
+using Pair = std::pair<F,S>;
 
 template<typename T>
 using Queue = std::queue<T>;
 
-template<typename K, typename V, typename H> 
-using HashMap = std::unordered_map<K, V, H>;
+template<typename K, typename V, typename H, typename E> 
+using HashMap = std::unordered_map<K, V, H, E>;
 
-template<typename T, typename H, typename E> 
+template<
+    typename T, 
+    typename H = std::hash<T>, 
+    typename E = std::equal_to<T>> 
 using HashSet = std::unordered_set<T, H, E>;
 
 template<typename K, typename V> 

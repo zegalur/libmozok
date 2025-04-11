@@ -626,7 +626,8 @@ Result World::addQuest(
         const Vector<Vector<StrVec>> &goals,
         const StrVec& questActionNames,
         const StrVec& questObjectNames,
-        const StrVec& questSubquestNames
+        const StrVec& questSubquestNames,
+        const bool useActionTree
         ) noexcept {
     const Result definitionError = errorQuestCantDefine(
             getServerWorldName(), questName);
@@ -704,7 +705,8 @@ Result World::addQuest(
     const ID newQuestId = (ID)_quests.size();
     _questNameToId[questName] = newQuestId;
     QuestPtr newQuest = makeShared<Quest>(
-            questName, newQuestId, pre, goalVec, actions, objects, subquests);
+            questName, newQuestId, pre, goalVec, 
+            actions, objects, subquests, useActionTree);
     QuestManagerPtr newQuestManager = makeShared<QuestManager>(newQuest);
     _quests.push_back(newQuestManager);
 
@@ -824,7 +826,7 @@ void World::findNewSubquest(
                     _worldName, 
                     subquest->getName(), 
                     quest->getName(),
-                    goalIndx);
+                    plan->goalIndx);
                 // Perform planning for the new subquest.
                 performQuestPlanning(subquestManager, messageProcessor);
                 break;

@@ -57,7 +57,7 @@ void DebugMessageProcessor::onNewQuestPlan(
         ) noexcept {
     cout << "> New quest plan: " << questName << endl;
     for(StrVec::size_type i=0; i<actionList.size(); ++i) {
-        cout << "  " << actionList[i] << " ( ";
+        cout << "  " << (i+1) << ". " << actionList[i] << " ( ";
         for(StrVec::size_type j=0; j<actionArgsList[i].size(); ++j)
             cout << actionArgsList[i][j] 
                 << (j != actionArgsList[i].size()-1 ? ", " : "");

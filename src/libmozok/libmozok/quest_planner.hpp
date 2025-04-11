@@ -35,40 +35,17 @@ class QuestPlanner {
     /// @brief Creates `_actionPreBuffers` vector.
     void createActionPreBuffers() noexcept;
 
-    struct StateNode;
-    struct StateNodeCmp;
-    class QuestPlannerActionsIterator;
-    using StateNodePtr = SharedPtr<StateNode>;
-    using StateNodeQueue = PriorityQueue<StateNodePtr, StateNodeCmp>;
-
     /// @brief Finds a plan for a given goal.
     /// @param goalIndx Goal index.
     /// @param worldName Quest's world name.
     /// @param messageProcessor A message processor.
     /// @return Returns a plan for a given goal.
     QuestPlanPtr findGoalPlan(
-            const ID goalIndx, 
-            const Str& worldName,
-            MessageProcessor& messageProcessor,
-            const int searchLimit,
-            const int spaceLimit,
-            const int omega
-            ) noexcept;
-
-    /// @brief Finds all possible next actions for a given node of a state graph.
-    /// @param node A node in a state graph.
-    /// @param knownStates The set of all known to this point states.
-    /// @param goal The goal statements.
-    /// @param openSet The queue of open (unprocessed) nodes in the state graph.
-    /// @param spaceLimit Specifies a space limit.
-    void findSubstitutions(
-            const StateNodePtr& node, 
-            StateSet& knownStates,
-            const Goal& goal,
-            StateNodeQueue& openSet,
-            const int spaceLimit,
-            const int omega
-            ) noexcept;
+        const ID goalIndx, 
+        const Str& worldName,
+        MessageProcessor& messageProcessor,
+        const QuestSettings& settings
+        ) noexcept;
 
 public:
     /// @brief Creates a quest planner.
@@ -87,13 +64,12 @@ public:
     /// @brief Performs planning.
     /// @param worldName Quest's world name.
     /// @param messageProcessor A message processor.
+    /// @param settings Planner settings.
     /// @return Returns a quest plan.
     QuestPlanPtr findQuestPlan(
         const Str& worldName,
         MessageProcessor& messageProcessor,
-        const int searchLimit,
-        const int spaceLimit,
-        const int omega
+        const QuestSettings& settings
         ) noexcept;
 
 };

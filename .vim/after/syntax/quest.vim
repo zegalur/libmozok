@@ -48,9 +48,11 @@ syn keyword questSpecial version project
 syn keyword questMacro include 
 syn match questNA /N\/A/ contained
 syn keyword questStatus ACTIVE INACTIVE DONE UNREACHABLE PARENT
+syn keyword questHeuristic SIMPLE HSP
 syn keyword questKeywordQuest quest
 syn keyword questQuestParam preconditions goal actions objects subquests 
 syn keyword questQuestParam options searchLimit spaceLimit omega status 
+syn keyword questQuestParam heuristic use_atree
 syn keyword questActionBlock pre add rem
 
 
@@ -65,6 +67,7 @@ hi def link questSpecial        Special
 hi def link questMacro          Macro
 hi def link questNA             String
 hi def link questStatus         String
+hi def link questHeuristic      String
 hi def link questKeyword        Keyword
 hi def link questKeywordType    Keyword
 hi def link questKeywordObject  Keyword

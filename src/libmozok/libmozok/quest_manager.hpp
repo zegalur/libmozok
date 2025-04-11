@@ -20,7 +20,30 @@ using QuestManagerVec = Vector<QuestManagerPtr>;
 enum QuestOption {
     QUEST_OPTION_SEARCH_LIMIT,
     QUEST_OPTION_SPACE_LIMIT,
-    QUEST_OPTION_OMEGA
+    QUEST_OPTION_OMEGA,
+    QUEST_OPTION_HEURISTIC
+};
+
+enum QuestHeuristic {
+    SIMPLE,
+    HSP
+};
+
+
+/// @brief Quest settings for planner.
+struct QuestSettings {
+    /// @brief Maximum number of unique states to visit during search process.
+    int searchLimit;
+
+    /// @brief Maximum number of unexplored nodes during the BFS.  
+    int spaceLimit;
+
+    /// @brief Special parameter used by the `SIMPLE` heuristics.
+    /// (See `quest-format-reference.md` for more details).
+    int omega;
+
+    /// @brief Sets the heuristic function used during the A* search.
+    QuestHeuristic heuristic;
 };
 
 
@@ -51,14 +74,8 @@ class QuestManager {
     /// @brief The most recent active goal.
     int _lastActiveGoal;
 
-    /// @brief Search limit for the quest planner.
-    int _searchLimit;
-
-    /// @brief Space limit for the planner.
-    int _spaceLimit;
-
-    /// @brief Quest's omega value for the planner.
-    int _omega;
+    /// @brief Various quest settings.
+    QuestSettings _settings;
 
     /// @brief nullptr for a main quest, parent quest for a subquest.
     QuestPtr _parentQuest;

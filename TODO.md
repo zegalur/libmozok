@@ -12,7 +12,6 @@ Libmozok TODO list.
 - [ ] Add: Error: The same object appears twice or more in the same statement.
 - [ ] Add: Warning: Action argument was not used.
 - [ ] Add: error codes for `libmozok::Result`
-- [ ] Add: a better heuristic function(s) for the quest planner
 - [ ] In the `World::performPlanning` function, update only the quests that are activated but not yet completed. This can be achieved by creating a set of quests that need to be planned.
 - [ ] Narration Engine
     - [ ] Implementation of multiple language support
@@ -21,6 +20,7 @@ Libmozok TODO list.
 - [ ] Migrate to C++17 (`[[nodiscard]]`, `<string_view>` etc.)
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
+- [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
 
 ### In Progress
 
@@ -28,6 +28,10 @@ Libmozok TODO list.
     - [x] Doxygen generated documentation
     - [x] .quest format reference page
     - [ ] First Tutorial
+- [ ] Add: other planning algorithms
+    - [x] Add: `heuristic` setting to quest definition
+    - [x] Implement *HSP* (Heuristic Search Planner) algorithm
+    - [ ] Implement *GraphPlan* algorithm
 
 ### Done ✓
 
@@ -52,6 +56,9 @@ Libmozok TODO list.
     - [x] Remove: the quest goal index from `INACTIVE` `status` command
     - [x] Add: `PARENT [parentQuestName]` to the `status` commands of sub-quests
     - [x] Ensure logical consistency of the status change command messages
+
+- [x] Optimization
+    - [x] Optimize `Quest::iterateOverApplicableActions` by organizing all possible actions into a tree structure, using precondition statements as nodes and action subsets as data. A node contains a statement that most effectively splits the set, with additional statements at each level further dividing the set of actions.
 
 - [x] Other
     - [x] Check the quality of the hash function used for the StatementSet
