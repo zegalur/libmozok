@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include <functional>
 #include <libmozok/public_types.hpp>
 
+#include <functional>
 #include <utility>
 #include <atomic>
 #include <memory>

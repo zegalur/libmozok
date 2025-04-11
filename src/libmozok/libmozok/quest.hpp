@@ -102,7 +102,6 @@ private:
     ///        that can be executed.
     const PossibleActionVec _possibleActions;
 
-
     UnorderedSet<ID> buildRelevantActions(const ActionVec& actions) const noexcept;
     UnorderedSet<ID> buildRelevantObjects(const ObjectVec& objects) const noexcept;
     UnorderedSet<ID> buildRelevantRelations(
@@ -123,9 +122,15 @@ private:
             Vector<StatementVec>& actionPreBuffers
             ) const noexcept;
 
-
-    // ActionTree segment
-
+    /// @brief Action tree node.
+    /// Action tree is a special optimization structure that improves 
+    /// `Quest::iterateOverApplicableActions` by organizing all possible 
+    /// actions into a tree, with precondition statements as nodes and action 
+    /// subsets as node data. Each node contains a statement that most 
+    /// effectively splits the set of all applicable actions. During the 
+    /// "iterateOver" call instead of iterate trough all the actions, 
+    /// we can walk trough the action tree, rejecting branches by checking 
+    /// node's precondition.
     struct ActionNode;
     using ActionNodePtr = SharedPtr<ActionNode>;
     ActionNodePtr _actionTree;
@@ -145,13 +150,12 @@ private:
 
     /// @brief Iterate, using the action tree. 
     /// Action tree take some additional time and space to make.
-    /// Can dramatically improves the planning speed for complex tasks.
+    /// Can dramatically improve the planning speed for complex tasks.
     void iterateOverApplicableActions_AT(
             const StatePtr& state,
             QuestApplicableActionsIterator& it,
             Vector<StatementVec>& actionPreBuffers
             ) const noexcept;
-
 
     /// @brief Iterates trough all allowed objects for a given allowed action.
     /// @param state The state from which the search occurs. If `state` is 

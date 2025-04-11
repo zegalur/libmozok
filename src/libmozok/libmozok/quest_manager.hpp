@@ -42,7 +42,7 @@ struct QuestSettings {
     /// (See `quest-format-reference.md` for more details).
     int omega;
 
-    /// @brief Sets heuristic function used during the A* search.
+    /// @brief Sets the heuristic function used during the A* search.
     QuestHeuristic heuristic;
 };
 

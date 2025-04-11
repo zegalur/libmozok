@@ -96,7 +96,7 @@ Quest::ActionArgObjects Quest::buildActionArgObjects() const noexcept {
             if(argObjects.size() == 0) {
                 notEmpty = false;
                 break;
-}
+            }
         }
         if(notEmpty) {
             // Action can be applicable.
