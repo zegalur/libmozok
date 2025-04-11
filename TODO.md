@@ -57,9 +57,8 @@ Libmozok TODO list.
     - [x] Add: `PARENT [parentQuestName]` to the `status` commands of sub-quests
     - [x] Ensure logical consistency of the status change command messages
 
-- [x] Optimize `Quest::iterateOverApplicableActions` by splitting all possible actions using a tree structure, with precondition statements as nodes and action subsets as leaves. The root contains the statement that splits the set most effectively (ideally in half), followed by additional statements at each level that continue to divide the set.
-    - [x] Basic implementation.
-    - [x] Add: `use_atree` quest option
+- [x] Optimization
+    - [x] Optimize `Quest::iterateOverApplicableActions` by organizing all possible actions into a tree structure, using precondition statements as nodes and action subsets as data. A node contains a statement that most effectively splits the set, with additional statements at each level further dividing the set of actions.
 
 - [x] Other
     - [x] Check the quality of the hash function used for the StatementSet
