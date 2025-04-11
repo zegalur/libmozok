@@ -23,7 +23,7 @@
 			"name": "comment.line.number-sign.quest"
 		},
 		"keywords": {
-			"match": "\\b(type|object|objects|version|project|include|rel|rlist|action|pre|add|rem|quest|main_quest|preconditions|goal|actions|subquests|status|ACTIVE|INACTIVE|DONE|UNREACHABLE|PARENT|N/A|options|searchLimit|spaceLimit|omega|heuristic|SIMPLE|HSP)\\b",
+			"match": "\\b(type|object|objects|version|project|include|rel|rlist|action|pre|add|rem|quest|main_quest|preconditions|goal|actions|subquests|status|ACTIVE|INACTIVE|DONE|UNREACHABLE|PARENT|N/A|options|searchLimit|spaceLimit|omega|heuristic|SIMPLE|HSP|use_atree)\\b",
 			"name": "keyword.quest"
 		},
 		"integer": {
