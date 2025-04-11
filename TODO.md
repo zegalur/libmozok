@@ -28,10 +28,10 @@ Libmozok TODO list.
     - [x] Doxygen generated documentation
     - [x] .quest format reference page
     - [ ] First Tutorial
-- [ ] Add: other heuristic function(s) for the quest planner
-    - [x] Add `heuristic` setting to quest definition
-    - [x] Implement HSP (Heuristic Search Planner) algorithm
-    - [ ] Implement GraphPlan algorithm
+- [ ] Add: other planning algorithms
+    - [x] Add: `heuristic` setting to quest definition
+    - [x] Implement *HSP* (Heuristic Search Planner) algorithm
+    - [ ] Implement *GraphPlan* algorithm
 
 ### Done ✓
 
@@ -59,7 +59,7 @@ Libmozok TODO list.
 
 - [x] Optimize `Quest::iterateOverApplicableActions` by splitting all possible actions using a tree structure, with precondition statements as nodes and action subsets as leaves. The root contains the statement that splits the set most effectively (ideally in half), followed by additional statements at each level that continue to divide the set.
     - [x] Basic implementation.
-    - [x] Make it optional?
+    - [x] Add: `use_atree` quest option
 
 - [x] Other
     - [x] Check the quality of the hash function used for the StatementSet

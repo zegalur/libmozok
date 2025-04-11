@@ -164,7 +164,7 @@ MoveFree2 ( human, right, left, wolf, cabbage, goat )
 MoveLoad3 ( human, left, right, goat, wolf, cabbage )
 ```
 
-Unfortunately, for now, libmozok is not powerful enough to solve more combinatorically complex puzzles. Libmozok is suitable for planning quests in real-time for games, but it is not intended to be a universal puzzle-solving library. An example of almost too complex puzzle is [game_of_fifteen.quest](./src/libmozok/tests/puzzles/game_of_fifteen.quest).
+**Warning!** Libmozok was designed for planning quests in real-time for games, and was not intended to be a universal puzzle-solving library. That said, it is powerful enough to solve many hard puzzles, although it can take some time and memory to find a solution. An example of a complex puzzle is [game_of_fifteen.quest](./src/libmozok/tests/puzzles/game_of_fifteen.quest).
 
 # Further Reading
 
@@ -216,6 +216,10 @@ How to build and install **libmozok** (Release):
 * Preston-Werner, Tom. Semantic Versioning. Web. https://semver.org/spec/v2.0.0.html
 
 * Kolpackov, Boris. *P1204R0: Canonical Project Structure*, 8 Oct. 2018. Web. https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
+
+* Gasser, Ralph Udo. Harnessing *Computational Resources for Efficient Exhaustive Search*. PhD Thesis, ETH Zürich, 1995
+
+* Brüngger, Adrian; Marzetta, Ambros; Fukuda, Komei; Nievergelt, Jurg. *The parallel search bench ZRAM and its applications*. Ann. Oper. Res. **90** (1999), 45-63.
 
 # Licenses
 

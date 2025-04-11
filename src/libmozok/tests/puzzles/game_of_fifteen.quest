@@ -108,10 +108,9 @@ rlist Initial:
     Adjacent(cell_43, cell_44)
     
 
-    # Tiles' initial setup is selected to be solvable. Unfortunately, for now, 
-    # libmozok is not powerful enough to solve the puzzle for any permutation.
-    # Libmozok is suitable for planning quests in real-time for games, but it is 
-    # not intended as a universal puzzle-solving library.
+# Tiles' initial setup is selected to be solvable.
+# Libmozok is now powerful enough to solve many hard puzzles but it is not 
+# intended as a universal puzzle-solving library.
 
 # Easily solvable
 rlist Easy:
@@ -135,6 +134,7 @@ rlist Easy:
 
 # From Wikipedia.
 # Solvable, but took some time to solve.
+# Test is disabled by default.
 rlist Medium:
     At(tile_12, cell_11)
     At(tile_1, cell_12)
@@ -154,8 +154,8 @@ rlist Medium:
     At(tile_3, cell_44)
     Use_HSP()
 
-# Much harder to solve.
-# Solvable, but took a long time to solve (~10 minutes).
+# Much harder, but still doable.
+# Took a long time to solve (~10 minutes).
 # This test is disabled by default.
 rlist Hard:
     At(tile_14, cell_11)
@@ -176,8 +176,35 @@ rlist Hard:
     Empty(cell_44)
     Use_HSP()
 
+# 80-moves combination by Ralph Gasser.
+# This test is disabled by default.
+# - Gasser, Ralph Udo. Harnessing Computational Resources for Efficient 
+#   Exhaustive Search. PhD Thesis, ETH Zürich, 1995
+# - Brüngger, Adrian; Marzetta, Ambros; Fukuda, Komei; Nievergelt, Jurg.
+#   The parallel search bench ZRAM and its applications. 
+#   Ann. Oper. Res. 90 (1999), 45-63.
+rlist Hardest_1:
+    At(tile_15, cell_11)
+    At(tile_14, cell_12)
+    At(tile_8, cell_13)
+    At(tile_12, cell_14)
+    At(tile_10, cell_21)
+    At(tile_11, cell_22)
+    At(tile_9, cell_23)
+    At(tile_13, cell_24)
+    At(tile_2, cell_31)
+    At(tile_6, cell_32)
+    At(tile_5, cell_33)
+    At(tile_1, cell_34)
+    At(tile_3, cell_41)
+    At(tile_7, cell_42)
+    At(tile_4, cell_43)
+    Empty(cell_44)
+    Use_HSP()
+
 # This one is provably unsolvable.
 # You can use this puzzle as a benchmark for detecting unsolvable puzzles.
+# Test is disabled by default.
 rlist Impossible:
     At(tile_1, cell_11)
     At(tile_2, cell_12)
@@ -217,6 +244,12 @@ action Init_Hard:
     rem # none
     add Initial()
         Hard()
+
+action Init_Hardest_1:
+    pre # none
+    rem # none
+    add Initial()
+        Hardest_1()
 
 action Init_Impossible:
     pre # none
@@ -264,7 +297,7 @@ action Flip2:
 main_quest PlaceTheTiles_H_SIMPLE:
     options:
         searchLimit 5000
-        spaceLimit 50000
+        spaceLimit 10000
         omega 4
         use_atree # use action tree for better performance
     preconditions:
