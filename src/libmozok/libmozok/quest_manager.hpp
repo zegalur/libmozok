@@ -21,7 +21,8 @@ enum QuestOption {
     QUEST_OPTION_SEARCH_LIMIT,
     QUEST_OPTION_SPACE_LIMIT,
     QUEST_OPTION_OMEGA,
-    QUEST_OPTION_HEURISTIC
+    QUEST_OPTION_HEURISTIC,
+    QUEST_OPTION_STRATEGY
 };
 
 enum QuestHeuristic {
@@ -29,6 +30,10 @@ enum QuestHeuristic {
     HSP
 };
 
+enum QuestSearchStrategy {
+    ASTAR,
+    DFS
+};
 
 /// @brief Quest settings for planner.
 struct QuestSettings {
@@ -44,6 +49,9 @@ struct QuestSettings {
 
     /// @brief Sets the heuristic function used during the A* search.
     QuestHeuristic heuristic;
+
+    /// @brief Sets the search strategy.
+    QuestSearchStrategy strategy;
 };
 
 

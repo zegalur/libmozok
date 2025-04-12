@@ -48,8 +48,8 @@ void MessageProcessor::onNewSubQuest(
 { /* empty */ }
 
 void MessageProcessor::onNewQuestState(
-        const mozok::Str& worldName, 
-        const mozok::Str& questName
+        const mozok::Str& /*worldName*/, 
+        const mozok::Str& /*questName*/
         ) noexcept
 { /* empty */ }
 

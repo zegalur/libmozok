@@ -249,6 +249,9 @@ Keywords are reserved words and must not be used in naming.
 | `SIMPLE` | Simple heuristic (used in `heuristic`).
 | `HSP` | Heuristic from HSP algorithm (used in `heuristic`).
 | `use_atree` | This quest option forces to use action tree structure to boost the performance.
+| `strategy` | This quest option sets the search strategy (default `ASTAR`).
+| `ASTAR` | Search the plan using A\*.
+| `DFS` | Search in depth. For the cases when plan is long but straighforward.
 
 ### Statement
 

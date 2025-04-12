@@ -815,7 +815,7 @@ void World::findNewSubquest(
             continue;
         if(!plan->givenState->hasSubstate(subquest->getPreconditions()))
             continue;
-        int goalIndx = 0;
+        //int goalIndx = 0;
         for(const Goal& goal : subquest->getGoals()) {
             if(post->hasSubstate(goal)) {
                 // New subquest has been found.
@@ -831,7 +831,7 @@ void World::findNewSubquest(
                 performQuestPlanning(subquestManager, messageProcessor);
                 break;
             }
-            ++goalIndx;
+            //++goalIndx;
         }
     }
 }
