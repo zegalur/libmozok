@@ -21,6 +21,7 @@ Libmozok TODO list.
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
+- [ ] Add: support of both BFS & DFS as quest option `strategy BFS` and `strategy DFS`.
 
 ### In Progress
 
