@@ -43,6 +43,9 @@ namespace {
     const char* KEYWORD_SIMPLE = "SIMPLE";
     const char* KEYWORD_HSP = "HSP";
     const char* KEYWORD_USE_ATREE = "use_atree";
+    const char* KEYWORD_STRATEGY = "strategy";
+    const char* KEYWORD_ASTAR = "ASTAR";
+    const char* KEYWORD_DFS = "DFS";
 }
 
 
@@ -847,8 +850,10 @@ public:
         int searchLimit = -1;
         int omega = -1;
         bool setHeuristic = false;
+        bool setStrategy = false;
         bool useActionTree = false;
         QuestHeuristic heuristic = QuestHeuristic::SIMPLE;
+        QuestSearchStrategy strategy = QuestSearchStrategy::ASTAR;
         res <<= empty_lines();
         res <<= space(1);
         if(keyword(KEYWORD_OPTIONS).isOk()) {
@@ -881,6 +886,23 @@ public:
                     } else if (heuristicName == KEYWORD_HSP) {
                         heuristic = QuestHeuristic::HSP;
                         setHeuristic = true;
+                    } else {    
+                        res <<= errorParserError(_file, _line, _col, 
+                            "Unknown heuristic name '" + heuristicName + "'");
+                    }
+                } else if(optionName == KEYWORD_STRATEGY) {
+                    res <<= space(1);
+                    Str strategyName;
+                    res <<= name(strategyName, UPPER);
+                    if(strategyName == KEYWORD_ASTAR) {
+                        strategy = QuestSearchStrategy::ASTAR;
+                        setStrategy = true;
+                    } else if (strategyName == KEYWORD_DFS) {
+                        strategy = QuestSearchStrategy::DFS;
+                        setStrategy = true;
+                    } else {    
+                        res <<= errorParserError(_file, _line, _col, 
+                            "Unknown strategy name '" + strategyName + "'");
                     }
                 } else if (optionName == KEYWORD_USE_ATREE) {
                     useActionTree = true;
@@ -974,6 +996,9 @@ public:
         if(setHeuristic)
             res <<= _world->setQuestOption(
                     questName, QUEST_OPTION_HEURISTIC, heuristic);
+        if(setStrategy)
+            res <<= _world->setQuestOption(
+                    questName, QUEST_OPTION_STRATEGY, strategy);
 
         if(res.isError())
             res <<= errorParserWorldError(

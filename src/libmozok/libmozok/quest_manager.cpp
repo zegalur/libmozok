@@ -9,6 +9,7 @@ const int DEFAULT_SEARCH_LIMIT = 1000;
 const int DEFAULT_SPACE_LIMIT = 10000;
 const int DEFAULT_OMEGA = 0;
 const QuestHeuristic DEFAULT_HEURISTIC = QuestHeuristic::SIMPLE;
+const QuestSearchStrategy DEFAULT_STRATEGY = QuestSearchStrategy::ASTAR;
 
 QuestManager::QuestManager(
         const QuestPtr& quest
@@ -22,7 +23,8 @@ QuestManager::QuestManager(
         /*.searchLimit = */DEFAULT_SEARCH_LIMIT,
         /*.spaceLimit = */DEFAULT_SPACE_LIMIT,
         /*.omega = */DEFAULT_OMEGA,
-        /*.heuristic = */DEFAULT_HEURISTIC
+        /*.heuristic = */DEFAULT_HEURISTIC,
+        /*.strategy = */DEFAULT_STRATEGY
     }),
     _parentQuest(nullptr),
     _parentQuestGoal(-1)
@@ -95,6 +97,9 @@ void QuestManager::setOption(
         break;
     case QUEST_OPTION_HEURISTIC:
         _settings.heuristic = QuestHeuristic(value);
+        break;
+    case QUEST_OPTION_STRATEGY:
+        _settings.strategy = QuestSearchStrategy(value);
         break;
     default:
         // skip

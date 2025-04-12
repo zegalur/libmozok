@@ -17,7 +17,7 @@ namespace mozok {
 namespace {
 
 struct StateNode;
-struct StateNodeCmp;
+class StateNodeCmp;
 
 using StateNodePtr = SharedPtr<StateNode>;
 using StateNodeQueue = PriorityQueue<StateNodePtr, StateNodeCmp>;
@@ -65,11 +65,38 @@ struct StateNode {
 };
 
 
-struct StateNodeCmp {
-    bool operator() (const StateNodePtr& a, const StateNodePtr& b) noexcept {
+// State node comparison classes.
+
+struct StateNodeCmp_Base {
+    virtual bool operator() (
+        const StateNodePtr& a, const StateNodePtr& b) const noexcept = 0;
+};
+
+struct StateNodeCmp_AStar : public StateNodeCmp_Base {
+    virtual bool operator() (
+        const StateNodePtr& a, const StateNodePtr& b) const noexcept 
+    { return a->fScore > b->fScore; }
+} const stateNodeCmp_AStar;
+
+struct StateNodeCmp_DFS : public StateNodeCmp_Base {
+    virtual bool operator() (
+            const StateNodePtr& a, const StateNodePtr& b) const noexcept {
+        if(a->gScore != b->gScore)
+            return a->gScore < b->gScore;
         return a->fScore > b->fScore;
     }
-} const stateNodeCmp;
+} const stateNodeCmp_DFS;
+
+class StateNodeCmp {
+    const StateNodeCmp_Base* const _cmpObj;
+public:
+    StateNodeCmp(const StateNodeCmp_Base* const cmpObj) noexcept
+    : _cmpObj(cmpObj) { /*empty*/ }
+    bool operator() (
+            const StateNodePtr& a, const StateNodePtr& b) noexcept {
+        return _cmpObj->operator()(a,b);
+    }
+};
 
 
 /// @brief A callback class for the `Quest::iterateOverApplicableActions(...)`.
@@ -200,7 +227,7 @@ public:
     bool actionCallback(
             const ActionPtr& action, 
             const ObjectVec& arguments,
-            const SIZE_T combinedIndx
+            const SIZE_T /*combinedIndx*/
             ) noexcept {
         if(_openSet.size() > StateNodeQueue::size_type(_settings.spaceLimit))
             return false;
@@ -212,6 +239,10 @@ public:
         // the state.
         action->applyActionUnsafe(arguments, newState); 
         
+        if(_knownStates.find(newState) != _knownStates.end())
+            // A StateNode with such a state already present in the tree.
+            return true;
+        
         // Save the resulting state into a new node.
         StatementVec emptySVec;
         ActionPtr nodeAction = makeShared<Action>(
@@ -219,10 +250,6 @@ public:
                 arguments, emptySVec, emptySVec, emptySVec);
         StateNodePtr newNode = makeShared<StateNode>(newState, _node, nodeAction);
 
-        if(_knownStates.find(newState) != _knownStates.end())
-            // A StateNode with such a state already present in the tree.
-            return true;
-        
         int h_value = 0;
         switch(_settings.heuristic) {
             case QuestHeuristic::SIMPLE:
@@ -320,7 +347,17 @@ QuestPlanPtr QuestPlanner::findGoalPlan(
 
     // States that must be investigated next.
     // Nodes with lower f-score have higher priority.
-    StateNodeQueue openSet(stateNodeCmp);
+    const StateNodeCmp_Base* cmpFunc = nullptr;
+    switch(settings.strategy) {
+        case QuestSearchStrategy::ASTAR: 
+            cmpFunc = &stateNodeCmp_AStar;
+            break;
+        case QuestSearchStrategy::DFS: 
+            cmpFunc = &stateNodeCmp_DFS;
+            break;
+    }
+    StateNodeCmp cmpObj(cmpFunc);
+    StateNodeQueue openSet(cmpObj);
     openSet.push(initialStateNode);
 
     StateNodePtr finalNode(nullptr);

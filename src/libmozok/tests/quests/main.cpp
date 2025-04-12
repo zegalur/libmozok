@@ -5,6 +5,7 @@
 // performs planning in a worker thread, and the user interacts with the server
 // by pushing actions and reading the messages.
 
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -32,28 +33,52 @@ const auto ERROR_MAX_RUNTIME = chrono::milliseconds(5000);
 
 
 /// @brief Quest solver message processor.
-class MyMessageProcessor : public DebugMessageProcessor {
-    struct QuestData {
-        Str questName;
-        Str parentQuestName;
-        Str nextAction;
-        StrVec nextActionArgs;
+class QuestSolver : public DebugMessageProcessor {
+
+    struct Quest;
+    using QuestPtr = std::shared_ptr<Quest>;
+
+    /// @brief Represents an opened quest.
+    struct Quest {
+        /// @brief Quest name.
+        Str name;
+        /// @brief Parent quest name.
+        Str parent;
+        /// @brief Currently opened subquest names.
+        StrVec subquests;
+        /// @brief Last received status from the server.
         QuestStatus lastStatus;
+        /// @brief Last received goal.
+        int goalIndx;
+        /// @brief List of actions from the first received plan
+        StrVec actionList;
+        /// @brief List of arguments from the first received plan.
+        Vector<StrVec> actionArgsList;
+        /// @brief Index of the next action that wait for been applied.
+        int nextAction;
+        /// @brief How many N/A actions have been skipped.
+        int skipped;
     };
-    std::unordered_map<Str, QuestData> _data;
-    Result _status;
+
+    Vector<Str> _mainQuests;
+    std::unordered_map<Str, QuestPtr> _quests;
+
+    /// @brief Count how many actions was applied in total by the server.
     int _actionIndx;
 
+    /// @brief Quest solver status.
+    Result _status;
+
 public:
-    MyMessageProcessor() noexcept 
+    QuestSolver() noexcept 
     : _actionIndx(0)
     { /* empty */ }
 
     void onActionError(
-            const mozok::Str& /*worldName*/, 
-            const mozok::Str& /*actionName*/,
-            const mozok::StrVec& /*actionArguments*/,
-            const mozok::Result& errorResult
+            const Str& /*worldName*/, 
+            const Str& /*actionName*/,
+            const StrVec& /*actionArguments*/,
+            const Result& errorResult
             ) noexcept override {
         _status <<= errorResult;
     }
@@ -63,12 +88,15 @@ public:
             const Str& questName
             ) noexcept override {
         DebugMessageProcessor::onNewMainQuest(worldName, questName);
-        if(_data.find(questName) != _data.end()) {
-            _status <<= Result::Error(
-                    "QS | Quest `" + questName + "` already exist.");
-            return;
-        }
-        _data[questName] = {questName, "", "", {}, MOZOK_QUEST_STATUS_UNKNOWN};
+        QuestPtr q = std::make_shared<Quest>();
+        q->lastStatus = QuestStatus::MOZOK_QUEST_STATUS_UNKNOWN;
+        q->name = questName;
+        q->parent = "";
+        q->goalIndx = -1;
+        q->nextAction = -1;
+        q->skipped = 0;
+        _quests[questName] = q;
+        _mainQuests.push_back(questName);
     }
 
     void onNewSubQuest(
@@ -79,20 +107,26 @@ public:
             ) noexcept override {
         DebugMessageProcessor::onNewSubQuest(
                 worldName, subquestName, parentQuestName, goal);
-        if(_data.find(subquestName) != _data.end()) {
+        if(_quests.find(subquestName) != _quests.end()) {
             _status <<= Result::Error(
                     "QS | Quest `" + subquestName + "` already exist.");
             return;
-        } else if(_data.find(parentQuestName) == _data.end()) {
+        } else if(_quests.find(parentQuestName) == _quests.end()) {
             _status <<= Result::Error(
                     "QS | Parent quest `" + parentQuestName 
                     + "` for a subquest `" + subquestName 
                     + "` doesn't exist.");
             return;
         }
-        _data[subquestName] = {
-                subquestName, parentQuestName, 
-                "", {}, MOZOK_QUEST_STATUS_UNKNOWN};
+        QuestPtr q = std::make_shared<Quest>();
+        q->lastStatus = QuestStatus::MOZOK_QUEST_STATUS_UNKNOWN;
+        q->name = subquestName;
+        q->parent = parentQuestName;
+        q->goalIndx = -1;
+        q->nextAction = -1;
+        q->skipped = 0;
+        _quests[subquestName] = q;
+        _quests[q->parent]->subquests.push_back(subquestName);
     }
 
     void onNewQuestStatus(
@@ -102,52 +136,123 @@ public:
             ) noexcept override {
         DebugMessageProcessor::onNewQuestStatus(
                 worldName, questName, questStatus);
-        if(_data.find(questName) == _data.end()) {
+        if(_quests.find(questName) == _quests.end()) {
             _status <<= Result::Error(
                     "QS | Quest `" + questName + "` doesn't exist.");
             return;
         }
-        _data[questName].lastStatus = questStatus;
+        _quests[questName]->lastStatus = questStatus;
     }
 
     void onNewQuestPlan(
-            const mozok::Str& /*worldName*/, 
-            const mozok::Str& questName,
-            const mozok::StrVec& actionList,
-            const mozok::Vector<mozok::StrVec>& actionArgsList
+            const Str& /*worldName*/, 
+            const Str& questName,
+            const StrVec& actionList,
+            const Vector<StrVec>& actionArgsList
             ) noexcept override {
         // Uncomment this if you want to output the full plan.
         /*DebugMessageProcessor::onNewQuestPlan(
                 worldName, questName, actionList, actionArgsList);*/
-        if(_data.find(questName) == _data.end()) {
+        if(_quests.find(questName) == _quests.end()) {
             _status <<= Result::Error(
-                    "QS | Quest `" + questName + "` doesn't exist.");
+                    "QS | Quest `" + questName 
+                    + "` doesn't exist." + " (onNewQuestPlan)");
             return;
         }
-        if(actionList.size() == 0) {
-            if(_data[questName].lastStatus != MOZOK_QUEST_STATUS_DONE) {
+        if(actionList.size() != actionArgsList.size()) {
+            _status <<= Result::Error(
+                    "QS | actionList.size() != actionArgsList.size()");
+            return;
+        }
+        if(actionList.size() == 0)
+            if(_quests[questName]->lastStatus != MOZOK_QUEST_STATUS_DONE) {
                 _status <<= Result::Error(
                         "QS | Quest `" + questName 
                         + "` has an empty plan despite not being done.");
                 return;
             }
-            _data[questName].nextAction = "";
-            _data[questName].nextActionArgs = {};
-        } else {
-            _data[questName].nextAction = actionList.front();
-            _data[questName].nextActionArgs = actionArgsList.front();
+        // Only the first plan is used for each quest.
+        if(_quests[questName]->nextAction == -1) {
+            _quests[questName]->nextAction = 0;
+            _quests[questName]->actionList = actionList;
+            _quests[questName]->actionArgsList = actionArgsList;
         }
     }
 
     /// @return Returns `true` only if all registered quests are `DONE`.
     bool isAllQuestsDone() const {
-        if(_data.size() == 0)
+        if(_quests.size() == 0)
             return false;
-        for(const auto& data : _data)
-            if(data.second.lastStatus != MOZOK_QUEST_STATUS_DONE)
+        for(const auto& q : _quests)
+            if(q.second->lastStatus != MOZOK_QUEST_STATUS_DONE)
                 return false;
         return true;
     }
+
+    /// @brief Applies (pushes) the next applicable action of a quest tree.
+    /// @param worldName The name of the world.
+    /// @param server Quest server.
+    /// @param quest Quest data.
+    /// @return Returns `true` if any new action was applied.
+    ///         Returns `false` if no new action was applied.
+    bool applyNext(
+            const Str& worldName,
+            const unique_ptr<Server>& server,
+            QuestPtr& quest) {
+        if(quest->lastStatus == MOZOK_QUEST_STATUS_DONE)
+            return false;
+        if(quest->lastStatus == MOZOK_QUEST_STATUS_UNREACHABLE)
+            return false;
+        if(quest->nextAction < 0)
+            return false;
+        bool allSubsDone = true;
+        for(const auto& sub : quest->subquests) {
+            if(applyNext(worldName, server, _quests[sub]))
+                return true;
+            allSubsDone &= _quests[sub]->lastStatus == MOZOK_QUEST_STATUS_DONE;
+        }
+        if(allSubsDone == false) 
+            return false;
+
+        // All current subquests are DONE.
+        
+        while(size_t(quest->nextAction) < quest->actionList.size()) {
+            const Str &actionName = quest->actionList[quest->nextAction];
+            
+            // Check if this action is N/A.
+            if(server->getActionStatus(
+                        worldName, quest->actionList[quest->nextAction])
+                    != Server::ACTION_APPLICABLE) {
+                // Skip N/A action only when corresponding subquest is DONE.
+                if(quest->subquests.size() > StrVec::size_type(quest->skipped)) {
+                    ++quest->nextAction;
+                    ++quest->skipped;
+                    return true;
+                }
+                return false;
+            }
+
+            // This action is applicable.
+            ++_actionIndx;
+            const StrVec &args = quest->actionArgsList[quest->nextAction];
+            ++quest->nextAction;
+
+            // Show the message.
+            cout << _actionIndx << " : " << actionName << " ( ";
+            StrVec::size_type i=0;
+            for(; i < args.size(); ++i) {
+                cout << args[i];
+                if(i != args.size() - 1)
+                    cout << ", ";
+            }
+            cout << " )" << endl;
+
+            // Push the action into a queue.
+            _status <<= server->pushAction(worldName, actionName, args);
+            return true;
+        }
+        return false;
+    } 
 
     /// @brief Applies (pushes) the next applicable action.
     /// @param worldName The name of the world.
@@ -157,29 +262,9 @@ public:
     bool applyNextApplicableAction(
             const Str& worldName,
             const unique_ptr<Server>& server) {
-        for(auto& data : _data) {
-            if(data.second.lastStatus == MOZOK_QUEST_STATUS_UNKNOWN)
-                continue;
-            if(data.second.nextAction.size() == 0)
-                continue;
-            if(server->getActionStatus(worldName, data.second.nextAction)
-                    != Server::ACTION_APPLICABLE)
-                continue;
-            // Next action is applicable, apply it!
-            ++_actionIndx;
-            cout << _actionIndx << " : " << data.second.nextAction << " ( ";
-            StrVec::size_type i=0;
-            for(; i < data.second.nextActionArgs.size(); ++i) {
-                cout << data.second.nextActionArgs[i];
-                if(i != data.second.nextActionArgs.size() - 1)
-                    cout << ", ";
-            }
-            cout << " )" << endl;
-            _status <<= server->pushAction(
-                    worldName, data.second.nextAction, data.second.nextActionArgs);
-            data.second.nextAction = "";
-            return true;
-        }
+        for(auto& mainQuestName : _mainQuests)
+            if(applyNext(worldName, server, _quests[mainQuestName]))
+                return true;
         return false;
     }
 
@@ -188,7 +273,7 @@ public:
         return _status;
     }
 
-} msgProcessor;
+} questSolver;
 
 
 int main(int argc, char **argv) {
@@ -226,7 +311,7 @@ int main(int argc, char **argv) {
     bool warningWasShown = false;
     do {
         // Apply all currently applicable actions.
-        while(msgProcessor.applyNextApplicableAction(quest_name, server));
+        while(questSolver.applyNextApplicableAction(quest_name, server));
 
         auto runTime = chrono::system_clock::now() - startFrom;
         if(runTime > ERROR_MAX_RUNTIME) {
@@ -236,15 +321,15 @@ int main(int argc, char **argv) {
         }
 
         // Try to process the next message.
-        if(server->processNextMessage(msgProcessor)) {
+        if(server->processNextMessage(questSolver)) {
             // New message has been processed.
             isWaiting = false;
             continue;
         }
 
-        if(msgProcessor.getStatus().isError())
+        if(questSolver.getStatus().isError())
             break;
-        if(msgProcessor.isAllQuestsDone() == true)
+        if(questSolver.isAllQuestsDone() == true)
             break;
 
         if(isWaiting) {
@@ -264,11 +349,11 @@ int main(int argc, char **argv) {
         }
     } while(stopLoop == false);
 
-    // Stop the worker thread and read the status of the msgProcessor.
+    // Stop the worker thread and read the status of the questSolver.
     while(server->stopWorkerThread() == false);
-    status <<= msgProcessor.getStatus();
+    status <<= questSolver.getStatus();
 
-    if(msgProcessor.isAllQuestsDone() == false)
+    if(questSolver.isAllQuestsDone() == false)
         status <<= Result::Error("Oops. The quest wasn't completed.");
 
     // Generate the first savefile.
@@ -278,7 +363,7 @@ int main(int argc, char **argv) {
 
     // Explicitly delete the first quests server.
     status <<= server->deleteWorld(quest_name);
-    server.release();
+    server.reset();
 
     // Check the status.
     if(status.isError()) {
@@ -308,7 +393,7 @@ int main(int argc, char **argv) {
 
     // Delete the second server.
     status <<= server2->deleteWorld(quest_name);
-    server2.release();
+    server2.reset();
 
     // Check the current status.
     if(status.isError()) {

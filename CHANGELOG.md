@@ -4,6 +4,17 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-04-12
+
+### Added
+
+- Search strategies for quests (A\* and DFS).
+- `strategy ASTAR` and `strategy DFS` quest options.
+
+### Changed
+
+- Improved quest solver test.
+
 ## [0.2.0] - 2024-04-11
 
 ### Added

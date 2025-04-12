@@ -207,6 +207,8 @@ action MakeSword:
 
 # One main quest without subquests.
 main_quest MakeSword_NoSubQuests:
+    options:
+        strategy DFS
     preconditions:
         NoSubQuests()
     goal:

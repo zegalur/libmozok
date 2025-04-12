@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
 
     // Explicitly delete the quests server.
     status <<= server->deleteWorld(puzzle_name);
-    server.release();
+    server.reset();
 
     if(status.isError()) {
         cout << status.getDescription() << endl;
