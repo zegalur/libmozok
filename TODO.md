@@ -21,6 +21,18 @@ Libmozok TODO list.
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
+- [ ] Quest debugging tool `mozok`(`.exe`). The main purpose of this tool is to model all the ways quest worlds can evolve during any possible gameplay:
+    - Command files (`.qcf` quest command file) — files that describe how to properly load the quest world and all possible quest lines.
+    - [ ] `world [name]` - create a new quest world
+    - [ ] `load [world_name] [file_name]` - load a quest project
+    - [ ] `exec [command_file_name]` - execute a list of commands from a file
+    - [ ] `apply [world] [action]([arg1],...)` - apply an action
+    - [ ] `add [world] [rel]([obj1],...)` - add a statement
+    - [ ] `rem [world] [rel]([obj1],...)` - remove a statent
+    - [ ] `when_quest [event] [quest_name] [debug_command]: ...` - sets a solver marker with a quest event as the condition (`NEW`, `DONE`, `UNREACHABLE`, `UNKNOWN`, `GOAL [id]`).
+    - [ ] `when: [<conditions>] [debug_command]: [<command list>]` - sets a solver marker using a list of statements as the condition
+        - [ ] Debug command `branch [name]` - creates a new branch. The debugger will try all branches by solving the quests up to the `[condition]`. Then it will first skip the `[<command list>]`, and in an alternative "timeline", execute the `[<command list>]`. This makes it possible to debug complex non-linear quests with multiple goals.
+        - [ ] Debug command `do [name]` - simply executes the command list when conditions are met, without branching
 
 ### In Progress
 
