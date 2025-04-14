@@ -25,10 +25,11 @@ Libmozok TODO list.
     - Command files (`.qcf` quest command file) — files that describe how to properly load the quest world and all possible quest lines.
     - [ ] `world [name]` - create a new quest world
     - [ ] `load [world_name] [file_name]` - load a quest project
-    - [ ] `exec [command_file_name]` - execute a list of commands from a file
+    - [ ] `run [command_file_name]` - execute a list of commands from a file
     - [ ] `apply [world] [action]([arg1],...)` - apply an action
     - [ ] `add [world] [rel]([obj1],...)` - add a statement
     - [ ] `rem [world] [rel]([obj1],...)` - remove a statent
+    - [ ] `expect [what]` - adds an expectaion, raise error if expectation fails. E.g. `expect quest FAIL [fullname]`, `expect goal_change ...`.
     - [ ] `when_quest [event] [quest_name] [debug_command]: ...` - sets a solver marker with a quest event as the condition (`NEW`, `DONE`, `UNREACHABLE`, `UNKNOWN`, `GOAL [id]`).
     - [ ] `when: [<conditions>] [debug_command]: [<command list>]` - sets a solver marker using a list of statements as the condition
         - [ ] Debug command `branch [name]` - creates a new branch. The debugger will try all branches by solving the quests up to the `[condition]`. Then it will first skip the `[<command list>]`, and in an alternative "timeline", execute the `[<command list>]`. This makes it possible to debug complex non-linear quests with multiple goals.
