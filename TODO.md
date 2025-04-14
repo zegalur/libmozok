@@ -22,7 +22,7 @@ Libmozok TODO list.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
 - [ ] Quest debugging tool `mozok`(`.exe`). The main purpose of this tool is to model all the ways quest worlds can evolve during any possible gameplay:
-    - Command files (`.qcf` quest command file) — files that describe how to properly load the quest world and all possible quest lines.
+    - [ ] Command files (`.qcf` quest command file) — files that describe how to properly load the quest world and all possible quest lines.
     - [ ] `world [name]` - create a new quest world
     - [ ] `load [world_name] [file_name]` - load a quest project
     - [ ] `run [command_file_name]` - execute a list of commands from a file
