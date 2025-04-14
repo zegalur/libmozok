@@ -32,8 +32,9 @@ Libmozok TODO list.
     - [ ] `expect [what]` - adds an expectaion, raise error if expectation fails. E.g. `expect quest FAIL [fullname]`, `expect goal_change ...`.
     - [ ] `when_quest [event] [world].[quest_name] [debug_command]: ...` - sets a solver marker with a quest event as the condition (`NEW`, `DONE`, `UNREACHABLE`, `UNKNOWN`, `GOAL [id]`).
     - [ ] `when: [<conditions>] [debug_command]: [<command list>]` - sets a solver marker using a list of statements as the condition
-        - [ ] Debug command `branch [name]` - creates a new branch. The debugger will try all branches by solving the quests up to the `[condition]`. Then it will first skip the `[<command list>]`, and in an alternative "timeline", execute the `[<command list>]`. This makes it possible to debug complex non-linear quests with multiple goals.
+        - [ ] Debug command `branch [name]` - creates a new branch (one even can have multiple branches). The debugger will try all branches by solving the quests up to the `[condition]`. Then it will first skip the `[<command list>]`, and in an alternative "timeline", execute the `[<command list>]`. This makes it possible to debug complex non-linear quests with multiple goals.
         - [ ] Debug command `do [name]` - simply executes the command list when conditions are met, without branching
+    - [ ] Export debug results as tree using popular tree formats (e.g. Graphviz). Hopefully, it will help to visualize the overall structure and see the mistakes better
 
 ### In Progress
 
