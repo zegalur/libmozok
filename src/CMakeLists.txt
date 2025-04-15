@@ -31,6 +31,7 @@ option(OUTPUT_HASH_COLLISIONS_INFO "If set ON enables the output on hash collisi
 set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 enable_testing() 
 add_subdirectory(libmozok)
+add_subdirectory(mozok_app)
 
 
 # ------------------ Doxygen ------------------ #

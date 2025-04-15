@@ -8,7 +8,7 @@ Libmozok TODO list.
 - [ ] Add: support arrays:
     - [ ] Add: `object arr[N,M,..] : Type` -> `arr_0_0`, `arr_0_1`, ...
     - [ ] Add: `rel(arr[i,j], arr[i+1, j])` -> `rel(arr_0_0, arr_1_0)` for all pairs of `(i,j)` that are consistent with the array size.
-- [ ] Add: onNewQuestGoal
+- [ ] Add: `onNewQuestGoal(oldGoal, newGoal)` event
 - [ ] Add: Error: The same object appears twice or more in the same statement.
 - [ ] Add: Warning: Action argument was not used.
 - [ ] Add: error codes for `libmozok::Result`
@@ -22,7 +22,12 @@ Libmozok TODO list.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
 - [ ] Quest debugging tool `mozok`(`.exe`). The main purpose of this tool is to model all the ways quest worlds can evolve during any possible gameplay:
-    - [ ] Command files (`.qcf` quest command file) — files that describe how to properly load the quest world and all possible quest lines.
+    - [ ] Auto-generate help MD document into `docs`
+    - [ ] Command files (`.qsf` quest script file) — files that describe how to properly load the quest world and all possible quest lines.
+    - [ ] Syntax highlight for the `.qsf` files
+        - [ ] Vim / NeoVim
+        - [ ] VSCode
+    - [ ] `pause` and `continue` to control the debugging process (`pause` is used inside the script, `continue` is used in the app terminal to continue the debugging)
     - [ ] `world [name]` - create a new quest world
     - [ ] `load [world_name] [file_name]` - load a quest project
     - [ ] `run [command_file_name]` - execute a list of commands from a file

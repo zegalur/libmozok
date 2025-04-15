@@ -1,0 +1,27 @@
+# ...
+
+# Create the `tutorial` quest world.
+world tutorial
+
+# Set `tutorial` as a standard world.
+# After this we don't need to write names in a long form like <world>.<obj>
+# but can use just <obj> etc.
+std_world tutorial
+
+# Load the `tutorial.quest` project into `tutorial` world.
+load tutorial.quest
+
+# Initialize the world.
+when_init:
+    apply InitTutorials
+
+# When `PuzzleTutorial_GetHeart` quest will be opened,
+# create a new branch where the puzzle is not solvable.
+when_quest NEW PuzzleTutorial_GetHeart branch:
+    # In this branch we expect this quest to fail.
+    expect QUEST_FAIL PuzzleTutorial_GetHeart
+    # As a consequence, we expect a goal change in the parent quest.
+    expect GOAL_CHANGE PuzzleTutorial _ 1
+    # Block the exit with the stone that can't be moved.
+    add PTut_BlockAt(pt_cell_00)
+
