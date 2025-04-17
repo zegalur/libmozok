@@ -24,6 +24,9 @@ target_sources(libmozok PRIVATE libmozok/result.cpp)
 target_sources(libmozok PRIVATE libmozok/message_processor.cpp)
 target_sources(libmozok PRIVATE libmozok/server.cpp)
 
+target_sources(libmozok PRIVATE libmozok/parser.hpp)
+target_sources(libmozok PRIVATE libmozok/parser.cpp)
+
 target_sources(libmozok PRIVATE libmozok/error_utils.hpp)
 target_sources(libmozok PRIVATE libmozok/error_utils.cpp)
 
@@ -32,6 +35,9 @@ target_sources(libmozok PRIVATE libmozok/world.cpp)
 
 target_sources(libmozok PRIVATE libmozok/project.hpp)
 target_sources(libmozok PRIVATE libmozok/project.cpp)
+
+target_sources(libmozok PRIVATE libmozok/script.hpp)
+target_sources(libmozok PRIVATE libmozok/script.cpp)
 
 target_sources(libmozok PRIVATE libmozok/type.hpp)
 target_sources(libmozok PRIVATE libmozok/type.cpp)
@@ -76,6 +82,7 @@ target_sources(libmozok PUBLIC libmozok/public_types.hpp)
 target_sources(libmozok PUBLIC libmozok/result.hpp)
 target_sources(libmozok PUBLIC libmozok/message_processor.hpp)
 target_sources(libmozok PUBLIC libmozok/server.hpp)
+target_sources(libmozok PUBLIC libmozok/filesystem.hpp)
 
 
 # --------------- Installation ---------------- #
@@ -87,6 +94,7 @@ install(FILES libmozok/mozok.hpp
               libmozok/result.hpp
               libmozok/message_processor.hpp
               libmozok/server.hpp
+              libmozok/filesystem.hpp
         DESTINATION include/libmozok)
 
 # Install rule for library itself.

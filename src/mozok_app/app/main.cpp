@@ -12,6 +12,7 @@
 #include <unordered_map>
 
 #include "app/app.hpp"
+#include "app/script.hpp"
 #include "app/strings.hpp"
 #include "libmozok/public_types.hpp"
 
@@ -140,14 +141,15 @@ Result o_pauseOnError(AppOptions& appOptions, int, char**, int&) {
     return Result::OK();
 }
 
-Result o_printOnOk(AppOptions& appOptions, int, char** argv, int& p) {
+Result o_printOnOk(AppOptions& appOptions, int argc, char** argv, int& p) {
+    if(++p >= argc)
+        return print_BadOptionFormat(argv[p-1]);
     appOptions.printOnOk = argv[p];
     return Result::OK();
 }
 
 Result o_setServerName(AppOptions& appOptions, int argc, char** argv, int& p) {
-    ++p;
-    if(p >= argc)
+    if(++p >= argc)
         return print_BadOptionFormat(argv[p-1]);
     appOptions.serverName = argv[p];
     return Result::OK();
@@ -155,17 +157,6 @@ Result o_setServerName(AppOptions& appOptions, int argc, char** argv, int& p) {
 
 
 // =========================== Command Functions =========================== //
-
-Result c_exit(App&, const Str& line, const StrVec& tokens) {
-    if(tokens.size() > 1)
-        cout << line << endl;
-    return Result::OK();
-}
-
-Result c_print(App&, const Str& line, const StrVec&) {
-    cout << line << endl;
-    return Result::OK();
-}
 
 Result c_help(App&, const Str&, const StrVec& tokens) {
     if(tokens.size() == 1) {
@@ -185,11 +176,15 @@ Result c_help(App&, const Str&, const StrVec& tokens) {
 Result c_world(App& app, const Str&, const StrVec& tokens) {
     if(tokens.size() != 2)
         return print_BadCommandFormat(tokens[0]);
-    return app.newWorld(C_WORLD);
+    return app.newWorld(tokens[1]);
 }
 
 Result c_unpause(App& app, const Str&, const StrVec&) {
     return app.unpause();
+}
+
+Result c_block_cmd(App& app, const Str& line, const StrVec&) {
+    return QSFParser::parseAndApplyCmd(line, &app);
 }
 
 }
@@ -206,7 +201,6 @@ int main(int argc, char **argv) {
 
     AppOptions appOptions;
     const Str scriptFileName = argv[1];
-    appOptions.inputFileName = scriptFileName;
 
     // Show app help.
     if(scriptFileName == O_HELP) {
@@ -228,15 +222,17 @@ int main(int argc, char **argv) {
     stringstream in_buffer;
     in_buffer << in.rdbuf();
     const Str scriptFile(in_buffer.str());
-    appOptions.inputFile = scriptFile;
     in.close();
 
     // Setting up the map that maps command name into a command function.
     commandMap["help"] = &c_help;
-    commandMap[C_EXIT] = &c_exit;
+    //commandMap[C_INFO] = ;
+    commandMap[C_EXIT] = &c_block_cmd;
     commandMap[C_UNPAUSE] = &c_unpause;
-    commandMap[C_PRINT] = &c_print;
     commandMap[C_WORLD] = &c_world;
+    commandMap[C_PRINT] = &c_block_cmd;
+    commandMap[C_EXPECT] = &c_block_cmd;
+    commandMap[C_APPLY] = &c_block_cmd;
 
     // Setting up the map that maps options name into an option function.
     optionMap[O_PAUSE_ON_ERR] = &o_pauseOnError;
@@ -260,6 +256,13 @@ int main(int argc, char **argv) {
     if(status.isError() || app==nullptr || app->getCurrentStatus().isError()) {
         print_Error("Oops! Can't create the `App` instance.");
         print_ErrorResult(status);
+        return ERROR_CODE;
+    }
+
+    // Parse the input QSF into the application.
+    status <<= QSFParser::parse(scriptFileName, scriptFile, app.get());
+    if(status.isError()) {
+        cout << status.getDescription() << endl;
         return ERROR_CODE;
     }
 
@@ -294,8 +297,9 @@ int main(int argc, char **argv) {
             break;
     }
 
-    if(app->getCurrentStatus().isOk() && appOptions.printOnOk.length() > 0)
-        cout << appOptions.printOnOk << endl;
+    if(app->getCurrentStatus().isOk()) 
+        if(appOptions.printOnOk.length() > 0)
+            cout << appOptions.printOnOk << endl;
 
     return 0;
 }

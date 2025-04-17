@@ -1,0 +1,41 @@
+# Tutorial project file.
+#
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
+version 1 0
+project tutorial_main
+
+# ================================ Main Quest ================================ #
+# Finish all the tutorials one by one.
+
+main_quest FinishAllTutorials:
+	preconditions:
+		# none
+	goal:
+		TutorialFinished(controlsTutorial)
+		TutorialFinished(fightingTutorial)
+		TutorialFinished(keyTutorial)
+		TutorialFinished(puzzleTutorial)
+	actions:
+		ControlsTutorial
+		FightingTutorial
+		KeyTutorial
+		PuzzleTutorial
+	objects:
+		controlsTutorial
+		fightingTutorial
+		keyTutorial
+		puzzleTutorial
+	subquests:
+		ControlsTutorial
+		FightingTutorial
+		KeyTutorial
+		PuzzleTutorial
+
+
+action InitTutorials:
+	pre # none
+	rem # none
+	add PTut_Init()

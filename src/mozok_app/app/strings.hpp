@@ -130,7 +130,7 @@ const StrVec C_WORLD_ARGS =
     };
 
 
-const Str C_STD_WORLD = "std_world";
+/*const Str C_STD_WORLD = "std_world";
 const Str C_STD_WORLD_FORMAT = "std_world <world_name>";
 const Str C_STD_WORLD_BRIEF = "Sets the standard world name.";
 const Str C_STD_WORLD_DESC = 
@@ -140,18 +140,36 @@ const Str C_STD_WORLD_DESC =
 const StrVec C_STD_WORLD_ARGS = 
     { "`<world_name>` - The name of a quest world that will"
         " be used as the standard quest world."
-    };
+    };*/
 
 
 const Str C_LOAD = "load";
-const Str C_LOAD_FORMAT = "load <world_name> <file_path>";
+const Str C_LOAD_FORMAT = "load <[world]> <file_path>";
 const Str C_LOAD_BRIEF = "Loads a quest project into a quest world.";
 const Str C_LOAD_DESC = C_LOAD_BRIEF;
 const StrVec C_LOAD_ARGS = 
-    { "`<world_name>` - The name of the world into which we load a project"
+    { "`<[world]>` - The name of the world !in brackets!, into which we load a project"
     , "`<file_path>` - The path to the `.quest` project file"
     };
 
+
+const Str C_EXPECT = "expect";
+const Str C_EXPECT_FORMAT = "expect <what> <args>";
+const Str C_EXPECT_BRIEF = "...";
+const Str C_EXPECT_DESC = "...";
+const StrVec C_EXPECT_ARGS =
+    { "`<what>` - "
+    , " ... "
+    };
+
+const Str C_APPLY = "apply";
+const Str C_APPLY_FORMAT = "apply <[world]> <action>";
+const Str C_APPLY_BRIEF = "...";
+const Str C_APPLY_DESC = "...";
+const StrVec C_APPLY_ARGS =
+    { " ... "
+    , " ... "
+    };
 
 /// @}
 
@@ -164,15 +182,18 @@ const HelpMap HELP_MAP = {
     , MOZOK_HELP(APP_OPTION, O_PAUSE_ON_ERR)
     , MOZOK_HELP(APP_OPTION, O_PRINT_ON_OK)
     , MOZOK_HELP(APP_OPTION, O_SERVER_NAME)
+    
     // commands
     , MOZOK_HELP(GENERAL_COMMAND, C_EXIT)
     , MOZOK_HELP(SCRIPT_COMMAND, C_PAUSE)
     , MOZOK_HELP(TERMINAL_COMMAND, C_UNPAUSE)
     , MOZOK_HELP(GENERAL_COMMAND, C_PRINT)
     , MOZOK_HELP(GENERAL_COMMAND, C_WORLD)
-    , MOZOK_HELP(GENERAL_COMMAND, C_STD_WORLD)
-    , MOZOK_HELP(SCRIPT_COMMAND, C_LOAD)
-    };
+    //, MOZOK_HELP(GENERAL_COMMAND, C_STD_WORLD)
+    , MOZOK_HELP(TERMINAL_COMMAND, C_LOAD)
+    , MOZOK_HELP(SCRIPT_COMMAND, C_EXPECT)
+    , MOZOK_HELP(SCRIPT_COMMAND, C_APPLY)
+};
 
 
 }

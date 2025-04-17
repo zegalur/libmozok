@@ -21,25 +21,30 @@ Libmozok TODO list.
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
-- [ ] Quest debugging tool `mozok`(`.exe`). The main purpose of this tool is to model all the ways quest worlds can evolve during any possible gameplay:
+- [ ] Add: Quest debugging tool `mozok`(`.exe`):
+    - [ ] Add: `FileReader` class as a part of public interface with `virtual Str FileReader::getTextFile(fileName)`
+    - [ ] Add: `Result Server::load(script, FileReader)` that will do only the loading part of the script file, but not the debugging part. (only commands `world` and `load`) - this will allow to use the same .qsf file for both debugging the quests and defining the load order.
     - [ ] Auto-generate help MD document into `docs`
-    - [ ] Command files (`.qsf` quest script file) — files that describe how to properly load the quest world and all possible quest lines.
-    - [ ] Syntax highlight for the `.qsf` files
-        - [ ] Vim / NeoVim
-        - [ ] VSCode
-    - [ ] `pause` and `continue` to control the debugging process (`pause` is used inside the script, `continue` is used in the app terminal to continue the debugging)
-    - [ ] `world [name]` - create a new quest world
-    - [ ] `load [world_name] [file_name]` - load a quest project
-    - [ ] `run [command_file_name]` - execute a list of commands from a file
-    - [ ] `apply [world].[action]([arg1],...)` - apply an action
-    - [ ] `add [world].[rel]([obj1],...)` - add a statement
-    - [ ] `rem [world].[rel]([obj1],...)` - remove a statent
-    - [ ] `expect [what]` - adds an expectaion, raise error if expectation fails. E.g. `expect quest FAIL [fullname]`, `expect goal_change ...`.
-    - [ ] `when_quest [event] [world].[quest_name] [debug_command]: ...` - sets a solver marker with a quest event as the condition (`NEW`, `DONE`, `UNREACHABLE`, `UNKNOWN`, `GOAL [id]`).
-    - [ ] `when: [<conditions>] [debug_command]: [<command list>]` - sets a solver marker using a list of statements as the condition
-        - [ ] Debug command `branch [name]` - creates a new branch. The debugger will try all branches by solving the quests up to the `[condition]`. Then it will first skip the `[<command list>]`, and in an alternative "timeline", execute the `[<command list>]`. This makes it possible to debug complex non-linear quests with multiple goals.
-        - [ ] Debug command `do [name]` - simply executes the command list when conditions are met, without branching
-
+    - [ ] Generate a tree representation in one of popular formats: 
+        - [ ] Information on how long was planning on each node
+        - [ ] Connect nodes with the same hash values
+    - [ ] `.qsf` quest script file:
+        - [ ] Add: Syntax highlight for the `.qsf` files
+            - [ ] Vim / NeoVim
+            - [ ] VSCode
+        - [ ] `pause` and `continue` to control the debugging process
+        - [ ] `world name` - create a new quest world
+        - [ ] `std_world name` - sets the standard world name
+        - [ ] `load [world_name] file_name` - load a quest project
+        - [ ] `run [command_file_name]` - execute a list of commands from a `qsf` file
+        - [ ] `apply [world] action(arg1,...)` - apply an action
+        - [ ] `expect [what]` - adds an expectation, raise error if expectation fails.
+        - [ ] `assert [what]` - asserts condition, raise error if it fails.
+        - [ ] `<ACT|SPLIT> on[Event] ... :` - event as marker
+        - [ ] `<ACT|SPLIT> if [world] action(...):` - N/A action as a marker
+            - [ ] `ACT 2`, `ACT 3` - act not once but two, three times etc.
+        - [ ] Placeholder parameters `_`
+    
 ### In Progress
 
 - [ ] Basic documentation

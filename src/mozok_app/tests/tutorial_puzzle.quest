@@ -1,189 +1,10 @@
-# Tutorial project file.
-#
-# This file is a part of the LibMozok DEMO project, intended to demonstrate 
-# how the library can be integrated into a popular game engine. Also, it is a
-# good playground to test various features.
-
-version 1 0
-project tutorials
-
-
-# ============================== Tutorial Utils ============================== #
-# Various elements that are common and useful to all tutorials.
-
-# Represents a small but complete tutorial.
-type Tutorial
-
-# Represent a part of a small tutorial.
-type TutorialAction
-
-
-# Marks a small tutorial as "Finished" (completed).
-rel TutorialFinished(Tutorial)
-
-# Marks a part of a small tutorial as "Applied" (completed).
-rel TutorialActionApplied(TutorialAction)
-
-# Marks a tutorial as reachable. This can be useful if you want to manually make 
-# some goals unreachable (see the PuzzleTutorial commentaries).
-rel TutorialIsReachable(Tutorial)
-
-
-# Mark the given tutorial action as applied.
-action ApplyTutorialAction:
-	tutorialAction : TutorialAction
-	pre # none
-	rem # none
-	add TutorialActionApplied(tutorialAction)
-
-# Finish a tutorial with 2 objectives.
-action FinishTutorial_2:
-	tutorial : Tutorial
-	action1 : TutorialAction
-	action2 : TutorialAction
-	pre TutorialActionApplied(action1)
-		TutorialActionApplied(action2)
-	rem # none
-	add TutorialFinished(tutorial)
-
-# Finish a tutorial with 3 objectives.
-action FinishTutorial_3:
-	tutorial : Tutorial
-	action1 : TutorialAction
-	action2 : TutorialAction
-	action3 : TutorialAction
-	pre TutorialActionApplied(action1)
-		TutorialActionApplied(action2)
-		TutorialActionApplied(action3)
-	rem # none
-	add TutorialFinished(tutorial)
-
-# Finish a tutorial with 5 objectives.
-action FinishTutorial_5:
-	tutorial : Tutorial
-	action1 : TutorialAction
-	action2 : TutorialAction
-	action3 : TutorialAction
-	action4 : TutorialAction
-	action5 : TutorialAction
-	pre TutorialActionApplied(action1)
-		TutorialActionApplied(action2)
-		TutorialActionApplied(action3)
-		TutorialActionApplied(action4)
-		TutorialActionApplied(action5)
-	rem # none
-	add TutorialFinished(tutorial)
-
-
-# ============================ Controls Tutorial ============================= #
-# Basic character controls, including movement, hiding, and attacking.
-
-type ControlsTutorial : Tutorial
-object controlsTutorial : ControlsTutorial
-
-type ControlsTutorialAction : TutorialAction
-object movementAction : ControlsTutorialAction # Move in all directions
-object attackAction : ControlsTutorialAction # Attack from all directions
-object hideAction : ControlsTutorialAction # Hide in all directions
-
-quest ControlsTutorial:
-	preconditions:
-		# none
-	goal:
-		TutorialFinished(controlsTutorial)
-	actions:
-		ApplyTutorialAction
-		FinishTutorial_3
-	objects:
-		controlsTutorial
-		movementAction
-		attackAction
-		hideAction
-	subquests:
-		# none
-
-action N/A ControlsTutorial:
-	tutorial : ControlsTutorial
-	pre # none
-	rem # none
-	add TutorialFinished(tutorial)
-
-
-# ============================ Fighting Tutorial ============================= #
-# Master fighting techniques.
-
-type FightingTutorial : Tutorial
-object fightingTutorial : FightingTutorial
-
-type FightingTutorialAction : TutorialAction
-object killEnemyAction : FightingTutorialAction # Kill the enemy
-object blockAttackAction : FightingTutorialAction # Block 3 enemy attacks
-object takeHitAction : FightingTutorialAction # Take a direct hit
-object takeHeartAction : FightingTutorialAction # Take a heart
-object dieAction : FightingTutorialAction # Die
-
-quest FightingTutorial:
-	preconditions:
-		# none
-	goal:
-		TutorialFinished(fightingTutorial)
-	actions:
-		ApplyTutorialAction
-		FinishTutorial_5
-	objects:
-		fightingTutorial
-		killEnemyAction
-		blockAttackAction
-		takeHitAction
-		takeHeartAction
-		dieAction
-	subquests:
-		# none
-
-action N/A FightingTutorial:
-	prevTutorial : ControlsTutorial
-	tutorial : FightingTutorial
-	pre TutorialFinished(prevTutorial)
-	rem # none
-	add TutorialFinished(tutorial)
-
-
-# =============================== Key Tutorial =============================== #
-# Keys and doors.
-
-type KeyTutorial : Tutorial
-object keyTutorial : KeyTutorial
-
-type KeyTutorialAction : TutorialAction
-object pickUpKeyAction : KeyTutorialAction # Pick up a key.
-object openDoorAction : KeyTutorialAction # Open the door.
-
-quest KeyTutorial:
-	preconditions:
-		# none
-	goal:
-		TutorialFinished(keyTutorial)
-	actions:
-		ApplyTutorialAction
-		FinishTutorial_2
-	objects:
-		keyTutorial
-		pickUpKeyAction
-		openDoorAction
-	subquests:
-		# none
-
-action N/A KeyTutorial:
-	prevTutorial : FightingTutorial
-	tutorial : KeyTutorial
-	pre TutorialFinished(prevTutorial)
-	rem # none
-	add TutorialFinished(tutorial)
-
-
 # ============================= Puzzle Tutorial ============================== #
+
 # This puzzle is for demonstration purposes only.
 # LibMozok was not intended to be a puzzle-solving library.
+
+version 1 0
+project tutorial_puzzle
 
 type PuzzleTutorial : Tutorial
 object puzzleTutorial : PuzzleTutorial
@@ -300,6 +121,13 @@ rlist PTut_Init:
 		PTut_Free(pt_cell_33)
 	
 	PTut_PlayerAt(pt_cell_33)
+
+
+# Blocks the exit making the Puzzle quest impossible to achieve.
+action N/A PTut_BlockExit:
+    pre # none
+    rem PTut_Free(pt_cell_00)
+    add PTut_BlockAt(pt_cell_00)
 
 # Player moved left.
 action PTut_MoveLeft:
@@ -479,6 +307,7 @@ action N/A PuzzleTutorial_GetHeart:
 	add TutorialFinished(main_tutorial)
 		TutorialFinished(tutorial)
 
+
 # Unreachable goals are skipped automatically. However, in this case, the 
 # puzzle quest was split into smaller subquest, and the associated goal must be 
 # manually canceled because we want the failed quest to appear in the quest 
@@ -511,35 +340,3 @@ action N/A PuzzleTutorial:
 	rem # none
 	add TutorialFinished(tutorial)
 
-# ================================ Main Quest ================================ #
-# Finish all the tutorials one by one.
-
-main_quest FinishAllTutorials:
-	preconditions:
-		# none
-	goal:
-		TutorialFinished(controlsTutorial)
-		TutorialFinished(fightingTutorial)
-		TutorialFinished(keyTutorial)
-		TutorialFinished(puzzleTutorial)
-	actions:
-		ControlsTutorial
-		FightingTutorial
-		KeyTutorial
-		PuzzleTutorial
-	objects:
-		controlsTutorial
-		fightingTutorial
-		keyTutorial
-		puzzleTutorial
-	subquests:
-		ControlsTutorial
-		FightingTutorial
-		KeyTutorial
-		PuzzleTutorial
-
-
-action InitTutorials:
-	pre # none
-	rem # none
-	add PTut_Init()

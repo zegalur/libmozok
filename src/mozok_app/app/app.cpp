@@ -1,4 +1,7 @@
 #include "app.hpp"
+#include "libmozok/error_utils.hpp"
+#include "libmozok/server.hpp"
+
 
 namespace mozok {
 namespace app {
@@ -27,7 +30,11 @@ App::~App() noexcept {
     delete _server;
 }
 
-const Result& App::getCurrentStatus() const {
+Server* App::getServer() noexcept {
+    return _server;
+}
+
+const Result& App::getCurrentStatus() const noexcept {
     return _status;
 }
 
@@ -35,7 +42,7 @@ const Result& App::getCurrentStatus() const {
     return _server->createWorld(name);
 }
 
-[[nodiscard]] Result App::setStdWorld(const Str& worldName) noexcept {
+/*[[nodiscard]] Result App::setStdWorld(const Str& worldName) noexcept {
     if(_server->hasWorld(worldName) == false)
         return Result::Error(
                 "Can't set `" + worldName + "` as the"
@@ -47,12 +54,41 @@ const Result& App::getCurrentStatus() const {
                 " already set to `" + _stdWorldName + "`.");
     _stdWorldName = worldName;
     return Result::OK();
-}
+}*/
 
 [[nodiscard]] Result App::unpause() noexcept {
     return errNotImplemented("unpause");
 }
 
+[[nodiscard]] Result App::applyInitAction(
+        const Str& worldName,
+        const Str& actionName,
+        const StrVec& arguments
+        ) noexcept {
+    if(_server->hasWorld(worldName) == false)
+        return errorWorldDoesntExist(_options.serverName, worldName);
+    if(_server->getActionStatus(worldName, actionName) != Server::ACTION_APPLICABLE)
+        return Result::Error("Invalid action `" + actionName + "`");
+    for(const auto& objName : arguments)
+        if(_server->hasObject(worldName, objName) == false)
+            return errorUndefinedObject(worldName, objName);
+    return _server->applyAction(worldName, actionName, arguments);
+}
+
+
+[[nodiscard]] Result App::addEventHandler(
+        const EventHandler& handler) noexcept {
+    _eventHandlers.push_back(handler);
+    return Result::OK();
+}
+
+const Str& App::getServerName() const noexcept {
+    return _options.serverName;
+}
+
+[[nodiscard]] Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
+    return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
+}
 
 }
 }

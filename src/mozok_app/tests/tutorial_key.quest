@@ -1,0 +1,39 @@
+# =============================== Key Tutorial =============================== #
+
+# Keys and doors.
+
+version 1 0
+project tutorial_key
+
+type KeyTutorial : Tutorial
+object keyTutorial : KeyTutorial
+
+type KeyTutorialAction : TutorialAction
+object pickUpKeyAction : KeyTutorialAction # Pick up a key.
+object openDoorAction : KeyTutorialAction # Open the door.
+
+quest KeyTutorial:
+	preconditions:
+		# none
+	goal:
+		TutorialFinished(keyTutorial)
+	actions:
+		ApplyTutorialAction
+		FinishTutorial_2
+	objects:
+		keyTutorial
+		pickUpKeyAction
+		openDoorAction
+	subquests:
+		# none
+
+action N/A KeyTutorial:
+	prevTutorial : FightingTutorial
+	tutorial : KeyTutorial
+	pre TutorialFinished(prevTutorial)
+	rem # none
+	add TutorialFinished(tutorial)
+
+
+
+

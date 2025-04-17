@@ -5,6 +5,7 @@
 #include <libmozok/public_types.hpp>
 #include <libmozok/result.hpp>
 #include <libmozok/message_processor.hpp>
+#include <libmozok/filesystem.hpp>
 
 namespace mozok {
 
@@ -46,7 +47,7 @@ public:
 
     /// @brief Checks if a world with the specified name exists.
     /// @param worldName The name of the world.
-    /// @return Returns true is a world with a specified name exists. 
+    /// @return Returns `true` if a world with a specified name exists. 
     ///         Otherwise, returns false.
     virtual bool hasWorld(const mozok::Str& worldName) const noexcept = 0;
 
@@ -90,6 +91,66 @@ public:
 
 
     //==========================================================================
+    /// @defgroup Script
+    /// @{
+
+    /// ...
+    virtual mozok::Result loadQuestScriptFile(
+            mozok::FileSystem* fileSystem,
+            const mozok::Str& scriptFileName,
+            const mozok::Str& scriptSrc,
+            bool applyInitActions
+            ) noexcept = 0;
+
+    /// @}
+
+
+    //==========================================================================
+    /// @defgroup Objects
+    /// @{
+
+    /// @brief Checks if a world has an object.
+    /// @param worldName The name of the world.
+    /// @param objectName The name of the object.
+    /// @return Returns `true` if this world has the object. 
+    ///         If world or objects doesn't exist, returns false.
+    virtual bool hasObject(
+            const mozok::Str& worldName,
+            const mozok::Str& objectName
+            ) noexcept = 0;
+
+    /// @}
+    
+    
+    //==========================================================================
+    /// @defgroup Quests
+    /// @{
+
+    /// @brief Checks if a world has a main quest with a specific name.
+    /// @param worldName The name of the world.
+    /// @param mainQuestName The name of the main quest.
+    /// @return Returns `true` if this world has the main quest. 
+    ///         If world or main quest doesn't exist, returns false.
+    virtual bool hasMainQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& mainQuestName
+            ) noexcept = 0;
+
+    /// @}
+
+    /// @brief Checks if a world has a subquest with a specific name.
+    /// @param worldName The name of the world.
+    /// @param subQuestName The name of the subquest.
+    /// @return Returns `true` if this world has the subquest. 
+    ///         If world or main quest doesn't exist, returns false.
+    virtual bool hasSubQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& subQuestName
+            ) noexcept = 0;
+
+    /// @}
+
+    //==========================================================================
     /// @defgroup Actions
     /// @{
 
@@ -107,7 +168,8 @@ public:
 
     /// @brief Applies an action to a world. Then it activates all inactive main 
     ///        quests with now consistent preconditions. In a case of an error,
-    ///        doesn't call `onActionError` message.
+    ///        it will return the error status, but it will not trigger the
+    ///        `onActionError` message.
     /// @param worldName The name of the world where action must be applied.
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).

@@ -1,27 +1,54 @@
 # ...
 
-# Create the `tutorial` quest world.
-world tutorial
+version 1 0
+script script_name_here
 
-# Set `tutorial` as a standard world.
-# After this we don't need to write names in a long form like <world>.<obj>
-# but can use just <obj> etc.
-std_world tutorial
+# ======================== STRUCTURE SECTION ================================ #
 
-# Load the `tutorial.quest` project into `tutorial` world.
-load tutorial.quest
+# Defines a list of worlds.
+worlds:
+    tut # Tutorial world.
 
-# Initialize the world.
-when_init:
-    apply InitTutorials
+# Defines a list of projects that need to be loaded.
+projects:
+    [tut] tutorial_utils.quest
+    [tut] tutorial_controls.quest
+    [tut] tutorial_fighting.quest
+    [tut] tutorial_key.quest
+    [tut] tutorial_puzzle.quest
+    [tut] tutorial_main.quest
 
-# When `PuzzleTutorial_GetHeart` quest will be opened,
-# create a new branch where the puzzle is not solvable.
-when_quest NEW PuzzleTutorial_GetHeart branch:
+# The list of actions to properly initialize the game.
+init:
+    [tut] InitTutorials()
+
+
+# ======================== DEBUGGING SECTION ================================ #
+
+# Split and block the exit, when `_GetHeart` is activated. 
+onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
+SPLIT BLOCK_EXIT:
     # In this branch we expect this quest to fail.
-    expect QUEST_FAIL PuzzleTutorial_GetHeart
+    expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
     # As a consequence, we expect a goal change in the parent quest.
-    expect GOAL_CHANGE PuzzleTutorial _ 1
+    expect GOAL_CHANGE [tut] PuzzleTutorial _ 1
     # Block the exit with the stone that can't be moved.
-    add PTut_BlockAt(pt_cell_00)
+    apply [tut] PTut_BlockExit()
+SPLIT DO_NOTHING:
+    # second possible split
+    print Second split test
 
+# Pause the simulation when search limit is reached.
+onSearchLimitReached [tut] _:
+ALWAYS SEARCH_LIMIT: 
+    exit ERROR: Search limit reached!
+
+# Triggered when this action preconditions hold during the simulation.
+onPre [tut] TstNAAction():
+ACT ON_TST_ACTION:
+    print Test action preconditions event.
+
+# Triggered when action was applied during the simulation.
+onAction [tut] TstNAAction():
+ACT ON_TST_ACTION:
+    print Test action preconditions event.

@@ -26,6 +26,8 @@ Result errorExpectingComma(const Str& fileName, int line, int col) noexcept;
 Result errorInvalidKeyword(const Str& fileName, int line, int col, const Str& keyword) noexcept;
 Result errorExpectingOpenPar(const Str& fileName, int line, int col) noexcept;
 Result errorExpectingClosePar(const Str& fileName, int line, int col) noexcept;
+Result errorExpectingOpenBracket(const Str& fileName, int line, int col) noexcept;
+Result errorExpectingCloseBracket(const Str& fileName, int line, int col) noexcept;
 Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept;
 
 // Server

@@ -18,6 +18,20 @@ target_sources(mozok PRIVATE app/strings.hpp)
 target_sources(mozok PRIVATE app/app.hpp)
 target_sources(mozok PRIVATE app/app.cpp)
 
+target_sources(mozok PRIVATE app/script.hpp)
+target_sources(mozok PRIVATE app/script.cpp)
+
+target_sources(mozok PRIVATE app/argument.hpp)
+target_sources(mozok PRIVATE app/argument.cpp)
+
+target_sources(mozok PRIVATE app/command.hpp)
+target_sources(mozok PRIVATE app/command.cpp)
+
+target_sources(mozok PRIVATE app/block.hpp)
+target_sources(mozok PRIVATE app/block.cpp)
+
+target_sources(mozok PRIVATE app/handler.hpp)
+target_sources(mozok PRIVATE app/handler.cpp)
 
 # --------------- Installation -------------- #
 

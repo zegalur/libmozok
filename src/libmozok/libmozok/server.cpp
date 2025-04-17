@@ -6,6 +6,7 @@
 #include <libmozok/error_utils.hpp>
 #include <libmozok/message_queue.hpp>
 #include <libmozok/world.hpp>
+#include <libmozok/script.hpp>
 
 namespace mozok {
 
@@ -169,6 +170,51 @@ public:
         return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
     }
 
+    // ============================== PROJECT =============================== //
+    
+    Result loadQuestScriptFile(
+            FileSystem* fileSystem,
+            const Str& scriptFileName,
+            const Str& scriptSrc,
+            bool applyInitActions
+            ) noexcept override {
+        return QuestScriptParser_Base::parseHeader(
+                this, fileSystem, scriptFileName, scriptSrc, applyInitActions);
+    }
+
+
+    // ============================== OBJECTS =============================== //
+    
+    bool hasObject(
+            const mozok::Str& worldName,
+            const mozok::Str& objectName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return false;
+        return _worlds[worldName]->hasObject(objectName);
+    }
+
+    // =============================== QUESTS =============================== //
+    
+    bool hasSubQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& subQuestName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return false;
+        return _worlds[worldName]->hasSubquest(subQuestName);
+    }
+
+    bool hasMainQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& mainQuestName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return false;
+        return _worlds[worldName]->hasMainQuest(mainQuestName);
+    }
+
+    
     // ============================== ACTIONS =============================== //
 
     Result applyAction(
@@ -200,6 +246,8 @@ public:
             const Str& actionName
             ) const noexcept override {
         if(hasWorld(worldName) == false)
+            return ACTION_UNDEFINED;
+        if(_worlds.find(worldName)->second->hasAction(actionName) == false)
             return ACTION_UNDEFINED;
         if(_worlds.find(worldName)->second->isActionNotApplicable(actionName))
             return ACTION_NOT_APPLICABLE;

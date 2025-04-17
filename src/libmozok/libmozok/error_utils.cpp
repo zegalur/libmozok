@@ -79,7 +79,7 @@ Result errorParserWorldError(
 Result errorParserUnsupportedVersion(const Str& fileName, int line, int col, 
         int curMajor, int curMinor, int badMajor, int badMinor) noexcept {
     std::stringstream strStream;
-    strStream << "Project file version (" << badMajor << ".";
+    strStream << "Version (" << badMajor << ".";
     strStream << badMinor << ") is not supported. ";
     strStream << "Expected version (" << curMajor << "." << curMinor << ").";
     return errorParserError(fileName, line, col, strStream.str());
@@ -139,6 +139,14 @@ Result errorExpectingOpenPar(const Str& fileName, int line, int col) noexcept {
 
 Result errorExpectingClosePar(const Str& fileName, int line, int col) noexcept {
     return errorParserError(fileName, line, col, "Expecting close parenthesis `)` symbol.");
+}
+
+Result errorExpectingOpenBracket(const Str& fileName, int line, int col) noexcept {
+    return errorParserError(fileName, line, col, "Expecting open braket `[` symbol.");
+}
+
+Result errorExpectingCloseBracket(const Str& fileName, int line, int col) noexcept {
+    return errorParserError(fileName, line, col, "Expecting close bracket `]` symbol.");
 }
 
 Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept {

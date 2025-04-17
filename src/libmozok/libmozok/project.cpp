@@ -3,6 +3,7 @@
 #include <libmozok/quest_manager.hpp>
 #include <libmozok/project.hpp>
 #include <libmozok/world.hpp>
+#include <libmozok/parser.hpp>
 #include <libmozok/error_utils.hpp>
 
 namespace mozok {
@@ -50,26 +51,8 @@ namespace {
 
 
 /// @brief Recursive descent parser for .quest files.
-class RecursiveDescentParser {
+class QuestProjectParser : public RecursiveDescentParser {
     World* _world;
-
-    /// @brief The project file name.
-    const Str _file;
-
-    /// @brief The current position of the parser's cursor within `_src` array.
-    int _pos;
-
-    /// @brief The current line of the parser's cursor (starting from 0).
-    int _line;
-
-    /// @brief The current column of the parser's cursor (starting from 0).
-    int _col;
-
-    /// @brief Project source code in the .quest format.
-    const Str _projectSrc;
-
-    /// @brief Source code characters array.
-    const char* _src;
 
     /// @brief Here the major version of the .quest file will be written.
     int _majorVersion;
@@ -81,136 +64,15 @@ class RecursiveDescentParser {
     Str _projectName;
 
 public:
-    RecursiveDescentParser(
+    QuestProjectParser(
             World* world, 
             const Str& file, 
             const Str& projectSrc) noexcept : 
+        RecursiveDescentParser(file, projectSrc, true),
         _world(world),
-        _file(file),
-        _pos(0),
-        _line(0),
-        _col(0),
-        _projectSrc(projectSrc + "\n"),
-        _src(_projectSrc.c_str()),
         _majorVersion(-1),
         _minorVersion(-1)
     { /* empty */ }
-
-    /// @brief Reads a space 'symbol'. Considers commentaries as one space symbol.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result space_symbol() noexcept {
-        if(_src[_pos] == '#') {
-            while (true) {
-                ++_pos;
-                ++_col;
-                if(_src[_pos] == '\n') return Result::OK();
-                if(_src[_pos] == '\0') return Result::OK();
-            }
-        }
-        bool isSpace = false;
-        isSpace = isSpace || (_src[_pos] == ' ');
-        isSpace = isSpace || (_src[_pos] == '\t');
-        if(isSpace == false)
-            return errorExpectingSpace(_file, _line, _col);
-        _pos++;
-        _col++;
-        return Result::OK();
-    }
-
-    /// @brief Parses a span of whitespace.
-    /// @param minCount Minimum required amount of 'space' symbols.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result space(const int minCount/* = 1*/) noexcept {
-        int count = 0;
-        for(; count < minCount; ++count) {
-            Result res = space_symbol();
-            if(res.isError())
-                return res;
-        }
-        while(space_symbol().isOk());
-        return Result::OK();
-    }
-
-    /// @brief Parses a next line symbol.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result next_line() noexcept {
-        if(_src[_pos] == '\n') {
-            // LF (Unix)
-            ++_pos;
-            _col = 0;
-            ++_line;
-            return Result::OK();
-        } else if(_src[_pos] == '\r' && _src[_pos + 1] == '\n') {
-            // CRLF (Windows)
-            _pos += 2;
-            _col = 0;
-            ++_line;
-            return Result::OK();
-        } else if(_src[_pos] == '\r') {
-            // CR (old Mac)
-            ++_pos;
-            _col = 0;
-            ++_line;
-            return Result::OK();
-        } else
-            return errorExpectingNewLine(_file, _line, _col);
-    }
-
-    /// @brief Moves the cursor to the next non-empty line.
-    /// @return Always returns 'Result::OK()'.
-    Result empty_lines() noexcept {
-        Result res;
-        do {space(0);} while (next_line().isOk());
-        _pos -= _col;
-        _col = 0;
-        return Result::OK();
-    }
-
-    /// @brief Parses a keyword.
-    /// @param str A string containing the keyword.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result keyword(const char* str) noexcept {
-        int len = 0;
-        for(; str[len]; ++len)
-            if(_src[_pos + len] != str[len])
-                return errorExpectingKeyword(_file, _line, _col, str);
-        if(_src[_pos + len] == '_' 
-                || (_src[_pos + len] >= 'a' && _src[_pos + len] <= 'z')
-                || (_src[_pos + len] >= 'A' && _src[_pos + len] <= 'Z'))
-            return errorExpectingKeyword(_file, _line, _col, str);
-        _pos += len;
-        _col += len;
-        return Result::OK();
-    }
-
-    /// @brief Parses a digit.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result digit() noexcept {
-        if(_src[_pos] < '0' || _src[_pos] > '9')
-            return errorExpectingDigit(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
-    /// @brief Parses a non-negative integer number.
-    /// @param out The parsed number will be written into this variable.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result pos_int(int& out) noexcept {
-        const int start = _pos;
-        if(digit().isError())
-            return errorExpectingDigit(_file, _line, _col);
-        while (digit().isOk());
-        const int end = _pos;
-        out = stoi(_projectSrc.substr(start, end - start));
-        return Result::OK();
-    }
 
     /// @brief Parses a `version X Y` command.
     /// @return Returns 'Result::OK()' if the reading operation was successful.
@@ -236,83 +98,6 @@ public:
         return Result::OK();
     }
 
-    /// @brief Parses an uppercase letter.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result upper_case() noexcept {
-        if(_src[_pos] < 'A' || _src[_pos] > 'Z')
-            return errorExpectingUppercase(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
-    /// @brief Parses a lowercase letter.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result lower_case() noexcept {
-        if(_src[_pos] < 'a' || _src[_pos] > 'z')
-            return errorExpectingLowercase(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
-    /// @brief Parses a letter.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result letter() noexcept {
-        if((_src[_pos]>='a' && _src[_pos]<='z') 
-                || (_src[_pos]>='A' && _src[_pos]<='Z')) {
-            ++_pos;
-            ++_col;
-            return Result::OK();
-        }
-        return errorExpectingLetter(_file, _line, _col);
-    }
-
-    /// @brief Parses an underscore '_' character.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result underscore() noexcept {
-        if(_src[_pos] != '_')
-            return errorExpectingUnderscore(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
-    /// @brief Letter case - uppercase, lowercase or both.
-    enum Case {
-        BOTH, // Upper and lower case.
-        UPPER, // Uppercase.
-        LOWER, // Lowercase.
-    };
-
-    /// @brief Parse a name. Name must start from a letter.
-    /// @param out The parsed name will be written into this variable.
-    /// @param first The case of the first letter (`UPPER`, `LOWER`, `BOTH`).
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result name(Str& out, const Case first = BOTH) noexcept {
-        Result res;
-        const int start = _pos;
-        if(first == BOTH) res = letter();
-        if(first == UPPER) res = upper_case();
-        if(first == LOWER) res = lower_case();
-        if(res.isError())
-            return res;
-        while (true) {
-            bool next = false;
-            next = next || (letter().isOk());
-            next = next || (digit().isOk());
-            next = next || (underscore().isOk());
-            if(!next) break;
-        }
-        out = _projectSrc.substr(start, _pos - start);
-        return Result::OK();
-    }
-
     /// @brief Parses a 'project project_name' command.
     /// @return Returns 'Result::OK()' if the reading operation was successful.
     ///         Otherwise, return a detailed error message.
@@ -326,41 +111,9 @@ public:
         return res;
     }
 
-    /// @brief Parses a colon ':' symbol.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result colon() noexcept {
-        if(_src[_pos] != ':')
-            return errorExpectingColon(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
-    /// @brief Parses a colon that may be surrounded by spaces.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result colon_with_spaces() noexcept {
-        Result res;
-        res <<= space(0);
-        res <<= colon();
-        res <<= space(0);
-        return res;
-    }
-
-    /// @brief Parses a comma ',' symbol.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result comma() noexcept {
-        if(_src[_pos] != ',')
-            return errorExpectingComma(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
+    
     /// @brief Parses a type name. Type names must begin with an uppercase letter.
-    ///        Also, can check if the type name is defined (this checking is no 
+    ///        Also, can check if the type name is defined (this checking is not
     ///        necessary, but it leads to more straight forward error message).
     /// @param out The parsed name will be written into this variable.
     /// @return Returns 'Result::OK()' if the reading operation was successful.
@@ -469,29 +222,7 @@ public:
                     _file, commandLine, _col, _world->getServerWorldName());
         return res;
     }
-
-    /// @brief Parses a open parenthesis '(' symbol.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result par_open() noexcept {
-        if(_src[_pos] != '(')
-            return errorExpectingOpenPar(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
-    /// @brief Parses a closed parenthesis ')' symbol.
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result par_close() noexcept {
-        if(_src[_pos] != ')')
-            return errorExpectingClosePar(_file, _line, _col);
-        ++_pos;
-        ++_col;
-        return Result::OK();
-    }
-
+    
     /// @brief Parses a relation definition.
     /// @return Returns 'Result::OK()' if the reading operation was successful.
     ///         Otherwise, return a detailed error message.
@@ -801,32 +532,6 @@ public:
         return res;
     }
 
-    /// @brief Parses a vertical list of names.
-    /// @param out The parsed list will be added into this variable.
-    /// @param firstLetterCase First letter case (`UPPER`, `LOWER`, `BOTH`).
-    /// @return Returns 'Result::OK()' if the reading operation was successful.
-    ///         Otherwise, return a detailed error message.
-    Result name_list(StrVec &out, Case firstLetterCase) noexcept {
-        Result res;
-        while(true) {
-            Str newName;
-            res <<= empty_lines();
-            res <<= space(1);
-            res <<= name(newName, firstLetterCase);
-            res <<= space(0);
-            res <<= next_line();
-
-            if(res.isError()) {
-                _pos -= _col;
-                _col = 0;
-                return Result::OK();
-            }
-
-            out.push_back(newName);
-        }
-        return Result::OK();
-    }
-
     /// @brief Parses a quest definition.
     /// @param isMainQuest Is this quest is a main quest.
     /// @return Returns 'Result::OK()' if the reading operation was successful.
@@ -1068,7 +773,7 @@ Result parseQuestFile(
         const Str& file, 
         const Str& projectSrc
         ) noexcept {
-    RecursiveDescentParser parser(world, file, projectSrc);
+    QuestProjectParser parser(world, file, projectSrc);
     return parser.parse();
 }
 
