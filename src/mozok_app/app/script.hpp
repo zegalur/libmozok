@@ -14,16 +14,8 @@ class App;
 class QSFParser {
     QSFParser();
 public:
-    static Result parse(
-            const Str& filename, 
-            const Str& script, 
-            App* app
-            ) noexcept;
-
-    static Result parseAndApplyCmd(
-            const Str& command,
-            App* app
-            ) noexcept;
+    static Result parseAndInit(App* app) noexcept;
+    static Result parseAndApplyCmd(const Str& command, App* app) noexcept;
 };
 
 }

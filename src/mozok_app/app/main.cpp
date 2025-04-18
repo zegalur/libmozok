@@ -8,13 +8,13 @@
 #include <iterator>
 #include <memory>
 #include <sstream>
-#include <libmozok/mozok.hpp>
 #include <unordered_map>
 
+#include <libmozok/mozok.hpp>
+#include <libmozok/public_types.hpp>
+
 #include "app/app.hpp"
-#include "app/script.hpp"
 #include "app/strings.hpp"
-#include "libmozok/public_types.hpp"
 
 using namespace mozok;
 using namespace mozok::app;
@@ -181,7 +181,7 @@ Result c_help(App&, const Str&, const StrVec& tokens) {
 Result c_world(App& app, const Str&, const StrVec& tokens) {
     if(tokens.size() != 2)
         return print_BadCommandFormat(tokens[0]);
-    return app.newWorld(tokens[1]);
+    return app.getCurrentServer()->createWorld(tokens[1]);
 }
 
 Result c_info(App& app, const Str&, const StrVec&) {
@@ -195,7 +195,7 @@ Result c_block_cmd(App& app, const Str& line, const StrVec&) {
     Str cmd = line;
     if(line == "exit")
         cmd += " Normal exit";
-    return QSFParser::parseAndApplyCmd(cmd, &app);
+    return app.parseAndApplyCmd(cmd);
 }
 
 }
@@ -209,7 +209,7 @@ public:
 
     bool onPause(App* app) noexcept override {
         while(true) {
-            cout << ">> ";
+            cout << app->getCurrentPath() << " >> ";
             Str line;
             getline(cin, line);
 
@@ -284,6 +284,9 @@ int main(int argc, char **argv) {
     const Str scriptFile(in_buffer.str());
     in.close();
 
+    appOptions.scriptFileName = scriptFileName;
+    appOptions.scriptFile = scriptFile;
+
     // Setting up the map that maps command name into a command function.
     commandMap["help"] = &c_help;
     //commandMap[C_INFO] = ;
@@ -312,7 +315,7 @@ int main(int argc, char **argv) {
         it->second(appOptions, argc, argv, p);
     }
 
-    // Create the application.
+    // Create the simulation application.
     Result status;
     unique_ptr<App> app(App::create(appOptions, status));
     if(status.isError() || app==nullptr || app->getCurrentStatus().isError()) {
@@ -321,17 +324,13 @@ int main(int argc, char **argv) {
         return ERROR_CODE;
     }
 
-    // Parse the input QSF into the application.
-    status <<= QSFParser::parse(scriptFileName, scriptFile, app.get());
-    if(status.isError()) {
-        cout << status.getDescription() << endl;
-        return ERROR_CODE;
-    }
-
     status <<= app->simulate(&callback);
+
     if(status.isOk()) { 
         if(appOptions.printOnOk.length() > 0)
             cout << appOptions.printOnOk << endl;
+    } else {
+        cout << status.getDescription() << endl;
     }
 
     return 0;

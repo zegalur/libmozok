@@ -36,6 +36,8 @@ class EventHandler {
             const DebugBlock& block
             ) noexcept;
 
+    friend App;
+
 public:
 
     static EventHandler onNewMainQuest(

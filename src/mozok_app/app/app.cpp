@@ -1,12 +1,18 @@
 #include "app/app.hpp"
+#include "app/block.hpp"
+#include "app/callback.hpp"
 #include "app/handler.hpp"
+#include "app/script.hpp"
+#include "app/filesystem.hpp"
 
 #include <libmozok/private_types.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/server.hpp>
 
+#include <iostream>
 #include <ostream>
 #include <sstream>
+#include <chrono>
 
 namespace mozok {
 namespace app {
@@ -21,30 +27,49 @@ Result errNotImplemented(const Str& what) {
 
 App::App(const AppOptions& options) noexcept 
     : _options(options)
-    , _server(Server::createServer(_options.serverName, _status))
+    , _currentServer(nullptr)
+    , _callback(nullptr)
+    , _exit(false)
 { /*empty*/ }
 
+App::~App() noexcept 
+{ /* empty */ }
+
+
 App* App::create(const AppOptions &options, Result &status) noexcept {
+    if(status.isError())
+        return nullptr;
+    
     App* app = new App(options);
     status <<= app->_status;
+    if(status.isError())
+        return app;
+
+    status <<= QSFParser::parseAndInit(app);
+    if(status.isError())
+        return app;
+
     return app;
-}
-
-App::~App() noexcept {
-    delete _server;
-}
-
-Server* App::getServer() noexcept {
-    return _server;
 }
 
 const Result& App::getCurrentStatus() const noexcept {
     return _status;
 }
 
-Result App::newWorld(const Str& name) noexcept {
-    Result res = _server->createWorld(name);
-    return res;
+Server* App::getCurrentServer() noexcept {
+    return _currentServer.get();
+}
+
+Str App::getCurrentPath() const noexcept {
+    std::stringstream ss;
+    ss << "(";
+    for(SIZE_T i = 0; i < _currentPath.size(); ++i) {
+        ss << _currentPath[i].first << "/" << _currentPath[i].second;
+        if(i != _currentPath.size() - 1)
+            ss << ",";
+    }
+    ss << ")";
+    return Str(ss.str());
 }
 
 const AppOptions& App::getAppOptions() const noexcept {
@@ -52,8 +77,14 @@ const AppOptions& App::getAppOptions() const noexcept {
 }
 
 Str App::getInfo() noexcept {
+    if(_currentServer == nullptr) {
+        if(_status.isError())
+            return _status.getDescription();
+        return "READY";
+    }
+
     std::stringstream ss;
-    StrVec worlds = _server->getWorlds();
+    StrVec worlds = _currentServer->getWorlds();
 
     // List of all created worlds.
     ss << "* Worlds:" << std::endl;
@@ -63,7 +94,7 @@ Str App::getInfo() noexcept {
 
     // The full state of each of the world.
     for(const auto& w : worlds) {
-        Str saveFile = _server->generateSaveFile(w);
+        Str saveFile = _currentServer->generateSaveFile(w);
         ss << "* [" << w << "] Full state:" << std::endl;
         ss << saveFile << std::endl;
     }
@@ -71,89 +102,189 @@ Str App::getInfo() noexcept {
     return Str(ss.str());
 }
 
-Result App::applyInitAction(
-        const Str& worldName,
-        const Str& actionName,
-        const StrVec& arguments
-        ) noexcept {
-    if(_server->hasWorld(worldName) == false)
-        return errorWorldDoesntExist(_options.serverName, worldName);
-    if(_server->getActionStatus(worldName, actionName) != Server::ACTION_APPLICABLE)
-        return Result::Error("Invalid action `" + actionName + "`");
-    for(const auto& objName : arguments)
-        if(_server->hasObject(worldName, objName) == false)
-            return errorUndefinedObject(worldName, objName);
-    return _server->applyAction(worldName, actionName, arguments);
-}
-
 Result App::addEventHandler(
         const EventHandler& handler) noexcept {
+    if(handler._block._type == DebugBlock::SPLIT) {
+        _splitEvents.push_back(_eventHandlers.size());
+        int subSplits = 0;
+        for(const auto& cmd : handler._block._cmds)
+            if(cmd._cmd == DebugCmd::SPLIT)
+                ++subSplits;
+        _splitsCount.push_back(subSplits);
+    }
     _eventHandlers.push_back(handler);
     return Result::OK();
 }
 
-const Str& App::getServerName() const noexcept {
-    return _options.serverName;
+Result App::parseAndApplyCmd(const Str& command) noexcept {
+    return QSFParser::parseAndApplyCmd(command, this);
 }
 
 Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
+    // Some commands uses first argument for the text messages.
+    Str msg = "";
+    if(cmd._args.size() > 0 && cmd._args.front().type == DebugArg::STR)
+        msg = cmd._args.front().str;
+
+    switch(cmd._cmd) {
+        case DebugCmd::PAUSE:
+            std::cout << "PAUSE: " << msg << std::endl;
+            _callback->onPause(this);
+            break;
+        case DebugCmd::EXIT:
+            std::cout << "EXIT: " << msg << std::endl;
+            _exit = true;
+            break;
+        default:
+            break;
+    }
     return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
 }
 
-namespace {
-
-Result saveStates(
-        Server* server, 
-        SplitPoint& out
+void App::onActionError(
+        const Str& worldName, 
+        const Str& actionName,
+        const StrVec& actionArguments,
+        const Result& errorResult
         ) noexcept {
-    Result res;
-    StrVec worlds = server->getWorlds();
-    for(const auto& w : worlds) {
-        const Str sf = server->generateSaveFile(w);
-        out.states[w] = sf;
-        if(sf.rfind("error", 0) == 0)
-            res <<= Result::Error("Invalid save file. File:\n" + sf);
+    // empty //
+}
+
+void App::onNewMainQuest(
+        const Str& worldName, 
+        const Str& questName
+        ) noexcept {
+    // empty //
+    std::cout << "NEW_MAIN_QUEST!" << std::endl;
+    for(SIZE_T i = 0; i < _eventHandlers.size(); ++i) {
+        const auto& eh = _eventHandlers[i];
+        if(eh._event != EventHandler::ON_NEW_MAIN_QUEST)
+            continue;
+        ...
     }
-    return res;
 }
 
+void App::onNewSubQuest(
+        const Str& worldName, 
+        const Str& questName,
+        const Str& parentQuestName,
+        const int goal
+        ) noexcept {
+    // empty //
 }
 
-SplitPoint App::rootSplitPoint() noexcept {
-    SplitPoint sp;
-    _status <<= saveStates(_server, sp);
-    for(HandlerId i=0; i < _eventHandlers.size(); ++i)
-        sp.handlerFlags.push_back(SplitPoint::OPEN);
-    sp.splitEventId = -1;
-    sp.nextBranch = 0;
-    return sp;
+void App::onNewQuestState(
+        const mozok::Str& worldName, 
+        const mozok::Str& questName
+        ) noexcept {
+    // empty //
 }
 
-SplitPoint App::makeSplitPoint(HandlerId splitEventId) noexcept {
-    SplitPoint sp;
-    _status <<= saveStates(_server, sp);
-    sp.handlerFlags = _splitPointStack.back().handlerFlags;
-    sp.reactionQueue = _splitPointStack.back().reactionQueue;
-    sp.splitEventId = int(splitEventId);
-    sp.nextBranch = 0;
-    return sp;
+void App::onNewQuestStatus(
+        const Str& worldName, 
+        const Str& questName,
+        const QuestStatus questStatus
+        ) noexcept {
+    // empty //
+}
+
+void App::onNewQuestPlan(
+        const Str& worldName, 
+        const Str& questName,
+        const StrVec& actionList,
+        const Vector<StrVec>& actionArgsList
+        ) noexcept {
+    // empty //
+}
+
+void App::onSearchLimitReached(
+        const mozok::Str& worldName,
+        const mozok::Str& questName,
+        const int searchLimitValue
+        ) noexcept {
+    // empty //
+}
+    
+void App::onSpaceLimitReached(
+        const mozok::Str& worldName,
+        const mozok::Str& questName,
+        const int searchLimitValue
+        ) noexcept {
+    // empty //
+}
+
+void App::simulateNext() noexcept {
+    // Reset event counters to zero for each event handlers.
+    _eventCounters.clear();
+    _eventCounters.resize(_eventHandlers.size(), 0);
+
+    // Create a new server for this timeline.
+    _currentServer = SharedPtr<Server>(
+            Server::createServer(_options.serverName, _status));
+    if(_status.isError())
+        return;
+
+    // Init, using QSF from the options.
+    StdFileSystem stdFileSystem;
+    _status <<= _currentServer->loadQuestScriptFile(
+            &stdFileSystem, 
+            _options.scriptFileName, 
+            _options.scriptFile, 
+            _options.applyInitAction);
+    if(_status.isError())
+        return;
+    
+    _currentServer->startWorkerThread();
+
+    bool isWaiting = false;
+    auto waitFrom = std::chrono::system_clock::now();
+    const auto MAX_WAIT_TIME = std::chrono::milliseconds(
+            _options.maxWaitTime_ms);
+    const Result WAIT_ERROR = Result::Error(
+            getCurrentPath() + 
+            " No new messages for an extended period of time." +
+            " Wait limit Reached.");
+    do {
+        // TODO: apply next applicable action.
+        //while(questSolver.applyNextApplicableAction(quest_name, server));
+
+        // Try to process the next message.
+        if(_currentServer->processNextMessage(*this)) {
+            // New message has been processed.
+            isWaiting = false;
+            continue;
+        }
+
+        if(getCurrentStatus().isError())
+            break;
+        //if(questSolver.isAllQuestsDone() == true)
+        //    break;
+
+        if(isWaiting) {
+            auto waitDuration = std::chrono::system_clock::now() - waitFrom;
+            if(waitDuration > MAX_WAIT_TIME) {
+                _status <<= WAIT_ERROR;
+                _exit = true;
+                break;
+            }
+        } else {
+            isWaiting = true;
+            waitFrom = std::chrono::system_clock::now();
+        }
+    } while(_exit == false);
+    _currentServer->stopWorkerThread();
 }
 
 Result App::simulate(AppCallback* callback) noexcept {
-    _splitPointStack.push_back(rootSplitPoint());
-
-    while(_status.isOk()) {
-        //_status <<= performPlanning();
-        while(_server->processNextMessage(*this));
-    }
-
-    /*while(callback->onPause(this) && _status.isOk()) {
-        
-    }*/
-
+    _callback = callback;
+    do {
+        simulateNext();
+        if(_status.isError())
+            break;
+    } while(_alternatives.empty() == false);
     if(_status.isError())
         callback->onError();
-
+    _callback = nullptr;
     return _status;
 }
 

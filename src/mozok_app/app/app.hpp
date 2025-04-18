@@ -21,90 +21,91 @@ struct AppOptions {
     bool applyInitAction = true;
     int maxWaitTime_ms = 500;
     Str printOnOk = "";
+    Str scriptFileName = "";
+    Str scriptFile = "";
 };
-
-struct QuestPlan {
-
-};
-
-struct SplitPoint {
-    enum HandlerFlag {
-        CLOSED = 0,
-        OPEN = 1
-    };
-    UnorderedMap<Str, Str> states;
-    UnorderedMap<Str, QuestPlan> plans;
-    Queue<HandlerId> reactionQueue;
-    Vector<HandlerFlag> handlerFlags;
-    int splitEventId;
-    int nextBranch;
-};
-
 
 /// @brief ...
 class App : public MessageProcessor {
     AppOptions _options;
     Result _status;
-    Server* _server;
-    Str _stdWorldName;
-
     EventHandlers _eventHandlers;
-    Vector<SplitPoint> _splitPointStack;
+    Vector<int> _eventCounters;
+    Vector<HandlerId> _splitEvents;
+    Vector<int> _splitsCount;
+    SharedPtr<Server> _currentServer;
+    using Path = Vector<Pair<int, int>>;
+    Path _currentPath;
+    HashSet<Str> _alternatives;
+    AppCallback* _callback;
+    bool _exit;
 
-private:
     App(const AppOptions& options) noexcept;
-    
-    Result performPlanning() noexcept;
-    SplitPoint rootSplitPoint() noexcept;
-    SplitPoint makeSplitPoint(HandlerId splitEventId) noexcept;
+    void simulateNext() noexcept;
 
 public:
-    static App* create(
-        const AppOptions& options,
-        Result& status
-        ) noexcept;
-    
+    static App* create(const AppOptions& options, Result& status) noexcept;
     virtual ~App() noexcept;
 
-    Server* getServer() noexcept;
-    const Str& getServerName() const noexcept;
+    const AppOptions& getAppOptions() const noexcept;
+    Server* getCurrentServer() noexcept;
+    Str getCurrentPath() const noexcept;
     const Result& getCurrentStatus() const noexcept;
     Result newWorld(const Str& worldName) noexcept; 
-    const AppOptions& getAppOptions() const noexcept;
     Str getInfo() noexcept;
-
-    Result applyInitAction(
-        const Str& worldName,
-        const Str& actionName,
-        const StrVec& arguments
-        ) noexcept;
-
     Result addEventHandler(const EventHandler& handler) noexcept;
     Result applyDebugCmd(const DebugCmd& cmd) noexcept;
-
+    Result parseAndApplyCmd(const Str& command) noexcept;
     Result simulate(AppCallback* callback) noexcept;
-
-/*
+    
     void onActionError(
-        const Str& worldName, 
-        const Str& actionName,
-        const StrVec& actionArguments,
-        const Result& errorResult
-        ) noexcept override;
+            const Str& worldName, 
+            const Str& actionName,
+            const StrVec& actionArguments,
+            const Result& errorResult
+            ) noexcept override;
 
     void onNewMainQuest(
-        const Str& worldName, 
-        const Str& questName
-        ) noexcept override;
+            const Str& worldName, 
+            const Str& questName
+            ) noexcept override;
 
     void onNewSubQuest(
-        const Str& worldName, 
-        const Str& subquestName,
-        const Str& parentQuestName,
-        const int goal
-        ) noexcept override;
-*/
+            const Str& worldName, 
+            const Str& questName,
+            const Str& parentQuestName,
+            const int goal
+            ) noexcept override;
 
+    void onNewQuestState(
+            const mozok::Str& worldName, 
+            const mozok::Str& questName
+            ) noexcept override;
+
+    void onNewQuestStatus(
+            const Str& worldName, 
+            const Str& questName,
+            const QuestStatus questStatus
+            ) noexcept override;
+
+    void onNewQuestPlan(
+            const Str& worldName, 
+            const Str& questName,
+            const StrVec& actionList,
+            const Vector<StrVec>& actionArgsList
+            ) noexcept override;
+
+    void onSearchLimitReached(
+            const mozok::Str& worldName,
+            const mozok::Str& questName,
+            const int searchLimitValue
+            ) noexcept override;
+        
+    void onSpaceLimitReached(
+            const mozok::Str& worldName,
+            const mozok::Str& questName,
+            const int searchLimitValue
+            ) noexcept override;
 
 };
 

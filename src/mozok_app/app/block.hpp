@@ -27,6 +27,8 @@ class DebugBlock {
             const DebugCmdVec& cmds
             ) noexcept;
 
+    friend App;
+
 public:
     static DebugBlock empty() noexcept;
     static DebugBlock act(const Str& name, const DebugCmdVec& cmds) noexcept;

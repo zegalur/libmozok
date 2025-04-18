@@ -6,40 +6,18 @@
 #include "app/block.hpp"
 #include "app/command.hpp"
 #include "app/handler.hpp"
+#include "app/filesystem.hpp"
 
 #include <libmozok/server.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/public_types.hpp>
 #include <libmozok/result.hpp>
-#include <libmozok/filesystem.hpp>
 #include <libmozok/script.hpp>
 
-#include <fstream>
 #include <set>
-#include <string>
-#include <iterator>
 
 namespace mozok {
 namespace app {
-
-namespace {
-
-class StdFileSystem : public FileSystem {
-public:
-    StdFileSystem() : FileSystem() { /* empty */ }
-    Result getTextFile(const Str& path, Str& out) override {
-        std::ifstream file(path);
-        if (file.is_open()) {
-            std::string src = std::string(
-                    std::istreambuf_iterator<char>(file),
-                    std::istreambuf_iterator<char>());
-            file.close();
-            out = src;
-            return Result::OK();
-        }
-        return Result::Error("StdFileSystem: Can't open `" + path +"` file.");
-    }
-};
 
 namespace {
 
@@ -71,17 +49,17 @@ const Str QEVENT_SUBQUEST = "SUBQUEST";
 
 const DebugCmd ERROR_CMD = DebugCmd::print("ERROR");
 
-};
-
 
 class QuestScriptParser : public QuestScriptParser_Base {
     App* _app;
+    Server* _server;
+    const bool _deleteServer;
 
     bool hasSubQuest(const Str& worldName, const Str& subquestName) noexcept {
-        return _app->getServer()->hasSubQuest(worldName, subquestName);
+        return _server->hasSubQuest(worldName, subquestName);
     }
     bool hasMainQuest(const Str& worldName, const Str& mainQuestName) noexcept {
-        return _app->getServer()->hasMainQuest(worldName, mainQuestName);
+        return _server->hasMainQuest(worldName, mainQuestName);
     }
     bool hasQuest(const Str& world, const Str& quest) noexcept {
         return hasSubQuest(world, quest) || hasMainQuest(world, quest);
@@ -94,8 +72,7 @@ protected:
         Result res = action(worldName, actionName, args);
         if(res.isError())
             return res;
-        res <<= _app->getServer()->checkAction(
-                true, worldName, actionName, args);
+        res <<= _server->checkAction(true, worldName, actionName, args);
         return res;
     }
 
@@ -168,9 +145,9 @@ protected:
             res <<= space(1);
             if(res.isError())
                 return ERROR_CMD;
-            if(_app->getServer()->hasWorld(worldName) == false) {
+            if(_server->hasWorld(worldName) == false) {
                 res <<= errorWorldDoesntExist(
-                        _app->getServerName(), worldName);
+                        _app->getAppOptions().serverName, worldName);
                 return ERROR_CMD;
             }
             if(questEventName == QEVENT_UNREACHABLE) {
@@ -462,7 +439,7 @@ protected:
                 res, worldName, actionName, args);
         if(res.isError())
             return res;
-        if(_app->getServer()->getActionStatus(
+        if(_server->getActionStatus(
                 worldName, actionName) != Server::ACTION_APPLICABLE)
             return errorMsg(
                     "Action `[" + worldName+"] " + actionName + "` "
@@ -489,9 +466,9 @@ protected:
                 res <<= world(worldName);
                 if(res.isError())
                     return res;
-                if(_app->getServer()->hasWorld(worldName) == false)
+                if(_server->hasWorld(worldName) == false)
                     return res <<= errorWorldDoesntExist(
-                            _app->getServerName(), worldName);
+                            _app->getAppOptions().serverName, worldName);
             }
 
             if(event == ON_NEW_SUBQUEST) {
@@ -525,21 +502,11 @@ protected:
         return res;
     }
 
-public:
-    /// @brief For parsing script files.
-    QuestScriptParser(const Str& fileName, const Str& script, App* app)
-    : QuestScriptParser_Base(fileName, script), _app(app) { /* empty */ }
-    
-    /// @brief For parsing and applying one command.
-    QuestScriptParser(const Str& oneCommand, App* app)
-    : QuestScriptParser_Base(oneCommand), _app(app) { /* empty */ }
-
     /// @brief Call this to parse the script file.
-    Result parse(bool applyInitAction) noexcept {
+    Result parseFile(bool applyInitAction) noexcept {
         Result res;
         StdFileSystem stdFileSystem;
-        res <<= parseHeaderFunc(
-                _app->getServer(), &stdFileSystem, applyInitAction);
+        res <<= parseHeaderFunc(_server, &stdFileSystem, applyInitAction);
         if(res.isOk())
             res <<= parseDebugSection();
         return res;
@@ -553,6 +520,41 @@ public:
             return res;
         return res <<= _app->applyDebugCmd(cmd);
     }
+
+public:
+    /// @brief For parsing script files.
+    QuestScriptParser(
+            const Str& fileName, 
+            const Str& script,
+            App* app) : 
+        QuestScriptParser_Base(fileName, script), 
+        _app(app),
+        _server(Server::createServer(app->getAppOptions().serverName, _status)),
+        _deleteServer(true) {
+        _status <<= parseFile(app->getAppOptions().applyInitAction);
+    }
+    
+    /// @brief For parsing and applying one command.
+    QuestScriptParser(
+            const Str& oneCommand, 
+            App* app) :
+        QuestScriptParser_Base(oneCommand), 
+        _app(app),
+        _server(app->getCurrentServer()),
+        _deleteServer(false) {
+        _status <<= parseCommand();
+    }
+
+    virtual ~QuestScriptParser() {
+        if(_deleteServer) {
+            delete _server;
+            _server = nullptr;
+        }
+    }
+
+    Result getStatus() const {
+        return _status;
+    }
 };
 
 }
@@ -560,18 +562,15 @@ public:
 QSFParser::QSFParser()
 { /* empty */ }
 
-Result QSFParser::parse(
-        const Str& fileName, 
-        const Str &script, 
-        App *app
-        ) noexcept {
-    QuestScriptParser parser(fileName, script, app);
-    return parser.parse(app->getAppOptions().applyInitAction);
+Result QSFParser::parseAndInit(App *app) noexcept {
+    const auto& o = app->getAppOptions();
+    QuestScriptParser parser(o.scriptFileName, o.scriptFile, app);
+    return parser.getStatus();
 }
 
 Result QSFParser::parseAndApplyCmd(const Str &command, App *app) noexcept {
     QuestScriptParser parser("[cmd_command]", command, app);
-    return parser.parseCommand();
+    return parser.getStatus();
 }
 
 }
