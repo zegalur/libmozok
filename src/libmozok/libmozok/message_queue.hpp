@@ -53,6 +53,9 @@ public:
     /// @return Returns `false` if message queue is empty.
     bool processNext(MessageProcessor& processor) noexcept;
 
+    /// @brief Returns the number of unprocessed messages.
+    SIZE_T size() noexcept;
+
     void onActionError(
         const Str& worldName, 
         const Str& actionName,

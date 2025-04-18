@@ -333,6 +333,20 @@ public:
         MessageProcessor& messageProcessor
         ) noexcept;
 
+    /// @brief Checks if action with this set of arguments is well defined.
+    ///        Optionally, checks if preconditions hold (in the current state).
+    /// @param doNotCheckPreconditions If `true` - skips preconditions check.
+    /// @param actionName The name of the action.
+    /// @param arguments A list of object names we'll use as arguments.
+    /// @return Returns error when action or any other name isn't defined, or
+    ///         when arity or types were wrong. 
+    Result checkAction(
+        const bool doNotCheckPreconditions,
+        const Str& actionName,
+        const StrVec& actionArguments
+        ) const noexcept;
+
+
     /// @brief Adds a quest status command to an action.
     /// @param actionName Action name.
     /// @param questName The name of the quest whose status will be changed.

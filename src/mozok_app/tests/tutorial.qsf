@@ -25,6 +25,16 @@ init:
 
 # ======================== DEBUGGING SECTION ================================ #
 
+# Activated after all projects were loaded and init actions were applied. 
+onInit:
+ACT ON_INIT:
+    print Hello, world!
+
+# Print a message when the `FinishAllTutorials` is activated.
+onNewMainQuest [tut] FinishAllTutorials:
+ACT TUTORIAL_STARTED:
+    print Tutorial quest started, enjoy!
+
 # Split and block the exit, when `_GetHeart` is activated. 
 onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
 SPLIT BLOCK_EXIT:
@@ -44,11 +54,11 @@ ALWAYS SEARCH_LIMIT:
     exit ERROR: Search limit reached!
 
 # Triggered when this action preconditions hold during the simulation.
-onPre [tut] TstNAAction():
+onPre [tut] KeyTutorial(fightingTutorial, keyTutorial):
 ACT ON_TST_ACTION:
-    print Test action preconditions event.
+    print KeyTutorial preconditions holds.
 
 # Triggered when action was applied during the simulation.
-onAction [tut] TstNAAction():
+onAction [tut] ApplyTutorialAction(pickUpKeyAction):
 ACT ON_TST_ACTION:
-    print Test action preconditions event.
+    print The key was picked up!

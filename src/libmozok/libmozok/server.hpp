@@ -51,6 +51,9 @@ public:
     ///         Otherwise, returns false.
     virtual bool hasWorld(const mozok::Str& worldName) const noexcept = 0;
 
+    /// @brief Returns a list of all created worlds.
+    virtual mozok::StrVec getWorlds() const noexcept = 0;
+
     /// @}
 
 
@@ -203,6 +206,20 @@ public:
 
     /// @}
 
+    /// @brief Checks if action with this set of arguments is well defined.
+    ///        Optionally, checks if preconditions hold (in the current state).
+    /// @param doNotCheckPreconditions If `true` - skips preconditions check.
+    /// @param worldName The name of the world where we'll do the evaluation.
+    /// @param actionName The name of the action.
+    /// @param arguments A list of object names we'll use as arguments.
+    /// @return Returns error when world or any other name isn't defined, or
+    ///         when arity or types were wrong. 
+    virtual mozok::Result checkAction(
+        const bool doNotCheckPreconditions,
+        const mozok::Str& worldName,
+        const mozok::Str& actionName,
+        const mozok::StrVec& arguments
+        ) const noexcept = 0;
 
     //==========================================================================
     /// @defgroup Messages

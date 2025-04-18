@@ -1,5 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include "libmozok/public_types.hpp"
 #include <libmozok/server.hpp>
 
 #include <libmozok/private_types.hpp>
@@ -146,6 +147,13 @@ public:
         return (_worlds.find(worldName) != _worlds.end());
     }
 
+    StrVec getWorlds() const noexcept override {
+        StrVec r;
+        for(const auto& it : _worlds)
+            r.push_back(it.first);
+        return r;
+    }
+
     // ============================== PROJECT =============================== //
 
     Result addProject(
@@ -254,6 +262,19 @@ public:
         return ACTION_APPLICABLE;
     }
 
+    Result checkAction(
+            const bool doNotCheckPreconditions,
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& arguments
+            ) const noexcept override {
+        if(hasWorld(worldName) == false)
+            return errorWorldDoesntExist(_serverName, worldName);
+        return _worlds.find(worldName)->second->checkAction(
+                doNotCheckPreconditions, actionName, arguments);
+    }
+
+
     // ============================== MESSAGES ============================== //
 
     bool processNextMessage(
@@ -298,6 +319,8 @@ public:
             return "error: Doesn't allowed while worker thread is running.";
         if(!hasWorld(worldName))
             return "error: Undefined world '" + worldName + "'.";
+        if(_messageQueue.size() != 0)
+            return "error: Doesn't allowed while message queue isn't empty.";
         return _worlds[worldName]->generateSaveFile();
     }
 

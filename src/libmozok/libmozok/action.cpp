@@ -65,6 +65,7 @@ bool Action::isGlobal() const noexcept {
 }
 
 Result Action::evaluateActionApplicability(
+        const bool doNotCheckPreconditions,
         const ObjectVec& arguments,
         const StatePtr& state
         ) const noexcept {
@@ -82,9 +83,11 @@ Result Action::evaluateActionApplicability(
                     typesetToStrVec(argument->getTypeSet()));
     }
 
-    const StatementVec preconditions = _pre.substitute(arguments);
-    if(state->hasSubstate(preconditions) == false)
-        return errorActionPreconditionsFailed(Str("???"), _name);
+    if(doNotCheckPreconditions == false) {
+        const StatementVec preconditions = _pre.substitute(arguments);
+        if(state->hasSubstate(preconditions) == false)
+            return errorActionPreconditionsFailed(Str("???"), _name);
+    }
     
     return Result::OK();
 }
@@ -93,7 +96,7 @@ Result Action::applyAction(
         const ObjectVec& arguments, 
         StatePtr& state
         ) const noexcept {
-    Result res = evaluateActionApplicability(arguments, state);
+    Result res = evaluateActionApplicability(false, arguments, state);
     if(res.isError())
         return res;
 

@@ -44,6 +44,18 @@ Libmozok TODO list.
         - [ ] `<ACT|SPLIT> if [world] action(...):` - N/A action as a marker
             - [ ] `ACT 2`, `ACT 3` - act not once but two, three times etc.
         - [ ] Placeholder parameters `_`
+        - [ ] Events:
+            - [ ] `onInit`
+            - [ ] `onPre`
+            - [ ] `onAction`
+            - [ ] `onActionError`
+            - [ ] `onNewMainQuest`
+            - [ ] `onNewSubQuest`
+            - [ ] `onNewQuestState`
+            - [ ] `onNewQuestStatus`
+            - [ ] `onNewQuestPlan`
+            - [ ] `onSearchLimitReached`
+            - [ ] `onSpaceLimitReached`
     
 ### In Progress
 

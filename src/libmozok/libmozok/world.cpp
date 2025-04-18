@@ -534,6 +534,26 @@ Result World::applyAction(
     return Result::OK();
 }
 
+Result World::checkAction(
+        const bool doNotCheckPreconditions,
+        const Str& actionName,
+        const StrVec& actionArguments
+        ) const noexcept {
+    if(hasAction(actionName) == false)
+        return errorUndefinedAction(_serverWorldName, actionName);
+    
+    ObjectVec objects;
+    for(const Str& objName : actionArguments)
+        if(hasObject(objName))
+            objects.push_back(getObject(objName));
+        else
+            return errorUndefinedObject(_serverWorldName, objName);
+
+    return getAction(actionName)->evaluateActionApplicability(
+            doNotCheckPreconditions, objects, _state);
+}
+
+
 Result World::addActionQuestStatusChange(
         const Str& actionName,
         const Str& questName, 

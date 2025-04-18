@@ -72,6 +72,12 @@ const Str O_SERVER_NAME_DESC = O_SERVER_NAME_BRIEF;
 const StrVec O_SERVER_NAME_ARGS = 
     { "`<server_name>` - New server name (default `mozok_app`)." };
 
+const Str O_NO_INIT = "-n";
+const Str O_NO_INIT_FORMAT = "-n";
+const Str O_NO_INIT_BRIEF = "(No-init) Do not call the `init` actions.";
+const Str O_NO_INIT_DESC = "If set, the app will not call the init actions.";
+const StrVec O_NO_INIT_ARGS = {};
+
 /// @}
 
 
@@ -104,11 +110,18 @@ const StrVec C_PAUSE_ARGS =
     };
 
 
-const Str C_UNPAUSE = "unpause"; 
-const Str C_UNPAUSE_FORMAT = "unpause";
-const Str C_UNPAUSE_BRIEF = "Unpauses the debugging process.";
-const Str C_UNPAUSE_DESC = C_UNPAUSE_BRIEF;
-const StrVec C_UNPAUSE_ARGS = {};
+const Str C_CONTINUE = "continue"; 
+const Str C_CONTINUE_FORMAT = "continue";
+const Str C_CONTINUE_BRIEF = "Continue the simulation process.";
+const Str C_CONTINUE_DESC = C_CONTINUE_BRIEF;
+const StrVec C_CONTINUE_ARGS = {};
+
+
+const Str C_INFO = "info"; 
+const Str C_INFO_FORMAT = "info";
+const Str C_INFO_BRIEF = "Print a general info about the current state.";
+const Str C_INFO_DESC = C_INFO_BRIEF;
+const StrVec C_INFO_ARGS = {};
 
 
 const Str C_PRINT = "print";
@@ -182,17 +195,19 @@ const HelpMap HELP_MAP = {
     , MOZOK_HELP(APP_OPTION, O_PAUSE_ON_ERR)
     , MOZOK_HELP(APP_OPTION, O_PRINT_ON_OK)
     , MOZOK_HELP(APP_OPTION, O_SERVER_NAME)
+    , MOZOK_HELP(APP_OPTION, O_NO_INIT)
     
     // commands
     , MOZOK_HELP(GENERAL_COMMAND, C_EXIT)
     , MOZOK_HELP(SCRIPT_COMMAND, C_PAUSE)
-    , MOZOK_HELP(TERMINAL_COMMAND, C_UNPAUSE)
+    , MOZOK_HELP(TERMINAL_COMMAND, C_CONTINUE)
     , MOZOK_HELP(GENERAL_COMMAND, C_PRINT)
-    , MOZOK_HELP(GENERAL_COMMAND, C_WORLD)
+    , MOZOK_HELP(TERMINAL_COMMAND, C_INFO)
+    , MOZOK_HELP(TERMINAL_COMMAND, C_WORLD)
     //, MOZOK_HELP(GENERAL_COMMAND, C_STD_WORLD)
     , MOZOK_HELP(TERMINAL_COMMAND, C_LOAD)
-    , MOZOK_HELP(SCRIPT_COMMAND, C_EXPECT)
-    , MOZOK_HELP(SCRIPT_COMMAND, C_APPLY)
+    , MOZOK_HELP(GENERAL_COMMAND, C_EXPECT)
+    , MOZOK_HELP(GENERAL_COMMAND, C_APPLY)
 };
 
 

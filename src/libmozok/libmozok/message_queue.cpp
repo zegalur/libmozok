@@ -42,6 +42,13 @@ bool MessageQueue::processNext(
     return true;
 }
 
+SIZE_T MessageQueue::size() noexcept {
+    _queueMutex.lock();
+    SIZE_T res = _queue.size();
+    _queueMutex.unlock();
+    return res;
+}
+
 void MessageQueue::pushMessage(MessagePtr& msg) noexcept {
     _queueMutex.lock();
     _queue.push(msg);

@@ -16,6 +16,17 @@ EventHandler::EventHandler(
     _block(block)
 { /* empty */ }
 
+EventHandler EventHandler::onNewMainQuest(
+        const Str& worldName,
+        const Str& mainQuestName,
+        const DebugBlock& block
+        ) noexcept {
+    return EventHandler(
+            ON_NEW_MAIN_QUEST, 
+            {worldName, mainQuestName}, 
+            block);
+}
+
 EventHandler EventHandler::onNewSubQuest(
         const Str& worldName,
         const Str& subQuestName,
@@ -66,6 +77,12 @@ EventHandler EventHandler::onAction(
     for(const auto& obj : arguments)
         args.push_back(obj);
     return EventHandler(ON_ACTION, args, block);
+}
+
+EventHandler EventHandler::onInit(
+        const DebugBlock& block
+        ) noexcept {
+    return EventHandler(ON_INIT, {}, block);
 }
 
 }

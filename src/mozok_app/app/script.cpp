@@ -6,8 +6,8 @@
 #include "app/block.hpp"
 #include "app/command.hpp"
 #include "app/handler.hpp"
-#include "libmozok/server.hpp"
 
+#include <libmozok/server.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/public_types.hpp>
 #include <libmozok/result.hpp>
@@ -15,7 +15,6 @@
 #include <libmozok/script.hpp>
 
 #include <fstream>
-#include <map>
 #include <set>
 #include <string>
 #include <iterator>
@@ -44,10 +43,12 @@ public:
 
 namespace {
 
+const Str ON_NEW_MAIN_QUEST = "onNewMainQuest";
 const Str ON_NEW_SUBQUEST = "onNewSubQuest";
 const Str ON_SEARCH_LIMIT_REACHED = "onSearchLimitReached";
 const Str ON_PRE = "onPre";
 const Str ON_ACTION = "onAction";
+const Str ON_INIT = "onInit";
 
 const Str BLOCK_ACT = "ACT";
 const Str BLOCK_SPLIT = "SPLIT";
@@ -93,12 +94,8 @@ protected:
         Result res = action(worldName, actionName, args);
         if(res.isError())
             return res;
-        if(_app->getServer()->getActionStatus(
-                worldName, actionName) == Server::ACTION_UNDEFINED)
-            return res <<= errorUndefinedAction(worldName, actionName);
-        for(const auto& objName : args)
-            if(_app->getServer()->hasObject(worldName, objName))
-                return res <<= errorUndefinedObject(worldName, objName);
+        res <<= _app->getServer()->checkAction(
+                true, worldName, actionName, args);
         return res;
     }
 
@@ -243,8 +240,13 @@ protected:
         Str blockType, blockName, tmp;
         bool isSplitBlock = false;
         res <<= name(blockType, UPPER);
-        if(res.isError())
+        if(res.isError()) {
+            Str allowed;
+            for(const auto& v : ALLOWED_BLOCKS)
+                allowed += v + "; ";
+            res <<= errorMsg("Expecting block: " + allowed);
             return DebugBlock::empty();
+        }
 
         if(ALLOWED_BLOCKS.find(blockType) == ALLOWED_BLOCKS.end()) {
             res <<= errorMsg("Unsupported block type `" + blockType + "`.");
@@ -308,6 +310,35 @@ protected:
         return DebugBlock::empty();
     }
 
+    Result onNewMainQuest(const Str& worldName) noexcept {
+        Result res;
+        Str mainQuestName;
+
+        res <<= space(1);
+        res <<= name(mainQuestName, UPPER);
+
+        if(res.isError())
+            return res;
+        if(hasMainQuest(worldName, mainQuestName) == false)
+            return res <<= errorUndefinedMainQuest(worldName, mainQuestName);
+
+        res <<= colon_with_spaces();
+        res <<= next_line();
+        res <<= empty_lines();
+        if(res.isError())
+            return res;
+
+        DebugBlock eventBlock = block(res);
+        if(res.isError())
+            return res;
+
+        EventHandler handler = EventHandler::onNewMainQuest(
+                worldName, mainQuestName, eventBlock);
+        res <<= _app->addEventHandler(handler);
+        return res;
+
+    }
+
 
     Result onNewSubQuest(const Str& worldName) noexcept {
         Result res;
@@ -352,7 +383,6 @@ protected:
 
     }
 
-    
     Result onSearchLimitReached(const Str& worldName) noexcept {
         Result res;
         res <<= space(1);
@@ -379,7 +409,7 @@ protected:
     }
 
     DebugBlock on_Pre_Action(
-            Result res,
+            Result& res,
             Str& worldName, 
             Str &actionName, 
             StrVec& args
@@ -393,6 +423,21 @@ protected:
         if(res.isError())
             return DebugBlock::empty();
         return block(res);
+    }
+
+    Result onInit() noexcept {
+        Result res;
+        res <<= colon_with_spaces();
+        res <<= next_line();
+        res <<= empty_lines();
+        if(res.isError())
+            return res;
+        DebugBlock eventBlock = block(res);
+        if(res.isError())
+            return res;
+        EventHandler handler = EventHandler::onInit(eventBlock);
+        res <<= _app->addEventHandler(handler);
+        return res;
     }
 
     Result onPre() noexcept {
@@ -417,6 +462,11 @@ protected:
                 res, worldName, actionName, args);
         if(res.isError())
             return res;
+        if(_app->getServer()->getActionStatus(
+                worldName, actionName) != Server::ACTION_APPLICABLE)
+            return errorMsg(
+                    "Action `[" + worldName+"] " + actionName + "` "
+                    + "is not applicable");
         EventHandler handler = EventHandler::onAction(
                 worldName, actionName, args, eventBlock);
         res <<= _app->addEventHandler(handler);
@@ -430,19 +480,28 @@ protected:
 
         while(name(event, LOWER).isOk()) {
             Str worldName;
-            res <<= space(1);
-            int p = _pos, c = _col;
-            res <<= world(worldName);
-            if(res.isError())
-                return res;
-            if(_app->getServer()->hasWorld(worldName) == false)
-                return res <<= errorWorldDoesntExist(
-                        _app->getServerName(), worldName);
+            int p, c;
+
+            if(event != ON_INIT) {
+                res <<= space(1);
+                p = _pos;
+                c = _col;
+                res <<= world(worldName);
+                if(res.isError())
+                    return res;
+                if(_app->getServer()->hasWorld(worldName) == false)
+                    return res <<= errorWorldDoesntExist(
+                            _app->getServerName(), worldName);
+            }
 
             if(event == ON_NEW_SUBQUEST) {
                 res <<= onNewSubQuest(worldName);
+            } else if(event == ON_NEW_MAIN_QUEST) {
+                res <<= onNewMainQuest(worldName);
             } else if(event == ON_SEARCH_LIMIT_REACHED) {
                 res <<= onSearchLimitReached(worldName);
+            } else if(event == ON_INIT) {
+                res <<= onInit();
             } else if(event == ON_PRE) {
                 _pos = p; _col = c;
                 res <<= onPre();
@@ -476,10 +535,11 @@ public:
     : QuestScriptParser_Base(oneCommand), _app(app) { /* empty */ }
 
     /// @brief Call this to parse the script file.
-    Result parse() noexcept {
+    Result parse(bool applyInitAction) noexcept {
         Result res;
         StdFileSystem stdFileSystem;
-        res <<= parseHeaderFunc(_app->getServer(), &stdFileSystem, true);
+        res <<= parseHeaderFunc(
+                _app->getServer(), &stdFileSystem, applyInitAction);
         if(res.isOk())
             res <<= parseDebugSection();
         return res;
@@ -506,7 +566,7 @@ Result QSFParser::parse(
         App *app
         ) noexcept {
     QuestScriptParser parser(fileName, script, app);
-    return parser.parse();
+    return parser.parse(app->getAppOptions().applyInitAction);
 }
 
 Result QSFParser::parseAndApplyCmd(const Str &command, App *app) noexcept {

@@ -33,6 +33,9 @@ target_sources(mozok PRIVATE app/block.cpp)
 target_sources(mozok PRIVATE app/handler.hpp)
 target_sources(mozok PRIVATE app/handler.cpp)
 
+target_sources(mozok PRIVATE app/callback.hpp)
+target_sources(mozok PRIVATE app/callback.cpp)
+
 # --------------- Installation -------------- #
 
 install(TARGETS mozok DESTINATION bin)

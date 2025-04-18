@@ -155,6 +155,11 @@ Result o_setServerName(AppOptions& appOptions, int argc, char** argv, int& p) {
     return Result::OK();
 }
 
+Result o_noInit(AppOptions& appOptions, int, char**, int&) {
+    appOptions.applyInitAction = false;
+    return Result::OK();
+}
+
 
 // =========================== Command Functions =========================== //
 
@@ -179,15 +184,70 @@ Result c_world(App& app, const Str&, const StrVec& tokens) {
     return app.newWorld(tokens[1]);
 }
 
-Result c_unpause(App& app, const Str&, const StrVec&) {
-    return app.unpause();
+Result c_info(App& app, const Str&, const StrVec&) {
+    Str info = app.getInfo();
+    cout << "INFO:\n" << endl;
+    cout << info << endl;
+    return Result::OK();
 }
 
 Result c_block_cmd(App& app, const Str& line, const StrVec&) {
-    return QSFParser::parseAndApplyCmd(line, &app);
+    Str cmd = line;
+    if(line == "exit")
+        cmd += " Normal exit";
+    return QSFParser::parseAndApplyCmd(cmd, &app);
 }
 
 }
+
+// =============================== Callback ================================ //
+
+class Callback : public AppCallback {
+public:
+    Callback() : AppCallback() 
+    { /*empty*/ }
+
+    bool onPause(App* app) noexcept override {
+        while(true) {
+            cout << ">> ";
+            Str line;
+            getline(cin, line);
+
+            // Split the command line into tokens.
+            stringstream ss(line);
+            std::istream_iterator<Str> b(ss);
+            std::istream_iterator<Str> e;
+            StrVec tokens(b,e);
+            if(tokens.size() == 0) {
+                print_CallHelpMsg();
+                continue;
+            }
+
+            const Str& command = tokens[0];
+
+            if(command == C_CONTINUE)
+                break;
+            
+            if(commandMap.find(command) != commandMap.end()) {
+                Result r = commandMap[command](*app, line, tokens);
+                if(r.isError())
+                    print_ErrorResult(r);
+            } else {
+                print_UnknownCommand(command);
+                print_CallHelpMsg();
+                continue;
+            }
+            
+            if(command == C_EXIT)
+                return false;
+        }
+        return true;
+    }
+
+    void onError() noexcept override {
+    }
+
+} callback;
 
 // ================================= Main ================================== //
 
@@ -228,14 +288,16 @@ int main(int argc, char **argv) {
     commandMap["help"] = &c_help;
     //commandMap[C_INFO] = ;
     commandMap[C_EXIT] = &c_block_cmd;
-    commandMap[C_UNPAUSE] = &c_unpause;
+    commandMap[C_CONTINUE] = nullptr;
     commandMap[C_WORLD] = &c_world;
+    commandMap[C_INFO] = &c_info;
     commandMap[C_PRINT] = &c_block_cmd;
     commandMap[C_EXPECT] = &c_block_cmd;
     commandMap[C_APPLY] = &c_block_cmd;
 
     // Setting up the map that maps options name into an option function.
     optionMap[O_PAUSE_ON_ERR] = &o_pauseOnError;
+    optionMap[O_NO_INIT] = &o_noInit;
     optionMap[O_PRINT_ON_OK] = &o_printOnOk;
     optionMap[O_SERVER_NAME] = &o_setServerName;
 
@@ -266,40 +328,11 @@ int main(int argc, char **argv) {
         return ERROR_CODE;
     }
 
-    while(false) {
-        cout << ">> ";
-        Str line;
-        getline(cin, line);
-
-        // Split the command line into tokens.
-        stringstream ss(line);
-        std::istream_iterator<Str> b(ss);
-        std::istream_iterator<Str> e;
-        StrVec tokens(b,e);
-        if(tokens.size() == 0) {
-            print_CallHelpMsg();
-            continue;
-        }
-
-        const Str& command = tokens[0];
-
-        if(commandMap.find(command) != commandMap.end()) {
-            Result r = commandMap[command](*app, line, tokens);
-            if(r.isError())
-                print_ErrorResult(r);
-        } else {
-            print_UnknownCommand(command);
-            print_CallHelpMsg();
-            continue;
-        }
-
-        if(command == C_EXIT)
-            break;
-    }
-
-    if(app->getCurrentStatus().isOk()) 
+    status <<= app->simulate(&callback);
+    if(status.isOk()) { 
         if(appOptions.printOnOk.length() > 0)
             cout << appOptions.printOnOk << endl;
+    }
 
     return 0;
 }

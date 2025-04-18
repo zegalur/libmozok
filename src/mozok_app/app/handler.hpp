@@ -10,12 +10,20 @@
 namespace mozok {
 namespace app {
 
+
+class EventHandler;
+using EventHandlers = Vector<EventHandler>;
+using HandlerId = EventHandlers::size_type;
+
+
 class EventHandler {
     enum Event {
+        ON_NEW_MAIN_QUEST,
         ON_NEW_SUBQUEST,
         ON_SEARCH_LIMIT_REACHED,
         ON_PRE,
-        ON_ACTION
+        ON_ACTION,
+        ON_INIT
     };
 
     const Event _event;
@@ -29,6 +37,13 @@ class EventHandler {
             ) noexcept;
 
 public:
+
+    static EventHandler onNewMainQuest(
+            const Str& worldName,
+            const Str& mainQuestName,
+            const DebugBlock& block
+            ) noexcept;
+
     static EventHandler onNewSubQuest(
             const Str& worldName,
             const Str& subQuestName,
@@ -54,6 +69,10 @@ public:
             const Str& worldName,
             const Str& actionName,
             const StrVec& arguments,
+            const DebugBlock& block
+            ) noexcept;
+
+    static EventHandler onInit(
             const DebugBlock& block
             ) noexcept;
 

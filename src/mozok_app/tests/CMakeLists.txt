@@ -1,6 +1,15 @@
 
+# Copy quest files as configure files.
+configure_file(tutorial.qsf tutorial.qsf COPYONLY)
+configure_file(tutorial_main.quest tutorial_main.quest COPYONLY)
+configure_file(tutorial_controls.quest tutorial_controls.quest COPYONLY)
+configure_file(tutorial_fighting.quest tutorial_fighting.quest COPYONLY)
+configure_file(tutorial_key.quest tutorial_key.quest COPYONLY)
+configure_file(tutorial_puzzle.quest tutorial_puzzle.quest COPYONLY)
+configure_file(tutorial_utils.quest tutorial_utils.quest COPYONLY)
+
+
 function(analyze_quest quest qsf options)
-    #configure_file(${quest}.quest ${quest}.quest COPYONLY)
     add_test(NAME try_${qsf}
         COMMAND mozok ${quest}.qsf -P MOZOK_OK ${options}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

@@ -91,10 +91,12 @@ public:
     bool isGlobal() const noexcept;
 
     /// @brief Evaluates the applicability with the given arguments and state.
+    /// @param doNotCheckPreconditions if `true` - skips preconditions check.
     /// @param arguments Argument objects.
     /// @param state A state.
     /// @return Returns `Result::OK()` when the action can be applied.
     Result evaluateActionApplicability(
+            const bool doNotCheckPreconditions,
             const ObjectVec& arguments, 
             const StatePtr& state
             ) const noexcept;
