@@ -245,6 +245,7 @@ protected:
             res <<= name(blockName);
             res <<= colon_with_spaces();
             res <<= next_line();
+            res <<= empty_lines();
         }
 
         if(res.isError())
@@ -280,6 +281,7 @@ protected:
                     return DebugBlock::empty();
                 }
             }
+            res <<= empty_lines();
         }
 
         if(blockType == BLOCK_ACT)

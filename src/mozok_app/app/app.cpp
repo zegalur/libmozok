@@ -102,15 +102,7 @@ Server* App::getCurrentServer() noexcept {
 }
 
 Str App::getCurrentPath() const noexcept {
-    std::stringstream ss;
-    ss << "(";
-    for(SIZE_T i = 0; i < _currentPath.size(); ++i) {
-        ss << _currentPath[i].first << "/" << _currentPath[i].second;
-        if(i != _currentPath.size() - 1)
-            ss << ",";
-    }
-    ss << ")";
-    return Str(ss.str());
+    return pathStr(_currentPath);
 }
 
 const AppOptions& App::getAppOptions() const noexcept {
@@ -189,6 +181,7 @@ Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
 }
 
 Result App::applyDebugBlock(const DebugBlock& block) noexcept {
+    infoMsg("Apply block `" + block._name + "`.");
     Result res;
     for(const auto& cmd : block._cmds) {
         res <<= applyDebugCmd(cmd);
@@ -196,6 +189,40 @@ Result App::applyDebugBlock(const DebugBlock& block) noexcept {
             break;
     }
     return res;
+}
+
+Result App::applySplitBlock(const DebugBlock& block, int split) noexcept {
+    if(_options.verbose) {
+        const Str splitBlockName = block._cmds[block._splits[split]]._args[0].str;
+        const Str pre = (_options.colorText ? "\033[92m\033[4m" : "");
+        const Str post = (_options.colorText ? "\033[0m" : "");
+        infoMsg(pre + "-=> Apply split block `" + splitBlockName + "`." + post);
+    }
+    Result res;
+    int start = block._splits[split] + 1;
+    int end = block._cmds.size();
+    if(split < int(block._splits.size())-1)
+        end = block._splits[split + 1];
+    for(int i = start; i < end; ++i) {
+        res <<= applyDebugCmd(block._cmds[SIZE_T(i)]);
+        if(res.isError())
+            break;
+    }
+    return res;
+
+}
+
+Str App::pathStr(const Path& path) const noexcept {
+    std::stringstream ss;
+    ss << "(";
+    for(SIZE_T i = 0; i < path.size(); ++i) {
+        ss << path[i].first + 1 << "/" << path[i].second + 1;
+        if(i != path.size() - 1)
+            ss << ",";
+    }
+    ss << ")";
+    return Str(ss.str());
+
 }
 
 template<typename ...Args>
@@ -207,11 +234,31 @@ Result App::onEvent(
     for(auto it = hset.begin(); it != hset.end(); ) {
         const HandlerId hid = *it;
         const auto& h = _eventHandlers[hid];
-        //std::cout << "BLOCK: " << h._block._name << std::endl;
         if(match(h._args, args...)) {
             if(h._block._type == DebugBlock::SPLIT) {
-                //res <<= applyDebugBlock(h._block);
+                // Split block.
+                Path split = _currentPath;
+                split.push_back({hid,0});
+                for(SIZE_T i=0; i<h._block._splits.size(); ++i) {
+                    const Str path = pathStr(split);
+                    if(_alternatives.find(path) != _alternatives.end()) {
+                        _currentPath = split;
+                        res <<= applySplitBlock(h._block, int(i));
+                        break;
+                    } if(_donePaths.find(path) == _donePaths.end()) {
+                        // This path is a new possible alternative.
+                        //_alternatives.insert(path);*/
+                        _alternatives[path] = 0;
+                        Path parent = split;
+                        do {
+                            parent.pop_back();
+                            _alternatives[pathStr(parent)]++;
+                        } while(parent.size() > 0);
+                    }
+                    split.back().second++;
+                }
             } else
+                // Not a split block.
                 res <<= applyDebugBlock(h._block);
 
             if(h._block._type != DebugBlock::ALWAYS)
@@ -281,8 +328,14 @@ void App::onNewQuestStatus(
         const Str& questName,
         const QuestStatus questStatus
         ) noexcept {
-    infoMsg("EVENT: onNewQuestStatus [" + worldName + "] " 
-            + questName + " " + questStatusToStr(questStatus));
+    if(_options.verbose) {
+        Str statusStr = questStatusToStr(questStatus);
+        Str doneStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_DONE);
+        if(_options.colorText && statusStr == doneStr)
+            statusStr = "\033[92m" + statusStr + "\033[0m";
+        infoMsg("EVENT: onNewQuestStatus [" + worldName + "] " 
+                + questName + " " + statusStr);
+    }
     _records[qname(worldName, questName)]->lastStatus = questStatus;
 }
 
@@ -348,13 +401,15 @@ bool App::applyNext(QuestRecPtr& rec) noexcept {
         int doneCount = 0;
         for(auto& sq_rec : rec->subquests) {
             allDone &= sq_rec->lastStatus == QuestStatus::MOZOK_QUEST_STATUS_DONE;
-            if(allDone)
+            if(allDone) {
                 ++doneCount;
-            else 
+                if(doneCount > rec->skippedActions)
+                    break;
+            } else 
             if(applyNext(sq_rec))
                 return true;
         }
-        if(allDone && doneCount < rec->skippedActions) {
+        if(allDone && doneCount > rec->skippedActions) {
             // All subquests are done. 
             // This only means that we can now skip N/A action.
             pushAction(
@@ -382,6 +437,8 @@ void App::pushAction(
         ) noexcept {
     if(_options.verbose) {
         Str pre = (isNA ? "skip N/A action" : "pushAction");
+        if(_options.colorText)
+            pre = "\033[92m" + pre + "\033[0m";
         Str text = pre + " [" + worldName + "] " + actionName + "(";
         for(SIZE_T i=0; i<args.size(); ++i)
             text += args[i] + (i != args.size()-1 ? "," : "");
@@ -411,6 +468,10 @@ bool App::isAllQuestsDone() noexcept {
 }
 
 void App::simulateNext() noexcept {
+    const Str pre = (_options.colorText ? "\033[95m" : "");
+    const Str post = (_options.colorText ? "\033[0m" : "");
+    infoMsg(pre + "=============== NEW TIMELINE ===============" + post);
+
     // Reset handler sets.
     std::map<EventHandler::Event, HandlerSet*> hmap;
     hmap[EventHandler::ON_SEARCH_LIMIT_REACHED] = &_onSearchLimitReached;
@@ -470,7 +531,7 @@ void App::simulateNext() noexcept {
 
         if(getCurrentStatus().isError())
             break;
-        if(isAllQuestsDone() == true)
+        if(isWaiting && isAllQuestsDone() == true)
             break;
 
         if(isWaiting) {
@@ -494,10 +555,36 @@ void App::simulateNext() noexcept {
 
 Result App::simulate(AppCallback* callback) noexcept {
     _callback = callback;
+    _alternatives.clear();
+    _alternatives[getCurrentPath()] = 0;
+    _donePaths.clear();
     do {
         simulateNext();
         if(_status.isError())
             break;
+
+        Path p = _currentPath;
+
+        // Delete this alternative when it's a leaf node.
+        if(_alternatives[getCurrentPath()] == 0) {
+            _alternatives.erase(pathStr(p));
+            _donePaths.insert(pathStr(p));
+        }
+        // Mark this timeline as completed. 
+        // Remove all the parent alternatives without children.
+        while(p.size() > 0) {
+            p.pop_back();
+            _alternatives[pathStr(p)]--;
+            if(_alternatives[pathStr(p)] == 0) {
+                _alternatives.erase(pathStr(p));
+                _donePaths.insert(pathStr(p));
+            }
+        }
+
+        //for(auto it=_alternatives.begin(); it!=_alternatives.end(); ++it)
+        //    std::cout << it->first << " = " << it->second << std::endl;
+        
+        _currentPath.clear();
     } while(_alternatives.empty() == false);
     if(_status.isError())
         callback->onError();

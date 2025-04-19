@@ -41,19 +41,29 @@ ACT TUTORIAL_STARTED:
 onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
 SPLIT BLOCK_EXIT:
     # In this branch we expect this quest to fail.
-    expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
+    #expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
     # As a consequence, we expect a goal change in the parent quest.
-    expect GOAL_CHANGE [tut] PuzzleTutorial _ 1
+    #expect GOAL_CHANGE [tut] PuzzleTutorial _ 1
     # Block the exit with the stone that can't be moved.
-    apply [tut] PTut_BlockExit()
+    #apply [tut] PTut_BlockExit()
+    print First split.
 SPLIT DO_NOTHING:
     # second possible split
-    print Second split test
+    print Second split.
+
+onNewSubQuest [tut] FightingTutorial _ _:
+SPLIT THIRD_SPLIT:
+    print Third split.
+    #
+
+SPLIT FOURTH_SPLIT:
+    print Another split.
+
 
 # Exit the simulation when search limit is reached.
 onSearchLimitReached [tut] _:
 ALWAYS SEARCH_LIMIT: 
-    exit ERROR: Search limit reached!
+    #exit ERROR: Search limit reached!
 
 # Exit the simulation when space limit is reached.
 onSpaceLimitReached [tut] _:

@@ -40,6 +40,7 @@ class DebugCmd {
             ) noexcept;
 
     friend class App;
+    friend class DebugBlock;
 
 public:
     static DebugCmd split(const Str& splitName) noexcept;

@@ -63,7 +63,8 @@ class App : public MessageProcessor {
     SharedPtr<Server> _currentServer;
     using Path = Vector<Pair<int, int>>;
     Path _currentPath;
-    HashSet<Str> _alternatives;
+    UnorderedMap<Str, int> _alternatives;
+    HashSet<Str> _donePaths;
     AppCallback* _callback;
     bool _exit;
 
@@ -75,6 +76,8 @@ class App : public MessageProcessor {
     bool applyNextApplicableAction() noexcept;
     bool applyNext(QuestRecPtr& rec) noexcept;
     bool isAllQuestsDone() noexcept;
+    Str pathStr(const Path& path) const noexcept;
+    Result applySplitBlock(const DebugBlock& block, int split) noexcept;
     
     void pushAction(
             bool isNA,

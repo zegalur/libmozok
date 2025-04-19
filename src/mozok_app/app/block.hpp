@@ -20,6 +20,9 @@ class DebugBlock {
     const Type _type;
     const Str _name;
     const DebugCmdVec _cmds;
+    const Vector<int> _splits;
+
+    static Vector<int> getSplits(const DebugCmdVec& cmds) noexcept;
 
     DebugBlock(
             const Type type,

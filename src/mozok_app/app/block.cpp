@@ -1,6 +1,7 @@
 // ...
 
 #include "app/block.hpp"
+#include "app/command.hpp"
 
 namespace mozok {
 namespace app {
@@ -12,8 +13,17 @@ DebugBlock::DebugBlock(
         ) noexcept :
     _type(type),
     _name(name),
-    _cmds(cmds)
+    _cmds(cmds),
+    _splits(getSplits(cmds))
 { /* empty */ }
+
+Vector<int> DebugBlock::getSplits(const DebugCmdVec& cmds) noexcept {
+    Vector<int> res;
+    for(DebugCmdVec::size_type i=0; i<cmds.size(); ++i)
+        if(cmds[i]._cmd == DebugCmd::SPLIT)
+            res.push_back(i);
+    return res;
+}
 
 DebugBlock DebugBlock::empty() noexcept {
     return DebugBlock(Type::EMPTY, "???", {});

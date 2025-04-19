@@ -196,6 +196,7 @@ Result QuestScriptParser_Base::init(
     res <<= keyword(KEYWORD_INIT);
     res <<= colon_with_spaces();
     res <<= next_line();
+    res <<= empty_lines();
     while(space(1).isOk()) {
         Str worldName;
         Str actionName;
