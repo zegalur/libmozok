@@ -24,6 +24,7 @@ namespace {
 const Str ON_NEW_MAIN_QUEST = "onNewMainQuest";
 const Str ON_NEW_SUBQUEST = "onNewSubQuest";
 const Str ON_SEARCH_LIMIT_REACHED = "onSearchLimitReached";
+const Str ON_SPACE_LIMIT_REACHED = "onSpaceLimitReached";
 const Str ON_PRE = "onPre";
 const Str ON_ACTION = "onAction";
 const Str ON_INIT = "onInit";
@@ -123,6 +124,11 @@ protected:
             Str msg;
             res <<= rest(msg);
             return DebugCmd::exit(msg);
+
+        } if(cmd == CMD_PAUSE) {
+            Str msg;
+            res <<= rest(msg);
+            return DebugCmd::pause(msg);
 
         } else if(cmd == CMD_PRINT) {
             Str msg;
@@ -360,7 +366,7 @@ protected:
 
     }
 
-    Result onSearchLimitReached(const Str& worldName) noexcept {
+    Result onLimitReached(const Str& worldName, bool searchLimit) noexcept {
         Result res;
         res <<= space(1);
         DebugArg questName = str_arg(res);
@@ -379,9 +385,15 @@ protected:
         if(res.isError())
             return res;
 
-        EventHandler handler = EventHandler::onSearchLimitReached(
-                worldName, questName, eventBlock);
-        res <<= _app->addEventHandler(handler);
+        if(searchLimit) {
+            EventHandler handler = EventHandler::onSearchLimitReached(
+                    worldName, questName, eventBlock);
+            res <<= _app->addEventHandler(handler);
+        } else {
+            EventHandler handler = EventHandler::onSpaceLimitReached(
+                    worldName, questName, eventBlock);
+            res <<= _app->addEventHandler(handler);
+        }
         return res;
     }
 
@@ -476,7 +488,9 @@ protected:
             } else if(event == ON_NEW_MAIN_QUEST) {
                 res <<= onNewMainQuest(worldName);
             } else if(event == ON_SEARCH_LIMIT_REACHED) {
-                res <<= onSearchLimitReached(worldName);
+                res <<= onLimitReached(worldName, true);
+            } else if(event == ON_SPACE_LIMIT_REACHED) {
+                res <<= onLimitReached(worldName, false);
             } else if(event == ON_INIT) {
                 res <<= onInit();
             } else if(event == ON_PRE) {

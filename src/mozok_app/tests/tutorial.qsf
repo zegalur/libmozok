@@ -25,10 +25,12 @@ init:
 
 # ======================== DEBUGGING SECTION ================================ #
 
-# Activated after all projects were loaded and init actions were applied. 
+# Activated after all projects were loaded and init actions were applied, 
+# but before the worker thread started.
 onInit:
 ACT ON_INIT:
     print Hello, world!
+    #pause ON_INIT
 
 # Print a message when the `FinishAllTutorials` is activated.
 onNewMainQuest [tut] FinishAllTutorials:
@@ -48,17 +50,22 @@ SPLIT DO_NOTHING:
     # second possible split
     print Second split test
 
-# Pause the simulation when search limit is reached.
+# Exit the simulation when search limit is reached.
 onSearchLimitReached [tut] _:
 ALWAYS SEARCH_LIMIT: 
     exit ERROR: Search limit reached!
+
+# Exit the simulation when space limit is reached.
+onSpaceLimitReached [tut] _:
+ALWAYS SEARCH_LIMIT: 
+    exit ERROR: Space limit reached!
 
 # Triggered when this action preconditions hold during the simulation.
 onPre [tut] KeyTutorial(fightingTutorial, keyTutorial):
 ACT ON_TST_ACTION:
     print KeyTutorial preconditions holds.
 
-# Triggered when action was applied during the simulation.
+# Triggered when action was applied by the quest solver during the simulation.
 onAction [tut] ApplyTutorialAction(pickUpKeyAction):
 ACT ON_TST_ACTION:
     print The key was picked up!

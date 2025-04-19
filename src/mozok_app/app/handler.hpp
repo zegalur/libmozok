@@ -5,6 +5,7 @@
 #include "app/argument.hpp"
 #include "app/block.hpp"
 
+#include <libmozok/private_types.hpp>
 #include <libmozok/mozok.hpp>
 
 namespace mozok {
@@ -14,6 +15,8 @@ namespace app {
 class EventHandler;
 using EventHandlers = Vector<EventHandler>;
 using HandlerId = EventHandlers::size_type;
+using HandlerIds = Vector<HandlerId>;
+using HandlerSet = HashSet<HandlerId>;
 
 
 class EventHandler {
@@ -21,6 +24,7 @@ class EventHandler {
         ON_NEW_MAIN_QUEST,
         ON_NEW_SUBQUEST,
         ON_SEARCH_LIMIT_REACHED,
+        ON_SPACE_LIMIT_REACHED,
         ON_PRE,
         ON_ACTION,
         ON_INIT
@@ -55,6 +59,12 @@ public:
             ) noexcept;
 
     static EventHandler onSearchLimitReached(
+            const Str& worldName,
+            const DebugArg& questName, // can be empty
+            const DebugBlock& block
+            ) noexcept;
+    
+    static EventHandler onSpaceLimitReached(
             const Str& worldName,
             const DebugArg& questName, // can be empty
             const DebugBlock& block

@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include "app/block.hpp"
 #include "app/handler.hpp"
 #include "app/command.hpp"
 #include "app/callback.hpp"
 
+#include <libmozok/message_processor.hpp>
 #include <libmozok/public_types.hpp>
 #include <libmozok/private_types.hpp>
 #include <libmozok/mozok.hpp>
@@ -19,10 +21,27 @@ struct AppOptions {
     bool pauseOnError = false;
     Str serverName = "mozok_app";
     bool applyInitAction = true;
-    int maxWaitTime_ms = 500;
+    int maxWaitTime_ms = 1000;
     Str printOnOk = "";
     Str scriptFileName = "";
     Str scriptFile = "";
+    bool verbose = false;
+    bool colorText = true;
+};
+
+struct QuestRec;
+using QuestRecPtr = SharedPtr<QuestRec>;
+struct QuestRec {
+    const Str worldName;
+    const Str questName;
+    const bool isMainQuest;
+    Vector<QuestRecPtr> subquests;
+    QuestStatus lastStatus;
+    StrVec lastPlan_Actions;
+    Vector<StrVec> lastPlan_Args;
+    int nextAction;
+    int skippedActions;
+    QuestRec(const Str& world, const Str& quest, const bool isMain) noexcept;
 };
 
 /// @brief ...
@@ -30,7 +49,15 @@ class App : public MessageProcessor {
     AppOptions _options;
     Result _status;
     EventHandlers _eventHandlers;
-    Vector<int> _eventCounters;
+    HandlerSet _onSearchLimitReached;
+    HandlerSet _onSpaceLimitReached;
+    HandlerSet _onNewMainQuest;
+    HandlerSet _onNewSubQuest;
+    HandlerSet _onAction;
+    HandlerSet _onInit;
+    HandlerSet _onPre;
+    Vector<QuestRecPtr> _mainQuests;
+    UnorderedMap<Str, QuestRecPtr> _records;
     Vector<HandlerId> _splitEvents;
     Vector<int> _splitsCount;
     SharedPtr<Server> _currentServer;
@@ -41,7 +68,23 @@ class App : public MessageProcessor {
     bool _exit;
 
     App(const AppOptions& options) noexcept;
+    Str msg(const Str& text) const noexcept;
+    void infoMsg(const Str& msg) const noexcept;
+    void errorMsg(const Str& msg) const noexcept;
     void simulateNext() noexcept;
+    bool applyNextApplicableAction() noexcept;
+    bool applyNext(QuestRecPtr& rec) noexcept;
+    bool isAllQuestsDone() noexcept;
+    
+    void pushAction(
+            bool isNA,
+            const Str& worldName, 
+            const Str& actionName, 
+            const StrVec& args
+            ) noexcept;
+
+    template<typename ...Args> 
+    Result onEvent(HandlerSet& hset, const Args&... args) noexcept;
 
 public:
     static App* create(const AppOptions& options, Result& status) noexcept;
@@ -54,8 +97,9 @@ public:
     Result newWorld(const Str& worldName) noexcept; 
     Str getInfo() noexcept;
     Result addEventHandler(const EventHandler& handler) noexcept;
-    Result applyDebugCmd(const DebugCmd& cmd) noexcept;
     Result parseAndApplyCmd(const Str& command) noexcept;
+    Result applyDebugCmd(const DebugCmd& cmd) noexcept;
+    Result applyDebugBlock(const DebugBlock& block) noexcept;
     Result simulate(AppCallback* callback) noexcept;
     
     void onActionError(

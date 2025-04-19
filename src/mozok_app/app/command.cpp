@@ -20,6 +20,10 @@ DebugCmd DebugCmd::split(const Str& splitName) noexcept {
     return DebugCmd(Cmd::SPLIT, QuestEvent::NONE, {DebugArg(splitName)});
 }
 
+DebugCmd DebugCmd::pause(const Str& message) noexcept {
+    return DebugCmd(Cmd::PAUSE, QuestEvent::NONE, {DebugArg(message)});
+}
+
 DebugCmd DebugCmd::print(const Str& message) noexcept {
     return DebugCmd(Cmd::PRINT, QuestEvent::NONE, {DebugArg(message)});
 }

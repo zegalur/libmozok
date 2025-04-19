@@ -78,6 +78,12 @@ const Str O_NO_INIT_BRIEF = "(No-init) Do not call the `init` actions.";
 const Str O_NO_INIT_DESC = "If set, the app will not call the init actions.";
 const StrVec O_NO_INIT_ARGS = {};
 
+const Str O_VERBOSE = "-V";
+const Str O_VERBOSE_FORMAT = "-V";
+const Str O_VERBOSE_BRIEF = "Verbose output.";
+const Str O_VERBOSE_DESC = "Turn ON the verbose output mode.";
+const StrVec O_VERBOSE_ARGS = {};
+
 /// @}
 
 
@@ -196,6 +202,7 @@ const HelpMap HELP_MAP = {
     , MOZOK_HELP(APP_OPTION, O_PRINT_ON_OK)
     , MOZOK_HELP(APP_OPTION, O_SERVER_NAME)
     , MOZOK_HELP(APP_OPTION, O_NO_INIT)
+    , MOZOK_HELP(APP_OPTION, O_VERBOSE)
     
     // commands
     , MOZOK_HELP(GENERAL_COMMAND, C_EXIT)

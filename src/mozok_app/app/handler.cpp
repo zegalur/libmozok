@@ -50,6 +50,16 @@ EventHandler EventHandler::onSearchLimitReached(
             {worldName, questName}, block);
 }
 
+EventHandler EventHandler::onSpaceLimitReached(
+        const Str& worldName,
+        const DebugArg& questName, // can be empty
+        const DebugBlock& block
+        ) noexcept {
+    return EventHandler(
+            ON_SPACE_LIMIT_REACHED, 
+            {worldName, questName}, block);
+}
+
 EventHandler EventHandler::onPre(
         const Str& worldName,
         const Str& actionName,

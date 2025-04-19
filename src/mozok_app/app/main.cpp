@@ -160,6 +160,11 @@ Result o_noInit(AppOptions& appOptions, int, char**, int&) {
     return Result::OK();
 }
 
+Result o_verbose(AppOptions& appOptions, int, char**, int&) {
+    appOptions.verbose = true;
+    return Result::OK();
+}
+
 
 // =========================== Command Functions =========================== //
 
@@ -303,6 +308,7 @@ int main(int argc, char **argv) {
     optionMap[O_NO_INIT] = &o_noInit;
     optionMap[O_PRINT_ON_OK] = &o_printOnOk;
     optionMap[O_SERVER_NAME] = &o_setServerName;
+    optionMap[O_VERBOSE] = &o_verbose;
 
     // Turning on the options.
     for(int p = 2; p < argc; ++p) {
