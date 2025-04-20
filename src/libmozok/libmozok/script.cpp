@@ -91,13 +91,7 @@ Result QuestScriptParser_Base::world(Str& out) noexcept {
     return res;
 }
 
-Result QuestScriptParser_Base::project(Str& worldName, Str& projectFile) noexcept {
-    Result res;
-    res <<= world(worldName);
-    res <<= space(1);
-    if(res.isError())
-        return res;
-    // the rest is the project file name
+Result QuestScriptParser_Base::filename(Str& filename) noexcept {
     int lineEnd = _pos;
     for(; _src[lineEnd] != '\0' && _src[lineEnd] != '\n'; ++lineEnd);
     // remove empty space on the right side of the string
@@ -111,11 +105,22 @@ Result QuestScriptParser_Base::project(Str& worldName, Str& projectFile) noexcep
         if(empty == false)
             break;
     }
-    projectFile = _text.substr(_pos, lineEnd - _pos + 1);
-    if(projectFile.length() == 0)
+    filename = _text.substr(_pos, lineEnd - _pos + 1);
+    if(filename.length() == 0)
         return errorMsg("Expecting a non-empty file name");
     _col += (lineEnd - _pos + 1);
     _pos += (lineEnd - _pos + 1);
+    return Result::OK();
+}
+
+Result QuestScriptParser_Base::project(Str& worldName, Str& projectFile) noexcept {
+    Result res;
+    res <<= world(worldName);
+    res <<= space(1);
+    if(res.isError())
+        return res;
+    // the rest is the project file name
+    res <<= filename(projectFile);
     return res;
 }
 

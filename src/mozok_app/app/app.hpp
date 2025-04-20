@@ -63,15 +63,17 @@ class App : public MessageProcessor {
     SharedPtr<Server> _currentServer;
     using Path = Vector<Pair<int, int>>;
     Path _currentPath;
+    Str _pathLog;
     UnorderedMap<Str, int> _alternatives;
     HashSet<Str> _donePaths;
+    HashSet<Str> _activeSplits;
     AppCallback* _callback;
     bool _exit;
 
     App(const AppOptions& options) noexcept;
     Str msg(const Str& text) const noexcept;
-    void infoMsg(const Str& msg) const noexcept;
-    void errorMsg(const Str& msg) const noexcept;
+    void infoMsg(const Str& msg) noexcept;
+    void errorMsg(const Str& msg) noexcept;
     void simulateNext() noexcept;
     bool applyNextApplicableAction() noexcept;
     bool applyNext(QuestRecPtr& rec) noexcept;

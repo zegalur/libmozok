@@ -1,0 +1,66 @@
+# ...
+
+version 1 0
+script script_name_here
+
+worlds: # none
+projects: # none
+init: # none
+
+# Activated after all projects were loaded and init actions were applied, 
+# but before the worker thread started.
+onInit:
+ACT ON_INIT:
+    print ------------- Hello, world! ------------- 
+    #pause ON_INIT
+
+# Print a message when the `FinishAllTutorials` is activated.
+onNewMainQuest [tut] FinishAllTutorials:
+ACT TUTORIAL_STARTED:
+    print Tutorial quest started, enjoy!
+
+# Split and block the exit, when `_GetHeart` is activated. 
+onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
+SPLIT BLOCK_EXIT:
+    # In this branch we expect this quest to fail.
+    #expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
+    # As a consequence, we expect a goal change in the parent quest.
+    #expect GOAL_CHANGE [tut] PuzzleTutorial _ 1
+    # Block the exit with the stone that can't be moved.
+    #apply [tut] PTut_BlockExit()
+    print First split.
+SPLIT DO_NOTHING:
+    # second possible split
+    print Second split.
+
+onNewSubQuest [tut] FightingTutorial _ _:
+SPLIT THIRD_SPLIT:
+    print Third split.
+SPLIT FOURTH_SPLIT:
+    print Another split.
+
+onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
+ACT_IF THIRD_SPLIT:
+    print Yes, Third split was activated!!!!!
+    #pause ACT_IF
+
+
+# Exit the simulation when search limit is reached.
+onSearchLimitReached [tut] _:
+ALWAYS SEARCH_LIMIT: 
+    #exit ERROR: Search limit reached!
+
+# Exit the simulation when space limit is reached.
+onSpaceLimitReached [tut] _:
+ALWAYS SEARCH_LIMIT: 
+    exit ERROR: Space limit reached!
+
+# Triggered when this action preconditions hold during the simulation.
+onPre [tut] KeyTutorial(fightingTutorial, keyTutorial):
+ACT ON_TST_ACTION:
+    print KeyTutorial preconditions holds.
+
+# Triggered when action was applied by the quest solver during the simulation.
+onAction [tut] ApplyTutorialAction(pickUpKeyAction):
+ACT ON_TST_ACTION:
+    print The key was picked up!

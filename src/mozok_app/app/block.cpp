@@ -33,6 +33,10 @@ DebugBlock DebugBlock::act(const Str& name, const DebugCmdVec& cmds) noexcept {
     return DebugBlock(Type::ACT, name, cmds);
 }
 
+DebugBlock DebugBlock::act_if(const Str& name, const DebugCmdVec& cmds) noexcept {
+    return DebugBlock(Type::ACT_IF, name, cmds);
+}
+
 DebugBlock DebugBlock::split(const DebugCmdVec& cmds) noexcept {
     return DebugBlock(Type::SPLIT, "???", cmds);
 }

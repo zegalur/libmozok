@@ -232,7 +232,6 @@ public:
 
             if(command == C_CONTINUE)
                 break;
-            
             if(commandMap.find(command) != commandMap.end()) {
                 Result r = commandMap[command](*app, line, tokens);
                 if(r.isError())
@@ -249,7 +248,9 @@ public:
         return true;
     }
 
-    void onError() noexcept override {
+    void onError(App* app) noexcept override {
+        if(app->getAppOptions().pauseOnError)
+            onPause(app);
     }
 
 } callback;

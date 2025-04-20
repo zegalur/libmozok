@@ -21,6 +21,7 @@ protected:
     Result scriptName() noexcept;
     Result worlds(Server* server) noexcept;
     Result world(Str& out) noexcept;
+    Result filename(Str& filename) noexcept;
     Result project(Str& worldName, Str& projectFile) noexcept;
     Result projects(Server* server, FileSystem* fileSystem) noexcept;
     Result action(Str& worldName, Str& actionName, StrVec& arguments) noexcept;

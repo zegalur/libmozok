@@ -75,22 +75,22 @@ Str App::msg(const Str& text) const noexcept {
     return getCurrentPath() + " " + text;
 }
 
-void App::infoMsg(const Str& text) const noexcept {
-    if(_options.verbose) {
-        if(_options.colorText)
-            std::cout << msg(Str("\033[96mINFO:\033[0m ") + text) << std::endl;
-        else
-            std::cout << msg(Str("INFO: ") + text) << std::endl;
-    }
+void App::infoMsg(const Str& text) noexcept {
+    Str m = msg(Str("INFO: ") + text);
+    if(_options.colorText)
+        m = msg(Str("\033[96mINFO:\033[0m ") + text);
+    _pathLog += m + "\n";
+    if(_options.verbose)
+        std::cout << m << std::endl;
 }
 
-void App::errorMsg(const Str& text) const noexcept {
-    if(_options.verbose) {
-        if(_options.colorText)
-            std::cout << msg(Str("\033[91mERROR:\033[0m ") + text) << std::endl;
-        else
-            std::cout << msg(Str("ERROR: ") + text) << std::endl;
-    }
+void App::errorMsg(const Str& text) noexcept {
+    Str m = msg(Str("ERROR: ") + text);
+    if(_options.colorText)
+        m = msg(Str("\033[91mERROR:\033[0m ") + text);
+    _pathLog += m + "\n";
+    if(_options.verbose)
+        std::cout << m << std::endl;
 }
 
 const Result& App::getCurrentStatus() const noexcept {
@@ -131,6 +131,10 @@ Str App::getInfo() noexcept {
         ss << "* [" << w << "] Full state:" << std::endl;
         ss << saveFile << std::endl;
     }
+    ss << std::endl;
+
+    // Current path's log.
+    ss << "* Timeline LOG:" << std::endl << _pathLog << std::endl;
 
     return Str(ss.str());
 }
@@ -168,7 +172,8 @@ Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
             break;
         case DebugCmd::PAUSE:
             std::cout << msg(pre + "PAUSE: " + post + m) << std::endl;
-            _callback->onPause(this);
+            if(_callback->onPause(this) == false)
+                _exit = true;
             break;
         case DebugCmd::EXIT:
             std::cout << msg(pre + "EXIT: " + post + m) << std::endl;
@@ -187,17 +192,20 @@ Result App::applyDebugBlock(const DebugBlock& block) noexcept {
         res <<= applyDebugCmd(cmd);
         if(res.isError())
             break;
+        if(_exit)
+            break;
     }
     return res;
 }
 
 Result App::applySplitBlock(const DebugBlock& block, int split) noexcept {
-    if(_options.verbose) {
-        const Str splitBlockName = block._cmds[block._splits[split]]._args[0].str;
-        const Str pre = (_options.colorText ? "\033[92m\033[4m" : "");
-        const Str post = (_options.colorText ? "\033[0m" : "");
-        infoMsg(pre + "-=> Apply split block `" + splitBlockName + "`." + post);
-    }
+    const Str splitBlockName = block._cmds[block._splits[split]]._args[0].str;
+    
+    // Info message
+    const Str pre = (_options.colorText ? "\033[92m\033[4m" : "");
+    const Str post = (_options.colorText ? "\033[0m" : "");
+    infoMsg(pre + "-=> Apply split block `" + splitBlockName + "`." + post);
+
     Result res;
     int start = block._splits[split] + 1;
     int end = block._cmds.size();
@@ -208,6 +216,7 @@ Result App::applySplitBlock(const DebugBlock& block, int split) noexcept {
         if(res.isError())
             break;
     }
+    _activeSplits.insert(splitBlockName);
     return res;
 
 }
@@ -231,10 +240,11 @@ Result App::onEvent(
         const Args&... args
         ) noexcept {
     Result res;
-    for(auto it = hset.begin(); it != hset.end(); ) {
+    for(auto it = hset.begin(); _exit == false && it != hset.end(); ) {
         const HandlerId hid = *it;
         const auto& h = _eventHandlers[hid];
         if(match(h._args, args...)) {
+            bool removeHandler = true;
             if(h._block._type == DebugBlock::SPLIT) {
                 // Split block.
                 Path split = _currentPath;
@@ -242,12 +252,13 @@ Result App::onEvent(
                 for(SIZE_T i=0; i<h._block._splits.size(); ++i) {
                     const Str path = pathStr(split);
                     if(_alternatives.find(path) != _alternatives.end()) {
+                        // This split is among the alternatives. 
+                        // Let's do the split.
                         _currentPath = split;
                         res <<= applySplitBlock(h._block, int(i));
                         break;
                     } if(_donePaths.find(path) == _donePaths.end()) {
-                        // This path is a new possible alternative.
-                        //_alternatives.insert(path);*/
+                        // Make this path a new possible alternative.
                         _alternatives[path] = 0;
                         Path parent = split;
                         do {
@@ -257,11 +268,17 @@ Result App::onEvent(
                     }
                     split.back().second++;
                 }
+            } else if(h._block._type == DebugBlock::ACT_IF) {
+                if(_activeSplits.find(h._block._name) != _activeSplits.end()) {
+                    // The required split is activated. Apply the block.
+                    res <<= applyDebugBlock(h._block);
+                } else
+                    removeHandler = false;
             } else
                 // Not a split block.
                 res <<= applyDebugBlock(h._block);
 
-            if(h._block._type != DebugBlock::ALWAYS)
+            if(removeHandler && h._block._type != DebugBlock::ALWAYS)
                 it = hset.erase(it);
             else
                 ++it;
@@ -328,14 +345,14 @@ void App::onNewQuestStatus(
         const Str& questName,
         const QuestStatus questStatus
         ) noexcept {
-    if(_options.verbose) {
-        Str statusStr = questStatusToStr(questStatus);
-        Str doneStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_DONE);
-        if(_options.colorText && statusStr == doneStr)
-            statusStr = "\033[92m" + statusStr + "\033[0m";
-        infoMsg("EVENT: onNewQuestStatus [" + worldName + "] " 
-                + questName + " " + statusStr);
-    }
+    // Info message.
+    Str statusStr = questStatusToStr(questStatus);
+    Str doneStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_DONE);
+    if(_options.colorText && statusStr == doneStr)
+        statusStr = "\033[92m" + statusStr + "\033[0m";
+    infoMsg("EVENT: onNewQuestStatus [" + worldName + "] " 
+            + questName + " " + statusStr);
+    
     _records[qname(worldName, questName)]->lastStatus = questStatus;
 }
 
@@ -435,16 +452,16 @@ void App::pushAction(
         const Str& actionName, 
         const StrVec& args
         ) noexcept {
-    if(_options.verbose) {
-        Str pre = (isNA ? "skip N/A action" : "pushAction");
-        if(_options.colorText)
-            pre = "\033[92m" + pre + "\033[0m";
-        Str text = pre + " [" + worldName + "] " + actionName + "(";
-        for(SIZE_T i=0; i<args.size(); ++i)
-            text += args[i] + (i != args.size()-1 ? "," : "");
-        text += ")";
-        infoMsg(text);
-    }
+    // Info message.
+    Str pre = (isNA ? "skip N/A action" : "pushAction");
+    if(_options.colorText)
+        pre = "\033[92m" + pre + "\033[0m";
+    Str text = pre + " [" + worldName + "] " + actionName + "(";
+    for(SIZE_T i=0; i<args.size(); ++i)
+        text += args[i] + (i != args.size()-1 ? "," : "");
+    text += ")";
+    infoMsg(text);
+    
     if(isNA == false)
         _currentServer->pushAction(worldName, actionName, args);
     //
@@ -548,9 +565,18 @@ void App::simulateNext() noexcept {
     } while(_exit == false);
 
     _currentServer->stopWorkerThread();
+
+    if(_status.isError()) {
+        errorMsg("Oops! error has been occured during the simulation.");
+        infoMsg("Info:\n" + getInfo());
+        _callback->onError(this);
+    }
+
     _mainQuests.clear();
     _records.clear();
     _currentServer.reset();
+    _activeSplits.clear();
+    _pathLog = "";
 }
 
 Result App::simulate(AppCallback* callback) noexcept {
@@ -561,6 +587,8 @@ Result App::simulate(AppCallback* callback) noexcept {
     do {
         simulateNext();
         if(_status.isError())
+            break;
+        if(_exit)
             break;
 
         Path p = _currentPath;
@@ -586,8 +614,6 @@ Result App::simulate(AppCallback* callback) noexcept {
         
         _currentPath.clear();
     } while(_alternatives.empty() == false);
-    if(_status.isError())
-        callback->onError();
     _callback = nullptr;
     return _status;
 }

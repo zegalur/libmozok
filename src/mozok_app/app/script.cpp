@@ -7,6 +7,7 @@
 #include "app/command.hpp"
 #include "app/handler.hpp"
 #include "app/filesystem.hpp"
+#include "libmozok/filesystem.hpp"
 
 #include <libmozok/server.hpp>
 #include <libmozok/error_utils.hpp>
@@ -21,6 +22,8 @@ namespace app {
 
 namespace {
 
+const Str DEBUG_BLOCK = "debug";
+
 const Str ON_NEW_MAIN_QUEST = "onNewMainQuest";
 const Str ON_NEW_SUBQUEST = "onNewSubQuest";
 const Str ON_SEARCH_LIMIT_REACHED = "onSearchLimitReached";
@@ -30,11 +33,13 @@ const Str ON_ACTION = "onAction";
 const Str ON_INIT = "onInit";
 
 const Str BLOCK_ACT = "ACT";
+const Str BLOCK_ACT_IF = "ACT_IF";
 const Str BLOCK_SPLIT = "SPLIT";
 const Str BLOCK_ALWAYS = "ALWAYS";
 
 const std::set<Str> ALLOWED_BLOCKS = {
         BLOCK_ACT,
+        BLOCK_ACT_IF,
         BLOCK_SPLIT,
         BLOCK_ALWAYS };
 
@@ -54,7 +59,6 @@ const DebugCmd ERROR_CMD = DebugCmd::print("ERROR");
 class QuestScriptParser : public QuestScriptParser_Base {
     App* _app;
     Server* _server;
-    const bool _deleteServer;
 
     bool hasSubQuest(const Str& worldName, const Str& subquestName) noexcept {
         return _server->hasSubQuest(worldName, subquestName);
@@ -286,6 +290,8 @@ protected:
 
         if(blockType == BLOCK_ACT)
             return DebugBlock::act(blockName, cmds);
+        if(blockType == BLOCK_ACT_IF)
+            return DebugBlock::act_if(blockName, cmds);
         if(blockType == BLOCK_ALWAYS)
             return DebugBlock::always(blockName, cmds);
         if(blockType == BLOCK_SPLIT)
@@ -469,7 +475,7 @@ protected:
         Result res;
         Str event;
 
-        while(name(event, LOWER).isOk()) {
+        while(name(event).isOk()) {
             Str worldName;
             int p, c;
 
@@ -518,11 +524,49 @@ protected:
         return res;
     }
 
+    Result parseDebugBlock(FileSystem *filesystem) noexcept {
+        Result res;
+        res <<= empty_lines();
+        if(keyword(DEBUG_BLOCK.c_str()).isOk()) {
+            res <<= colon_with_spaces();
+            res <<= next_line();
+            res <<= empty_lines();
+            if(res.isError())
+                return res;
+            while(space(1).isOk()) {
+                Str scriptFilename, scriptFile;
+                res <<= filename(scriptFilename);
+                if(res.isError())
+                    break;
+                Result scriptErr = errorMsg(
+                    "Error while processing `" + scriptFilename + "` script.");
+                res <<= filesystem->getTextFile(scriptFilename, scriptFile);
+                if(res.isError()) {
+                    res <<= scriptErr;
+                    break;
+                }
+                QuestScriptParser p(scriptFilename, scriptFile, _server, _app);
+                res <<= p.getStatus();
+                if(res.isError()) {
+                    res <<= scriptErr;
+                    break;
+                }
+                res <<= space(0);
+                res <<= next_line();
+                res <<= empty_lines();
+                if(res.isError())
+                    break;
+            }
+        }
+        return res;
+    }
+
     /// @brief Call this to parse the script file.
     Result parseFile(bool applyInitAction) noexcept {
         Result res;
         StdFileSystem stdFileSystem;
         res <<= parseHeaderFunc(_server, &stdFileSystem, applyInitAction);
+        res <<= parseDebugBlock(&stdFileSystem);
         if(res.isOk())
             res <<= parseDebugSection();
         return res;
@@ -542,11 +586,11 @@ public:
     QuestScriptParser(
             const Str& fileName, 
             const Str& script,
+            Server* server,
             App* app) : 
         QuestScriptParser_Base(fileName, script), 
         _app(app),
-        _server(Server::createServer(app->getAppOptions().serverName, _status)),
-        _deleteServer(true) {
+        _server(server) {
         _status <<= parseFile(app->getAppOptions().applyInitAction);
     }
     
@@ -556,17 +600,12 @@ public:
             App* app) :
         QuestScriptParser_Base(oneCommand), 
         _app(app),
-        _server(app->getCurrentServer()),
-        _deleteServer(false) {
+        _server(app->getCurrentServer()) {
         _status <<= parseCommand();
     }
 
-    virtual ~QuestScriptParser() {
-        if(_deleteServer) {
-            delete _server;
-            _server = nullptr;
-        }
-    }
+    virtual ~QuestScriptParser() 
+    { /* empty */ }
 
     Result getStatus() const {
         return _status;
@@ -580,12 +619,20 @@ QSFParser::QSFParser()
 
 Result QSFParser::parseAndInit(App *app) noexcept {
     const auto& o = app->getAppOptions();
-    QuestScriptParser parser(o.scriptFileName, o.scriptFile, app);
+    Result res;
+    Server *server = Server::createServer(app->getAppOptions().serverName, res);
+    if(res.isError()) {
+        if(server != nullptr)
+            delete server;
+        return res;
+    }
+    QuestScriptParser parser(o.scriptFileName, o.scriptFile, server, app);
+    delete server;
     return parser.getStatus();
 }
 
 Result QSFParser::parseAndApplyCmd(const Str &command, App *app) noexcept {
-    QuestScriptParser parser("[cmd_command]", command, app);
+    QuestScriptParser parser(command, app);
     return parser.getStatus();
 }
 
