@@ -52,6 +52,9 @@ Libmozok TODO list.
         - [ ] `assert [what]` - asserts a condition and raises an error if it fails.
         - [x] Event handlers: `ACT`, `ACT_IF`, `ALWAYS`, `SPLIT`
         - [x] Placeholder parameters `_`
+        - [ ] Options:
+            - [ ] Max wait time
+            - [ ] Color output
         - [ ] Events:
             - [x] `onInit`
             - [ ] `onPre`
