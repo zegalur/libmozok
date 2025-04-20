@@ -149,19 +149,6 @@ const StrVec C_WORLD_ARGS =
     };
 
 
-/*const Str C_STD_WORLD = "std_world";
-const Str C_STD_WORLD_FORMAT = "std_world <world_name>";
-const Str C_STD_WORLD_BRIEF = "Sets the standard world name.";
-const Str C_STD_WORLD_DESC = 
-    "Sets a previously created `<world_name>` as the standard world name."
-    " If standard world is set, then instead of `world.obj` format you can use"
-    " just `obj`. You can only call this command once per script.";
-const StrVec C_STD_WORLD_ARGS = 
-    { "`<world_name>` - The name of a quest world that will"
-        " be used as the standard quest world."
-    };*/
-
-
 const Str C_LOAD = "load";
 const Str C_LOAD_FORMAT = "load <[world]> <file_path>";
 const Str C_LOAD_BRIEF = "Loads a quest project into a quest world.";
@@ -173,21 +160,23 @@ const StrVec C_LOAD_ARGS =
 
 
 const Str C_EXPECT = "expect";
-const Str C_EXPECT_FORMAT = "expect <what> <args>";
-const Str C_EXPECT_BRIEF = "...";
-const Str C_EXPECT_DESC = "...";
+const Str C_EXPECT_FORMAT = "expect UNREACHABLE <[world]> <quest>";
+const Str C_EXPECT_BRIEF = "Expect quest to fail.";
+const Str C_EXPECT_DESC = "By default any active quest is expected to be `DONE`."
+        " After this command, the <quest> is expected to be `UNREACHABLE`.";
 const StrVec C_EXPECT_ARGS =
-    { "`<what>` - "
-    , " ... "
+    { "`<[world]>` - The name of the world !in brackets!, into which we load a project"
+    , "`<quest>` - The name of the quest expected to be UNREACHABLE"
     };
 
 const Str C_PUSH = "push";
 const Str C_PUSH_FORMAT = "push <[world]> <action>([<arguments>])";
-const Str C_PUSH_BRIEF = "...";
-const Str C_PUSH_DESC = "...";
+const Str C_PUSH_BRIEF = "Push an action into the worker thread queue.";
+const Str C_PUSH_DESC = C_PUSH_BRIEF;
 const StrVec C_PUSH_ARGS =
-    { " ... "
-    , " ... "
+    { "`<[world]>` - The name of the world !in brackets!, into which we load a project"
+    , "`<action>` - Action name"
+    , "`[<arguments>] - Action arguments`"
     };
 
 /// @}

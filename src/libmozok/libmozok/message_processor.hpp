@@ -124,11 +124,14 @@ public:
         const mozok::QuestStatus questStatus
         ) noexcept;
 
-    /// @brief Triggered when a quest received a new goal.
+    /// @brief Triggered when the active goal of a quest changes.
+    ///        Quests that are just activated with the default goal (0) 
+    ///        do not trigger this event.
     /// @param worldName The name of the world from which this message was sent.
     /// @param questName The name of the quest.
-    /// @param newGoal The new goal index (starting from 0).
-    /// @param oldGoal The old goal index (starting from 0).
+    /// @param newGoal The new goal index (starting from 0, but not called for
+    ///     quests just activated with the default goal (0)).
+    /// @param oldGoal The previous goal index (starting from 0).
     virtual void onNewQuestGoal(
         const mozok::Str& worldName,
         const mozok::Str& questName,
