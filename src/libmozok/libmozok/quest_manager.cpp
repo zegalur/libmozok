@@ -1,5 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include "libmozok/message_processor.hpp"
 #include <libmozok/quest_manager.hpp>
 #include <libmozok/quest_planner.hpp>
 
@@ -153,6 +154,7 @@ bool QuestManager::performPlanning(
             worldName, messageProcessor, questManager->_settings);
     
     const QuestStatus oldStatus = questManager->getStatus();
+    const int oldGoal = questManager->getLastActiveGoalIndx();
 
     // Set a new plan.
     if(questManager->setPlan(plan) == false)
@@ -162,6 +164,11 @@ bool QuestManager::performPlanning(
     if(plan->status != oldStatus)
         messageProcessor.onNewQuestStatus(
                 worldName, quest->getName(), plan->status);
+
+    // New goal?
+    if(plan->goalIndx != oldGoal)// || oldStatus == MOZOK_QUEST_STATUS_UNKNOWN)
+        messageProcessor.onNewQuestGoal(
+                worldName, quest->getName(), plan->goalIndx, oldGoal);
 
     StrVec actions;
     Vector<StrVec> actionArgs;

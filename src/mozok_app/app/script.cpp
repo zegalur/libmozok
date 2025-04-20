@@ -8,6 +8,7 @@
 #include "app/handler.hpp"
 #include "app/filesystem.hpp"
 #include "libmozok/filesystem.hpp"
+#include "libmozok/message_processor.hpp"
 
 #include <libmozok/server.hpp>
 #include <libmozok/error_utils.hpp>
@@ -26,11 +27,15 @@ const Str DEBUG_BLOCK = "debug";
 
 const Str ON_NEW_MAIN_QUEST = "onNewMainQuest";
 const Str ON_NEW_SUBQUEST = "onNewSubQuest";
+const Str ON_NEW_QUEST_STATUS = "onNewQuestStatus";
 const Str ON_SEARCH_LIMIT_REACHED = "onSearchLimitReached";
 const Str ON_SPACE_LIMIT_REACHED = "onSpaceLimitReached";
 const Str ON_PRE = "onPre";
 const Str ON_ACTION = "onAction";
 const Str ON_INIT = "onInit";
+
+const Str QUEST_STATUS_UNREACHABLE = "UNREACHABLE";
+const Str QUEST_STATUS_DONE = "DONE";
 
 const Str BLOCK_ACT = "ACT";
 const Str BLOCK_ACT_IF = "ACT_IF";
@@ -47,7 +52,7 @@ const Str CMD_PRINT = "print";
 const Str CMD_EXIT = "exit";
 const Str CMD_PAUSE = "pause";
 const Str CMD_EXPECT = "expect";
-const Str CMD_APPLY = "apply";
+const Str CMD_PUSH = "push";
 
 const Str QEVENT_UNREACHABLE = "UNREACHABLE";
 const Str QEVENT_GOAL_CHANGE = "GOAL_CHANGE";
@@ -139,13 +144,13 @@ protected:
             res <<= rest(msg);
             return DebugCmd::print(msg);
 
-        } else if(cmd == CMD_APPLY) {
+        } else if(cmd == CMD_PUSH) {
             Str worldName, actionName;
             StrVec args;
             res <<= action_with_checks(worldName, actionName, args);
             if(res.isError())
                 return ERROR_CMD;
-            return DebugCmd::apply(worldName, actionName, args);
+            return DebugCmd::push(worldName, actionName, args);
 
         } else if(cmd == CMD_EXPECT) {
             Str questEventName, worldName;
@@ -327,7 +332,49 @@ protected:
                 worldName, mainQuestName, eventBlock);
         res <<= _app->addEventHandler(handler);
         return res;
+    }
 
+    Result onNewQuestStatus(const Str& worldName) noexcept {
+        Result res;
+        Str questName, statusStr;
+
+        res <<= space(1);
+        res <<= name(questName, UPPER);
+
+        if(res.isError())
+            return res;
+        if(hasQuest(worldName, questName) == false)
+            return res <<= errorUndefinedQuest(worldName, questName);
+
+        res <<= space(1);
+        res <<= name(statusStr, UPPER);
+        if(res.isError())
+            return res;
+        if(statusStr != QUEST_STATUS_UNREACHABLE 
+                && statusStr != QUEST_STATUS_DONE)
+            return res <<= errorMsg("Invalid quest status `" + statusStr + "`."
+                                    " Expecting " + QUEST_STATUS_DONE
+                                    + " or " + QUEST_STATUS_UNREACHABLE + ".");
+
+        res <<= colon_with_spaces();
+        res <<= next_line();
+        res <<= empty_lines();
+        if(res.isError())
+            return res;
+
+        DebugBlock eventBlock = block(res);
+        if(res.isError())
+            return res;
+
+        // Convert into QuestStatus standard naming.
+        if(statusStr == QUEST_STATUS_UNREACHABLE)
+            statusStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE);
+        if(statusStr == QUEST_STATUS_DONE)
+            statusStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_DONE);
+        EventHandler handler = EventHandler::onNewQuestStatus(
+                worldName, questName, statusStr, eventBlock);
+        res <<= _app->addEventHandler(handler);
+        return res;
     }
 
 
@@ -371,7 +418,6 @@ protected:
                 worldName, subquestName, parentQuest, parentGoal, eventBlock);
         res <<= _app->addEventHandler(handler);
         return res;
-
     }
 
     Result onLimitReached(const Str& worldName, bool searchLimit) noexcept {
@@ -495,6 +541,8 @@ protected:
                 res <<= onNewSubQuest(worldName);
             } else if(event == ON_NEW_MAIN_QUEST) {
                 res <<= onNewMainQuest(worldName);
+            } else if(event == ON_NEW_QUEST_STATUS) {
+                res <<= onNewQuestStatus(worldName);
             } else if(event == ON_SEARCH_LIMIT_REACHED) {
                 res <<= onLimitReached(worldName, true);
             } else if(event == ON_SPACE_LIMIT_REACHED) {

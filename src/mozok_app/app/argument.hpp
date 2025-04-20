@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "libmozok/public_types.hpp"
 #include <libmozok/mozok.hpp>
 
 namespace mozok {
@@ -28,8 +29,54 @@ using DebugArgs = Vector<DebugArg>;
 
 // Templates to make the pattern matching
 
+
+template<int L, typename... Ts>
+struct GetLen;
+
+template<int L>
+struct GetLen<L, StrVec> {
+    static inline int get_len(const StrVec& strs) noexcept {
+        return L + strs.size();
+    }
+};
+
+template<int L>
+struct GetLen<L> {
+    static inline int get_len() noexcept {
+        return L;
+    }
+};
+
+template<int L, typename T, typename... Ts>
+struct GetLen<L, T, Ts...> {
+    static inline int get_len(const T&, const Ts&... args) noexcept {
+        return GetLen<L+1, Ts...>::get_len(args...);
+    }
+};
+
+
+
 template<int Indx, typename... Ts>
 struct MatchClass;
+
+template<int Indx, typename... Ts>
+struct MatchClass<Indx, StrVec, Ts...> {
+    static inline bool match_fn(
+            const DebugArgs& args, 
+            const StrVec& strs, 
+            const Ts&... args2
+            ) noexcept {
+        if(strs.size() == 0)
+            return MatchClass<Indx,Ts...>::match_fn(args, args2...);
+        StrVec strsCopy(strs.begin()+1, strs.end());
+        if(args[Indx].type == DebugArg::ANY)
+            return MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
+        if(args[Indx].type != DebugArg::STR)
+            return false;
+        return args[Indx].str == strs.front() 
+            && MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
+    }
+};
 
 template<int Indx, typename... Ts>
 struct MatchClass<Indx, Str, Ts...> {
@@ -74,7 +121,8 @@ struct MatchClass<Indx> {
 
 template<typename... Ts>
 inline bool match(const DebugArgs& args1, const Ts&... args2) noexcept {
-    constexpr DebugArgs::size_type l = DebugArgs::size_type(sizeof...(Ts));
+    const DebugArgs::size_type l = DebugArgs::size_type(
+            GetLen<0, Ts...>::get_len(args2...));
     if(args1.size() != l)
         return false;
     if(l == 0)

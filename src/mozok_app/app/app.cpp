@@ -1,6 +1,7 @@
 #include "app/app.hpp"
 #include "app/block.hpp"
 #include "app/callback.hpp"
+#include "app/command.hpp"
 #include "app/handler.hpp"
 #include "app/script.hpp"
 #include "app/filesystem.hpp"
@@ -33,11 +34,14 @@ inline Str qname(const Str& w, const Str& q) noexcept {
 QuestRec::QuestRec(
         const Str& world, 
         const Str& quest, 
-        const bool isMain
+        const bool isMain,
+        const int recordId
         ) noexcept :
     worldName(world),
     questName(quest),
     isMainQuest(isMain),
+    expectDone(true),
+    recId(recordId),
     lastStatus(QuestStatus::MOZOK_QUEST_STATUS_UNKNOWN),
     nextAction(-1),
     skippedActions(0)
@@ -179,6 +183,13 @@ Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
             std::cout << msg(pre + "EXIT: " + post + m) << std::endl;
             _exit = true;
             break;
+        case DebugCmd::PUSH:
+            pushAction(cmd, -1);
+            break;
+        case DebugCmd::EXPECT:
+            if(cmd._questEvent != DebugCmd::UNREACHABLE)
+                return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
+            return expectUnreachable(cmd);
         default:
             return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
     }
@@ -196,6 +207,20 @@ Result App::applyDebugBlock(const DebugBlock& block) noexcept {
             break;
     }
     return res;
+}
+
+Result App::expectUnreachable(const DebugCmd& cmd) noexcept {
+    const Str& worldName = cmd._args[0].str;
+    const Str& questName = cmd._args[1].str;
+    const Str name = qname(worldName, questName);
+    if(_records.find(name) == _records.end())
+        return errorUndefinedQuest(worldName, questName);
+    _records[name]->expectDone = false;
+    const Str pre = (_options.colorText ? "\033[96m" : "");
+    const Str post = (_options.colorText ? "\033[0m" : "");
+    infoMsg(pre + "Expect quest `[" + worldName + "] " + questName 
+            + "` to be unreachable." + post);
+    return Result::OK();
 }
 
 Result App::applySplitBlock(const DebugBlock& block, int split) noexcept {
@@ -292,7 +317,9 @@ void App::onActionError(
         const Str& worldName, 
         const Str& actionName,
         const StrVec& actionArguments,
-        const Result& errorResult
+        const Result& errorResult,
+        const mozok::ActionError actionError,
+        const int data
         ) noexcept {
     Str text = "onActionError: [" + worldName + "]";
     text += actionName + "(";
@@ -300,8 +327,33 @@ void App::onActionError(
             text += actionArguments[i] 
                     + (i != actionArguments.size()-1 ? "," : "");
     text += "). Error result = `" + errorResult.getDescription() + "`";
-    errorMsg(text);
-    _exit = true;
+
+    if(data < 0 || actionError != MOZOK_AE_PRECONDITIONS_ERROR) {
+        _exit = true;
+        errorMsg(text);
+    } else {
+        // Try the alternative plane.
+        QuestRecPtr q = _allQuests[data];
+        infoMsg("Invalid action from the `" 
+                + qname(q->worldName, q->questName) + "` plan.");
+
+        if(q->alternativePlan_Actions.size() > 0) {
+            if(q->alternativePlan_Actions.front() == actionName)
+                if(q->alternativePlan_Args.front() == actionArguments) {
+                    // Alternative plan starts from the same action as last plan.
+                    infoMsg("No good alternative plan avaiable for `" 
+                            + q->questName + "`. Throwing an error...");
+                    _exit = true;
+                    errorMsg(text);
+                    return;
+                }
+        }
+
+        infoMsg("Switch to the alternative plan for `" + q->questName + "`.");
+        q->lastPlan_Actions = q->alternativePlan_Actions;
+        q->lastPlan_Args = q->alternativePlan_Args;
+        q->nextAction = 0;
+    }
 }
 
 void App::onNewMainQuest(
@@ -309,9 +361,10 @@ void App::onNewMainQuest(
         const Str& questName
         ) noexcept {
     infoMsg("EVENT: onNewMainQuest [" + worldName + "] " + questName);
-    QuestRecPtr rec(new QuestRec(worldName, questName, true));
+    QuestRecPtr rec(new QuestRec(worldName, questName, true, int(_records.size())));
     _mainQuests.push_back(rec);
     _records[qname(worldName, questName)] = rec;
+    _allQuests.push_back(rec);
     _status <<= onEvent(_onNewMainQuest, worldName, questName);
 }
 
@@ -323,9 +376,10 @@ void App::onNewSubQuest(
         ) noexcept {
     infoMsg("EVENT: onNewSubQuest [" + worldName + "] " 
             + questName + " " + parentQuestName + " " + std::to_string(goal));
-    QuestRecPtr rec(new QuestRec(worldName, questName, true));
+    QuestRecPtr rec(new QuestRec(worldName, questName, true, int(_records.size())));
     _records[qname(worldName, questName)] = rec;
     _records[qname(worldName, parentQuestName)]->subquests.push_back(rec);
+    _allQuests.push_back(rec);
     _status <<= onEvent(
             _onNewSubQuest, worldName, questName, parentQuestName, goal);
 }
@@ -348,12 +402,33 @@ void App::onNewQuestStatus(
     // Info message.
     Str statusStr = questStatusToStr(questStatus);
     Str doneStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_DONE);
+    Str failStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE);
     if(_options.colorText && statusStr == doneStr)
         statusStr = "\033[92m" + statusStr + "\033[0m";
+    if(_options.colorText && statusStr == failStr)
+        statusStr = "\033[91m" + statusStr + "\033[0m";
     infoMsg("EVENT: onNewQuestStatus [" + worldName + "] " 
             + questName + " " + statusStr);
     
     _records[qname(worldName, questName)]->lastStatus = questStatus;
+    _status <<= onEvent(
+        _onNewQuestStatus, worldName, questName, questStatusToStr(questStatus));
+}
+
+void App::onNewQuestGoal(
+        const Str& worldName,
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept {
+    std::stringstream ss;
+    ss << "EVENT: onNewQuestGoal [" << worldName << "] " << questName << " ";
+    ss << newGoal << " " << oldGoal;
+    infoMsg(ss.str());
+
+    // Reset the plan when goal changed.
+    QuestRecPtr rec = _records[qname(worldName, questName)];
+    rec->nextAction = -1;
 }
 
 void App::onNewQuestPlan(
@@ -366,10 +441,13 @@ void App::onNewQuestPlan(
     QuestRecPtr &rec = _records[qname(worldName, questName)];
     if(rec->nextAction < 0) {
         // accept the plan
+        infoMsg("       New plan accepted for ["+worldName+"] "+questName);
         rec->nextAction = 0;
         rec->lastPlan_Actions = actionList;
         rec->lastPlan_Args = actionArgsList;
     }
+    rec->alternativePlan_Actions = actionList;
+    rec->alternativePlan_Args = actionArgsList;
 }
 
 void App::onSearchLimitReached(
@@ -408,7 +486,8 @@ bool App::applyNext(QuestRecPtr& rec) noexcept {
         // Action is applicable, push it into a worker thread.
         pushAction(
                 false, rec->worldName, nextAction, 
-                rec->lastPlan_Args[rec->nextAction]);
+                rec->lastPlan_Args[rec->nextAction], 
+                rec->recId);
         rec->nextAction++;
         return true;
     } else if(actionStatus == Server::ACTION_NOT_APPLICABLE) {
@@ -417,21 +496,25 @@ bool App::applyNext(QuestRecPtr& rec) noexcept {
         bool allDone = true;
         int doneCount = 0;
         for(auto& sq_rec : rec->subquests) {
-            allDone &= sq_rec->lastStatus == QuestStatus::MOZOK_QUEST_STATUS_DONE;
+            QuestStatus expectedStatus = QuestStatus::MOZOK_QUEST_STATUS_DONE;
+            if(sq_rec->expectDone == false)
+                expectedStatus = QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE;
+            allDone &= sq_rec->lastStatus == expectedStatus;
             if(allDone) {
                 ++doneCount;
                 if(doneCount > rec->skippedActions)
                     break;
             } else 
-            if(applyNext(sq_rec))
-                return true;
+                if(applyNext(sq_rec))
+                    return true;
         }
         if(allDone && doneCount > rec->skippedActions) {
             // All subquests are done. 
             // This only means that we can now skip N/A action.
             pushAction(
                 true, rec->worldName, nextAction, 
-                rec->lastPlan_Args[rec->nextAction]);
+                rec->lastPlan_Args[rec->nextAction],
+                rec->recId);
             rec->nextAction++;
             rec->skippedActions++;
             return true;
@@ -446,11 +529,20 @@ bool App::applyNext(QuestRecPtr& rec) noexcept {
     return false;
 }
 
+// Make sure cmd is a PUSH command!
+void App::pushAction(const DebugCmd& cmd, const int data) noexcept {
+    StrVec args;
+    for(auto it = cmd._args.cbegin() + 2; it != cmd._args.cend(); ++it)
+        args.push_back(it->str);
+    pushAction(false, cmd._args[0].str, cmd._args[1].str, args, data);
+}
+
 void App::pushAction(
         bool isNA,
         const Str& worldName, 
         const Str& actionName, 
-        const StrVec& args
+        const StrVec& args,
+        const int data
         ) noexcept {
     // Info message.
     Str pre = (isNA ? "skip N/A action" : "pushAction");
@@ -463,10 +555,8 @@ void App::pushAction(
     infoMsg(text);
     
     if(isNA == false)
-        _currentServer->pushAction(worldName, actionName, args);
-    //
-    // TODO: onAction event here
-    //
+        _currentServer->pushAction(worldName, actionName, args, data);
+    _status <<= onEvent(_onAction, worldName, actionName, args);
 }
 
 bool App::applyNextApplicableAction() noexcept {
@@ -476,12 +566,34 @@ bool App::applyNextApplicableAction() noexcept {
     return false;
 }
 
-bool App::isAllQuestsDone() noexcept {
-    for(auto &r : _records)
-        if(r.second->lastStatus != QuestStatus::MOZOK_QUEST_STATUS_DONE)
-            return false;
-    infoMsg("All quests are DONE.");
-    return true;
+App::CheckStatus App::checkQuestExpectations() noexcept {
+    for(auto &r : _records) {
+        const QuestRecPtr& rec = r.second;
+        if(rec->expectDone) {
+            if(rec->lastStatus == QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE) {
+                infoMsg("Quest `" + qname(rec->worldName, rec->questName)
+                        + "` is unreachable (but expected to be DONE).");
+                return STATUS_FAILED;
+            }
+        } else {
+            if(rec->lastStatus == QuestStatus::MOZOK_QUEST_STATUS_DONE) {
+                infoMsg("Quest `" + qname(rec->worldName, rec->questName)
+                        + "` is done (but expected to be UNREACHABLE).");
+                return STATUS_FAILED;
+            }
+        }
+    }
+    for(auto &r : _records) {
+        const QuestRecPtr& rec = r.second;
+        if(rec->expectDone) {
+            if(rec->lastStatus != QuestStatus::MOZOK_QUEST_STATUS_DONE)
+                return STATUS_WAITING;
+        } else {
+            if(rec->lastStatus != QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE)
+                return STATUS_WAITING;
+        }
+    }
+    return STATUS_DONE;
 }
 
 void App::simulateNext() noexcept {
@@ -495,6 +607,7 @@ void App::simulateNext() noexcept {
     hmap[EventHandler::ON_NEW_MAIN_QUEST] = &_onNewMainQuest;
     hmap[EventHandler::ON_NEW_MAIN_QUEST] = &_onNewMainQuest;
     hmap[EventHandler::ON_NEW_SUBQUEST] = &_onNewSubQuest;
+    hmap[EventHandler::ON_NEW_QUEST_STATUS] = &_onNewQuestStatus;
     hmap[EventHandler::ON_ACTION] = &_onAction;
     hmap[EventHandler::ON_INIT] = &_onInit;
     hmap[EventHandler::ON_PRE] = &_onPre;
@@ -539,17 +652,26 @@ void App::simulateNext() noexcept {
         if(applyNextApplicableAction())
             isWaiting = false;
 
-        // Try to process the next message.
-        if(_currentServer->processNextMessage(*this)) {
+        // Process the messages.
+        while(_currentServer->processNextMessage(*this)) {
             // New message has been processed.
             isWaiting = false;
-            continue;
+            if(getCurrentStatus().isError())
+                break;
         }
 
         if(getCurrentStatus().isError())
             break;
-        if(isWaiting && isAllQuestsDone() == true)
-            break;
+        if(isWaiting) {
+            CheckStatus s = checkQuestExpectations();
+            if(s == STATUS_DONE) {
+                infoMsg("All quest expectations are met.");
+                break;
+            } else if(s == STATUS_FAILED) {
+                _status <<= Result::Error("Quest expectations failed.");
+                break;
+            }
+        }
 
         if(isWaiting) {
             auto waitDuration = std::chrono::system_clock::now() - waitFrom;
@@ -573,6 +695,7 @@ void App::simulateNext() noexcept {
     }
 
     _mainQuests.clear();
+    _allQuests.clear();
     _records.clear();
     _currentServer.reset();
     _activeSplits.clear();

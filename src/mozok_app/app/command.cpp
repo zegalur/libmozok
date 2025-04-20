@@ -61,7 +61,7 @@ DebugCmd DebugCmd::expectSubquest(
 
 }
 
-DebugCmd DebugCmd::apply(
+DebugCmd DebugCmd::push(
         const Str& worldName,
         const Str& actionName,
         const StrVec& actionArguments
@@ -71,7 +71,7 @@ DebugCmd DebugCmd::apply(
     args.push_back(actionName);
     for(const auto& objName : actionArguments)
         args.push_back(objName);
-    return DebugCmd(Cmd::APPLY, QuestEvent::NONE, args);
+    return DebugCmd(Cmd::PUSH, QuestEvent::NONE, args);
 }
 
 

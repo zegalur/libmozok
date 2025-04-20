@@ -181,11 +181,11 @@ const StrVec C_EXPECT_ARGS =
     , " ... "
     };
 
-const Str C_APPLY = "apply";
-const Str C_APPLY_FORMAT = "apply <[world]> <action>";
-const Str C_APPLY_BRIEF = "...";
-const Str C_APPLY_DESC = "...";
-const StrVec C_APPLY_ARGS =
+const Str C_PUSH = "push";
+const Str C_PUSH_FORMAT = "push <[world]> <action>([<arguments>])";
+const Str C_PUSH_BRIEF = "...";
+const Str C_PUSH_DESC = "...";
+const StrVec C_PUSH_ARGS =
     { " ... "
     , " ... "
     };
@@ -214,7 +214,7 @@ const HelpMap HELP_MAP = {
     //, MOZOK_HELP(GENERAL_COMMAND, C_STD_WORLD)
     , MOZOK_HELP(TERMINAL_COMMAND, C_LOAD)
     , MOZOK_HELP(GENERAL_COMMAND, C_EXPECT)
-    , MOZOK_HELP(GENERAL_COMMAND, C_APPLY)
+    , MOZOK_HELP(GENERAL_COMMAND, C_PUSH)
 };
 
 

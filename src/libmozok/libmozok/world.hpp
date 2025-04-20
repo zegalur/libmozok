@@ -326,11 +326,13 @@ public:
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
     /// @param messageProcessor A message processor.
+    /// @param errorOutput Writes action error code in a case of an error.
     /// @return Returns the status of the operation.
     Result applyAction(
         const Str& actionName,
         const StrVec& actionArguments,
-        MessageProcessor& messageProcessor
+        MessageProcessor& messageProcessor,
+        ActionError& errorOutput
         ) noexcept;
 
     /// @brief Checks if action with this set of arguments is well defined.

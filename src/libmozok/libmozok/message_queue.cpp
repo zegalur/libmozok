@@ -59,10 +59,12 @@ void MessageQueue::onActionError(
         const Str& worldName, 
         const Str& actionName,
         const StrVec& actionArguments,
-        const Result& errorResult
+        const Result& errorResult,
+        const ActionError actionError,
+        const int data
         ) noexcept {
     MessagePtr msg = makeShared<OnActionError>(
-            worldName, actionName, actionArguments, errorResult);
+        worldName, actionName, actionArguments, errorResult, actionError, data);
     pushMessage(msg);
 }
 
@@ -105,6 +107,17 @@ void MessageQueue::onNewQuestStatus(
     pushMessage(msg);
 }
 
+void MessageQueue::onNewQuestGoal(
+        const Str& worldName,
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept {
+    MessagePtr msg = makeShared<OnNewQuestGoal>(
+            worldName, questName, newGoal, oldGoal);
+    pushMessage(msg);
+}
+
 void MessageQueue::onNewQuestPlan(
         const Str& worldName, 
         const Str& questName,
@@ -143,17 +156,22 @@ OnActionError::OnActionError(
         const Str& worldName, 
         const Str& actionName,
         const StrVec& actionArguments,
-        const Result& errorResult
+        const Result& errorResult,
+        const ActionError actionError,
+        const int data
         ) noexcept :
-        Message(worldName),
-        _actionName(actionName),
-        _actionArguments(actionArguments),
-        _errorResult(errorResult)
+    Message(worldName),
+    _actionName(actionName),
+    _actionArguments(actionArguments),
+    _errorResult(errorResult),
+    _actionError(actionError),
+    _data(data)
 { /* empty */ }
 
 void OnActionError::process(MessageProcessor& messageProcessor) const noexcept {
     messageProcessor.onActionError(
-            _worldName, _actionName, _actionArguments, _errorResult);
+            _worldName, _actionName, _actionArguments, 
+            _errorResult, _actionError, _data);
 }
 
 
@@ -215,6 +233,24 @@ OnNewQuestStatus::OnNewQuestStatus(
 void OnNewQuestStatus::process(
         MessageProcessor& messageProcessor) const noexcept {
     messageProcessor.onNewQuestStatus(_worldName, _questName, _status);
+}
+
+
+OnNewQuestGoal::OnNewQuestGoal(
+        const Str& worldName, 
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept :
+    Message(worldName),
+    _questName(questName),
+    _newGoal(newGoal),
+    _oldGoal(oldGoal)
+{ /* empty */ }
+
+void OnNewQuestGoal::process(
+        MessageProcessor& messageProcessor) const noexcept {
+    messageProcessor.onNewQuestGoal(_worldName, _questName, _newGoal, _oldGoal);
 }
 
 

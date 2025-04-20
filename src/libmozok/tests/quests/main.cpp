@@ -5,6 +5,7 @@
 // performs planning in a worker thread, and the user interacts with the server
 // by pushing actions and reading the messages.
 
+#include "libmozok/message_processor.hpp"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -78,7 +79,9 @@ public:
             const Str& /*worldName*/, 
             const Str& /*actionName*/,
             const StrVec& /*actionArguments*/,
-            const Result& errorResult
+            const Result& errorResult,
+            const mozok::ActionError actionError,
+            const int data
             ) noexcept override {
         _status <<= errorResult;
     }
@@ -248,7 +251,9 @@ public:
             cout << " )" << endl;
 
             // Push the action into a queue.
-            _status <<= server->pushAction(worldName, actionName, args);
+            ActionError actionError = MOZOK_AE_NO_ERROR;
+            _status <<= server->pushAction(
+                    worldName, actionName, args, actionError);
             return true;
         }
         return false;
@@ -300,8 +305,9 @@ int main(int argc, char **argv) {
     }
 
     // Start the worker thread and push the `Init` action.
+    ActionError actionError = MOZOK_AE_NO_ERROR;
     status <<= server->startWorkerThread();
-    status <<= server->pushAction(quest_name, init_name, {});
+    status <<= server->pushAction(quest_name, init_name, {}, actionError);
 
     // "Game loop" emulation.
     bool stopLoop = false;
@@ -381,7 +387,7 @@ int main(int argc, char **argv) {
 
     // Load the state from the generated save file.
     status <<= server2->addProject(quest_name, "saveFile", saveFile);
-    server2->applyAction(quest_name, "Load", {});
+    server2->applyAction(quest_name, "Load", {}, actionError);
     server2->performPlanning();
 
     // Process all the messages.

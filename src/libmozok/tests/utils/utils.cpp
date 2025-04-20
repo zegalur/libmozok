@@ -17,7 +17,9 @@ void DebugMessageProcessor::onActionError(
         const Str&, 
         const Str& /*actionName*/,
         const StrVec& /*actionArguments*/,
-        const Result& errorResult
+        const Result& errorResult,
+        const mozok::ActionError actionError,
+        const int data
         ) noexcept {
     cout << "> Action error: " << errorResult.getDescription() << endl;
 }
@@ -48,6 +50,18 @@ void DebugMessageProcessor::onNewQuestStatus(
          << " = " << questStatusToStr(questStatus) 
          << endl;
 }
+
+void DebugMessageProcessor::onNewQuestGoal(
+        const Str&,
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept {
+    cout << "> New quest goal: " << questName 
+         << " " << oldGoal << " -> " << newGoal
+         << endl;
+}
+
 
 void DebugMessageProcessor::onNewQuestPlan(
         const Str&, 

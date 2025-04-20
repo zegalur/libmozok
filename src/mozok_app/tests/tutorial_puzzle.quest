@@ -124,7 +124,7 @@ rlist PTut_Init:
 
 
 # Blocks the exit making the Puzzle quest impossible to achieve.
-action N/A PTut_BlockExit:
+action PTut_BlockExit:
     pre # none
     rem PTut_Free(pt_cell_00)
     add PTut_BlockAt(pt_cell_00)

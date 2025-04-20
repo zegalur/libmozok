@@ -1,5 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include "libmozok/message_processor.hpp"
 #include "libmozok/public_types.hpp"
 #include <libmozok/server.hpp>
 
@@ -17,6 +18,7 @@ struct ApplyCommand {
     const Str worldName;
     const Str actionName;
     const StrVec actionArguments;
+    const int data;
 };
 
 class ServerImpl : public mozok::Server {
@@ -76,16 +78,20 @@ class ServerImpl : public mozok::Server {
             _actionQueue.pop();
             queueLock.unlock();
 
+            ActionError actionError = MOZOK_AE_NO_ERROR;
             Result res = applyActionUnsafe(
                     nextCommand.worldName,
                     nextCommand.actionName,
-                    nextCommand.actionArguments);
+                    nextCommand.actionArguments,
+                    actionError);
             if(res.isError())
                 _messageQueue.onActionError(
                     nextCommand.worldName,
                     nextCommand.actionName, 
                     nextCommand.actionArguments,
-                    res);
+                    res, 
+                    actionError,
+                    nextCommand.data);
         }
 
         _isWorkerRunning.store(false);
@@ -94,12 +100,13 @@ class ServerImpl : public mozok::Server {
     Result applyActionUnsafe(
         const Str& worldName,
         const Str& actionName,
-        const StrVec& actionArguments
+        const StrVec& actionArguments,
+        ActionError& actionError
         ) noexcept {
         if(hasWorld(worldName) == false)
             return errorWorldDoesntExist(_serverName, worldName);
         return _worlds[worldName]->applyAction(
-                actionName, actionArguments, _messageQueue);
+                actionName, actionArguments, _messageQueue, actionError);
     }
 
     void performPlanningUnsafe() noexcept {
@@ -226,24 +233,27 @@ public:
     // ============================== ACTIONS =============================== //
 
     Result applyAction(
-        const Str& worldName,
-        const Str& actionName,
-        const StrVec& actionArguments
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& actionArguments,
+            ActionError& actionError
         ) noexcept override {
         if(_isWorkerJoined.load() == false)
             return errorServerWorkerIsRunning(_serverName);
-        return applyActionUnsafe(worldName, actionName, actionArguments);
+        return applyActionUnsafe(
+                worldName, actionName, actionArguments, actionError);
     }
 
     Result pushAction(
-        const Str& worldName,
-        const Str& actionName,
-        const StrVec& actionArguments
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& actionArguments,
+            const int data
         ) noexcept override {
         if(hasWorld(worldName) == false)
             return errorWorldDoesntExist(_serverName, worldName);
         _actionQueueMutex.lock();
-        _actionQueue.push({worldName, actionName, actionArguments});
+        _actionQueue.push({worldName, actionName, actionArguments, data});
         _actionQueueMutex.unlock();
         _actionQueueCV.notify_all();
         return Result::OK();

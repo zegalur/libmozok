@@ -29,7 +29,9 @@ void MessageProcessor::onActionError(
         const Str& /*worldName*/, 
         const Str& /*actionName*/,
         const StrVec& /*actionArguments*/,
-        const Result& /*errorResult*/
+        const Result& /*errorResult*/,
+        const ActionError /*actionError*/,
+        const int /*data*/
         ) noexcept 
 { /* empty */ }
 
@@ -57,6 +59,14 @@ void MessageProcessor::onNewQuestStatus(
         const Str& /*worldName*/, 
         const Str& /*questName*/,
         const QuestStatus /*questStatus*/
+        ) noexcept
+{ /* empty */ }
+
+void MessageProcessor::onNewQuestGoal(
+        const Str& /*worldName*/,
+        const Str& /*questName*/,
+        const int /*newGoal*/,
+        const int /*oldGoal*/
         ) noexcept
 { /* empty */ }
 

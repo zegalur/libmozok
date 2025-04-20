@@ -176,11 +176,13 @@ public:
     /// @param worldName The name of the world where action must be applied.
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
+    /// @param actionError Writes action error code here.
     /// @return Returns the status of the operation.
     virtual mozok::Result applyAction(
         const mozok::Str& worldName,
         const mozok::Str& actionName,
-        const mozok::StrVec& actionArguments
+        const mozok::StrVec& actionArguments,
+        ActionError& actionError
         ) noexcept = 0;
     
     /// @brief Pushes an action into action queue. Action then will be executed
@@ -188,11 +190,14 @@ public:
     /// @param worldName The name of the world where action must be applied.
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
+    /// @param data In a case of an error, this data will be passed to the 
+    ///         `onActionError` message.
     /// @return Returns the status of the operation.
     virtual mozok::Result pushAction(
         const mozok::Str& worldName,
         const mozok::Str& actionName,
-        const mozok::StrVec& actionArguments
+        const mozok::StrVec& actionArguments,
+        const int data
         ) noexcept = 0;
 
     /// @brief Returns the status of the action.

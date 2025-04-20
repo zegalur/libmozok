@@ -302,7 +302,7 @@ int main(int argc, char **argv) {
     commandMap[C_INFO] = &c_info;
     commandMap[C_PRINT] = &c_block_cmd;
     commandMap[C_EXPECT] = &c_block_cmd;
-    commandMap[C_APPLY] = &c_block_cmd;
+    commandMap[C_PUSH] = &c_block_cmd;
 
     // Setting up the map that maps options name into an option function.
     optionMap[O_PAUSE_ON_ERR] = &o_pauseOnError;

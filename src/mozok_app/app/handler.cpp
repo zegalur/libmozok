@@ -40,6 +40,18 @@ EventHandler EventHandler::onNewSubQuest(
             block);
 }
 
+EventHandler EventHandler::onNewQuestStatus(
+        const Str& worldName,
+        const Str& questName,
+        const Str& newStatus,
+        const DebugBlock& block
+        ) noexcept {
+    return EventHandler(
+            ON_NEW_QUEST_STATUS,
+            {worldName, questName, newStatus},
+            block);
+}
+
 EventHandler EventHandler::onSearchLimitReached(
         const Str& worldName,
         const DebugArg& questName, // can be empty

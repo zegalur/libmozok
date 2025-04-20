@@ -1,5 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include "libmozok/message_processor.hpp"
 #include <libmozok/world.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/project.hpp>
@@ -431,23 +432,30 @@ bool World::isActionNotApplicable(const Str& actionName) const noexcept {
 Result World::applyAction(
         const Str& actionName,
         const StrVec& actionArguments,
-        MessageProcessor& messageProcessor
+        MessageProcessor& messageProcessor,
+        ActionError& errorOutput
         ) noexcept {
-    if(hasAction(actionName) == false)
+    if(hasAction(actionName) == false) {
+        errorOutput = MOZOK_AE_UNDEFINED_ACTION;
         return errorUndefinedAction(_serverWorldName, actionName);
+    }
     const ActionPtr action = getAction(actionName);
 
-    if(action->isNotApplicable())
+    if(action->isNotApplicable()) {
+        errorOutput = MOZOK_AE_NA_ACTION;
         return errorCantApplyNAAction(_serverWorldName, actionName);
+    }
 
     ObjectVec objects;
     for(const Str& objName : actionArguments)
         if(hasObject(objName))
             objects.push_back(getObject(objName));
-        else
+        else {
+            errorOutput = MOZOK_AE_UNDEFINED_OBJECT;
             return errorUndefinedObject(_serverWorldName, objName);
+        }
 
-    Result res = action->applyAction(objects, _state);
+    Result res = action->applyAction(objects, _state, errorOutput);
     if(res.isError())
         return res;
     
@@ -484,6 +492,7 @@ Result World::applyAction(
             }
             // Status change command increases the substate id
             cmd.quest->increaseCurrentSubstateId();
+            int oldGoal = cmd.quest->getLastActiveGoalIndx();
             cmd.quest->setQuestStatus(cmd.status, cmd.goal);
             // Do not send `onNewQuestStatus` if the quest was `INACTIVE` 
             // and remains `INACTIVE`.
@@ -491,6 +500,15 @@ Result World::applyAction(
                     && cmd.status == MOZOK_QUEST_STATUS_INACTIVE) == false)
                 messageProcessor.onNewQuestStatus(
                         _worldName, cmd.quest->getQuest()->getName(), cmd.status);
+            // Trigger `onNewQuestGoal` when goal changes or when
+            // quest was INACTIVE and now it's not INACTIVE or UNKNOWN.
+            if(oldGoal != cmd.goal 
+                    || (prevStatus == MOZOK_QUEST_STATUS_INACTIVE 
+                            && cmd.status != MOZOK_QUEST_STATUS_INACTIVE
+                            && cmd.status != MOZOK_QUEST_STATUS_UNKNOWN))
+                messageProcessor.onNewQuestGoal(
+                        _worldName, cmd.quest->getQuest()->getName(), 
+                        cmd.goal, oldGoal);
         }
 
     // Change the substate IDs of relevant quests
@@ -549,8 +567,9 @@ Result World::checkAction(
         else
             return errorUndefinedObject(_serverWorldName, objName);
 
+    ActionError actionError;
     return getAction(actionName)->evaluateActionApplicability(
-            doNotCheckPreconditions, objects, _state);
+            doNotCheckPreconditions, objects, _state, actionError);
 }
 
 
@@ -828,7 +847,8 @@ void World::findNewSubquest(
         return;
 
     StatePtr post = plan->givenState->duplicate();
-    action->applyAction(planAction->getArguments(), post);
+    ActionError actionError = MOZOK_AE_NO_ERROR;
+    action->applyAction(planAction->getArguments(), post, actionError);
     for(const QuestPtr& subquest : plan->quest->getSubquests()) {
         QuestManagerPtr subquestManager = getSubquest(subquest->getName());
         if(subquestManager->getStatus() != MOZOK_QUEST_STATUS_INACTIVE)

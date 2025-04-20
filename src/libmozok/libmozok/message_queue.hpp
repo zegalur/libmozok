@@ -60,7 +60,9 @@ public:
         const Str& worldName, 
         const Str& actionName,
         const StrVec& actionArguments,
-        const Result& errorResult
+        const Result& errorResult,
+        const ActionError actionError,
+        const int data
         ) noexcept override;
 
     void onNewMainQuest(
@@ -85,7 +87,14 @@ public:
         const Str& questName,
         const QuestStatus questStatus
         ) noexcept override;
-    
+
+    void onNewQuestGoal(
+        const Str& worldName,
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept override;
+
     void onNewQuestPlan(
         const Str& worldName, 
         const Str& questName,
@@ -115,12 +124,17 @@ class OnActionError : public Message {
     const Str _actionName;
     const StrVec _actionArguments;
     const Result _errorResult;
+    const ActionError _actionError;
+    const int _data;
 public:
     OnActionError(
             const Str& worldName, 
             const Str& actionName,
             const StrVec& actionArguments,
-            const Result& errorResult) noexcept;
+            const Result& errorResult,
+            const ActionError actionError,
+            const int data
+            ) noexcept;
     void process(MessageProcessor& messageProcessor) const noexcept override;
 };
 
@@ -166,6 +180,20 @@ public:
             const Str& worldName, 
             const Str& questName,
             const QuestStatus status) noexcept;
+    void process(MessageProcessor& messageProcessor) const noexcept override;
+};
+
+
+class OnNewQuestGoal: public Message {
+    const Str _questName;
+    const int _newGoal;
+    const int _oldGoal;
+public:
+    OnNewQuestGoal(
+            const Str& worldName, 
+            const Str& questName,
+            const int newGoal,
+            const int oldGoal) noexcept;
     void process(MessageProcessor& messageProcessor) const noexcept override;
 };
 

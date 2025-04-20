@@ -8,6 +8,7 @@
 #include "app/handler.hpp"
 #include "app/command.hpp"
 #include "app/callback.hpp"
+#include "libmozok/result.hpp"
 
 #include <libmozok/message_processor.hpp>
 #include <libmozok/public_types.hpp>
@@ -21,7 +22,7 @@ struct AppOptions {
     bool pauseOnError = false;
     Str serverName = "mozok_app";
     bool applyInitAction = true;
-    int maxWaitTime_ms = 1000;
+    int maxWaitTime_ms = 5000;
     Str printOnOk = "";
     Str scriptFileName = "";
     Str scriptFile = "";
@@ -35,17 +36,31 @@ struct QuestRec {
     const Str worldName;
     const Str questName;
     const bool isMainQuest;
+    bool expectDone;
+    const int recId; // index in the `_allQuests`
     Vector<QuestRecPtr> subquests;
     QuestStatus lastStatus;
     StrVec lastPlan_Actions;
     Vector<StrVec> lastPlan_Args;
+    StrVec alternativePlan_Actions;
+    Vector<StrVec> alternativePlan_Args;
     int nextAction;
     int skippedActions;
-    QuestRec(const Str& world, const Str& quest, const bool isMain) noexcept;
+    QuestRec(
+            const Str& world, 
+            const Str& quest, 
+            const bool isMain,
+            const int recordId
+            ) noexcept;
 };
 
 /// @brief ...
 class App : public MessageProcessor {
+    enum CheckStatus {
+        STATUS_DONE,
+        STATUS_FAILED,
+        STATUS_WAITING
+    };
     AppOptions _options;
     Result _status;
     EventHandlers _eventHandlers;
@@ -53,10 +68,12 @@ class App : public MessageProcessor {
     HandlerSet _onSpaceLimitReached;
     HandlerSet _onNewMainQuest;
     HandlerSet _onNewSubQuest;
+    HandlerSet _onNewQuestStatus;
     HandlerSet _onAction;
     HandlerSet _onInit;
     HandlerSet _onPre;
     Vector<QuestRecPtr> _mainQuests;
+    Vector<QuestRecPtr> _allQuests;
     UnorderedMap<Str, QuestRecPtr> _records;
     Vector<HandlerId> _splitEvents;
     Vector<int> _splitsCount;
@@ -77,15 +94,18 @@ class App : public MessageProcessor {
     void simulateNext() noexcept;
     bool applyNextApplicableAction() noexcept;
     bool applyNext(QuestRecPtr& rec) noexcept;
-    bool isAllQuestsDone() noexcept;
+    CheckStatus checkQuestExpectations() noexcept;
     Str pathStr(const Path& path) const noexcept;
     Result applySplitBlock(const DebugBlock& block, int split) noexcept;
+    Result expectUnreachable(const DebugCmd& cmd) noexcept;
     
+    void pushAction(const DebugCmd& cmd, const int data) noexcept;
     void pushAction(
             bool isNA,
             const Str& worldName, 
             const Str& actionName, 
-            const StrVec& args
+            const StrVec& args,
+            const int data
             ) noexcept;
 
     template<typename ...Args> 
@@ -111,7 +131,9 @@ public:
             const Str& worldName, 
             const Str& actionName,
             const StrVec& actionArguments,
-            const Result& errorResult
+            const Result& errorResult,
+            const mozok::ActionError actionError,
+            const int data
             ) noexcept override;
 
     void onNewMainQuest(
@@ -136,6 +158,13 @@ public:
             const Str& questName,
             const QuestStatus questStatus
             ) noexcept override;
+
+    void onNewQuestGoal(
+        const Str& worldName,
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept override;
 
     void onNewQuestPlan(
             const Str& worldName, 

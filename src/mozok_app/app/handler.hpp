@@ -23,6 +23,7 @@ class EventHandler {
     enum Event {
         ON_NEW_MAIN_QUEST,
         ON_NEW_SUBQUEST,
+        ON_NEW_QUEST_STATUS,
         ON_SEARCH_LIMIT_REACHED,
         ON_SPACE_LIMIT_REACHED,
         ON_PRE,
@@ -55,6 +56,13 @@ public:
             const Str& subQuestName,
             const DebugArg& parentQuestName,
             const DebugArg& parentGoal,
+            const DebugBlock& block
+            ) noexcept;
+
+    static EventHandler onNewQuestStatus(
+            const Str& worldName,
+            const Str& questName,
+            const Str& newStatus,
             const DebugBlock& block
             ) noexcept;
 

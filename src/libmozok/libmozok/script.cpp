@@ -1,3 +1,4 @@
+#include "libmozok/message_processor.hpp"
 #include <libmozok/script.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/server.hpp>
@@ -198,6 +199,7 @@ Result QuestScriptParser_Base::init(
         bool applyInitActions
         ) noexcept {
     Result res;
+    ActionError actionError;
     res <<= keyword(KEYWORD_INIT);
     res <<= colon_with_spaces();
     res <<= next_line();
@@ -210,7 +212,7 @@ Result QuestScriptParser_Base::init(
         if(res.isError())
             return res;
         if(applyInitActions)
-            res <<= server->applyAction(worldName, actionName, args);
+            res <<= server->applyAction(worldName, actionName, args, actionError);
         if(res.isError())
             return res <<= errorMsg("Incorrect init action.");
         res <<= empty_lines();

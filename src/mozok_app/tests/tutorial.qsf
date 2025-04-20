@@ -20,6 +20,6 @@ projects:
 init:
     [tut] InitTutorials()
 
-# Defines a list of debug script files that will loaded by the debugger.
+# Defines a list of script files that will loaded by the debugger.
 debug:
     tutorial_debug.qsf

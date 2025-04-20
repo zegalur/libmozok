@@ -12,7 +12,9 @@ public:
             const Str&, 
             const Str& actionName,
             const StrVec& actionArguments,
-            const Result& errorResult
+            const Result& errorResult,
+            const mozok::ActionError actionError,
+            const int data
             ) noexcept override;
     void onNewMainQuest(
             const Str&, 
@@ -28,6 +30,12 @@ public:
             const Str&, 
             const Str& questName,
             const QuestStatus questStatus
+            ) noexcept override;
+    void onNewQuestGoal(
+            const Str&,
+            const Str& questName,
+            const int newGoal,
+            const int oldGoal
             ) noexcept override;
     void onNewQuestPlan(
             const Str&, 

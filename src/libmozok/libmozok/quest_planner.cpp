@@ -315,14 +315,15 @@ QuestPlanPtr QuestPlanner::findQuestPlan(
         ) noexcept {
     const GoalVec& goals = _quest->getQuest()->getGoals();
     QuestPlanPtr lastPlan;
-    for(GoalVec::size_type goalIndx = _quest->getLastActiveGoalIndx(); 
-            goalIndx < goals.size(); 
-            ++goalIndx) {
-        lastPlan = findGoalPlan(
-                ID(goalIndx), worldName, messageProcessor, settings);
-        if(lastPlan->status != MOZOK_QUEST_STATUS_UNREACHABLE)
-            break;
-    }
+    if(_quest->getLastActiveGoalIndx() >= 0)
+        for(GoalVec::size_type goalIndx = _quest->getLastActiveGoalIndx(); 
+                goalIndx < goals.size(); 
+                ++goalIndx) {
+            lastPlan = findGoalPlan(
+                    ID(goalIndx), worldName, messageProcessor, settings);
+            if(lastPlan->status != MOZOK_QUEST_STATUS_UNREACHABLE)
+                break;
+        }
     return lastPlan;
 }
 

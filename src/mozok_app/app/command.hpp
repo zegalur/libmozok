@@ -16,7 +16,7 @@ class DebugCmd {
     enum Cmd {
         SPLIT, // split command
         EXPECT, // expect quest event
-        APPLY, // apply action
+        PUSH, // push action into the action queue
         PAUSE, // pause debugger
         PRINT, // print message
         EXIT // exit debugger
@@ -67,8 +67,7 @@ public:
             const DebugArg parentGoal
             ) noexcept;
 
-
-    static DebugCmd apply(
+    static DebugCmd push(
             const Str& worldName,
             const Str& actionName,
             const StrVec& actionArguments
