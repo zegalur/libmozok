@@ -49,6 +49,7 @@ Libmozok TODO list.
         - [ ] `run [command_file_name]` - executes a list of commands from a `qsf` file
         - [x] `push [world] action(arg1,...)` - pushes an action into the action queue
         - [x] `expect UNREACHABLE`
+        - [ ] `expect DONE <goal>`
         - [ ] `assert [what]` - asserts a condition and raises an error if it fails.
         - [x] Event handlers: `ACT`, `ACT_IF`, `ALWAYS`, `SPLIT`
         - [x] Placeholder parameters `_`
@@ -57,7 +58,9 @@ Libmozok TODO list.
             - [ ] Color output
         - [ ] Events:
             - [x] `onInit`
-            - [ ] `onPre`
+            - [ ] `onCheck`:
+                - [ ] `pushCheck` to `Server` (with data)
+                - [ ] `onCheck` event for `MessageProcessor` (with check status `true,false,error` and data)
             - [x] `onAction`
             - [ ] `onActionError`
             - [x] `onNewMainQuest`
