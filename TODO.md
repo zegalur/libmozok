@@ -53,6 +53,7 @@ Libmozok TODO list.
     - [ ] `expect DONE <goal>`
     - [ ] `assert [what]` - asserts a condition and raises an error if it fails.
     - [x] Event handlers: `ACT`, `ACT_IF`, `ALWAYS`, `SPLIT`
+    - [ ] Add: `SPLIT_IF`, `ALWAYS_IF`, `ACT_IF_NOT`, `IF_NOT`, `SPLIT_IF_NOT`
     - [x] Placeholder parameters `_`
     - [ ] Options:
         - [ ] Max wait time
