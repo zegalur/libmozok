@@ -5,13 +5,11 @@
 // performs planning in a worker thread, and the user interacts with the server
 // by pushing actions and reading the messages.
 
-#include "libmozok/message_processor.hpp"
 #include <cstddef>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <sstream>
-#include <fstream>
 #include <chrono>
 #include <unordered_map>
 
@@ -80,8 +78,8 @@ public:
             const Str& /*actionName*/,
             const StrVec& /*actionArguments*/,
             const Result& errorResult,
-            const mozok::ActionError actionError,
-            const int data
+            const ActionError /*actionError*/,
+            const int /*data*/
             ) noexcept override {
         _status <<= errorResult;
     }

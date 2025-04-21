@@ -22,6 +22,28 @@ Str questStatusToStr(const QuestStatus status) noexcept {
     }
 }
 
+Str actionErrorToStr(const ActionError code) noexcept {
+    switch(code) {
+        case MOZOK_AE_NO_ERROR:
+            return "MOZOK_AE_NO_ERROR";
+        case MOZOK_AE_UNDEFINED_ACTION:
+            return "MOZOK_AE_UNDEFINED_ACTION";
+        case MOZOK_AE_ARITY_ERROR:
+            return "MOZOK_AE_ARITY_ERROR";
+        case MOZOK_AE_UNDEFINED_OBJECT:
+            return "MOZOK_AE_UNDEFINED_OBJECT";
+        case MOZOK_AE_TYPE_ERROR:
+            return "MOZOK_AE_TYPE_ERROR";
+        case MOZOK_AE_PRECONDITIONS_ERROR:
+            return "MOZOK_AE_PRECONDITIONS_ERROR";
+        case MOZOK_AE_NA_ACTION:
+            return "MOZOK_AE_NA_ACTION";
+        case MOZOK_OTHER_ERROR:
+            return "MOZOK_OTHER_ERROR";
+        default:
+            return "???";
+    }
+}
 
 MessageProcessor::~MessageProcessor() = default;
 

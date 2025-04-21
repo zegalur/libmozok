@@ -23,9 +23,6 @@ namespace mozok {
 namespace app {
 
 namespace {
-Result errNotImplemented(const Str& what) {
-    return Result::Error("App::" + what + " is not yet implemented!");
-}
 inline Str qname(const Str& w, const Str& q) noexcept {
     return w + Str(".") + q;
 }

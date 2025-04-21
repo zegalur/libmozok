@@ -48,6 +48,8 @@ enum ActionError {
 /// @return Returns the corresponding `Str` value.
 Str questStatusToStr(const QuestStatus) noexcept;
 
+/// @brief Converts an `ActionError` code into the corresponding `Str`.
+Str actionErrorToStr(const ActionError) noexcept;
 
 /// @brief Enables customized message handling through inheritance.
 /// LibMozok guarantee that message order is always logically consistent:

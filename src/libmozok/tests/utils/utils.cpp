@@ -1,13 +1,12 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include "libmozok/message_processor.hpp"
 #include <utils/utils.hpp>
 
 #include <iostream>
 #include <memory>
-#include <string.h>
 #include <sstream>
 #include <fstream>
-#include <chrono>
 
 using namespace std;
 using namespace mozok;
@@ -18,10 +17,12 @@ void DebugMessageProcessor::onActionError(
         const Str& /*actionName*/,
         const StrVec& /*actionArguments*/,
         const Result& errorResult,
-        const mozok::ActionError actionError,
+        const ActionError actionError,
         const int data
         ) noexcept {
     cout << "> Action error: " << errorResult.getDescription() << endl;
+    cout << "> Action error code: " << actionErrorToStr(actionError) << endl;
+    cout << "> Action data: " << data << endl;
 }
 
 void DebugMessageProcessor::onNewMainQuest(
