@@ -1,7 +1,7 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
-#include "libmozok/message_processor.hpp"
-#include "libmozok/public_types.hpp"
+#include <libmozok/message_processor.hpp>
+#include <libmozok/public_types.hpp>
 #include <libmozok/server.hpp>
 
 #include <libmozok/private_types.hpp>

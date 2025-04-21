@@ -95,7 +95,7 @@ public:
     /// @param doNotCheckPreconditions if `true` - skips preconditions check.
     /// @param arguments Argument objects.
     /// @param state A state.
-    /// @param actionError Writes action error code here.
+    /// @param actionError Outputs the action error code into this variable.
     /// @return Returns `Result::OK()` when the action can be applied.
     Result evaluateActionApplicability(
             const bool doNotCheckPreconditions,
@@ -107,7 +107,7 @@ public:
     /// @brief Applies the action to the state.
     /// @param arguments Argument objects.
     /// @param state A state that will be modified by the action.
-    /// @param actionError Writes action error code here.
+    /// @param actionError Outputs the action error code into this variable.
     /// @return Returns `Result::OK()` when the action was successfully applied.
     Result applyAction(
             const ObjectVec& arguments, 

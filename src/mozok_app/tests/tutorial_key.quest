@@ -1,3 +1,9 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
 # =============================== Key Tutorial =============================== #
 
 # Keys and doors.
@@ -33,7 +39,3 @@ action N/A KeyTutorial:
 	pre TutorialFinished(prevTutorial)
 	rem # none
 	add TutorialFinished(tutorial)
-
-
-
-

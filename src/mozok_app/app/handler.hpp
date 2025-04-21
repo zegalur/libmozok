@@ -1,4 +1,4 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
@@ -11,14 +11,14 @@
 namespace mozok {
 namespace app {
 
-
 class EventHandler;
 using EventHandlers = Vector<EventHandler>;
 using HandlerId = EventHandlers::size_type;
 using HandlerIds = Vector<HandlerId>;
 using HandlerSet = HashSet<HandlerId>;
 
-
+/// @brief Event handler that waits for a specific event and reacts by 
+///        applying the debug block to the current timeline.
 class EventHandler {
     enum Event {
         ON_NEW_MAIN_QUEST,
@@ -30,7 +30,6 @@ class EventHandler {
         ON_ACTION,
         ON_INIT
     };
-
     const Event _event;
     const DebugArgs _args;
     const DebugBlock _block;
@@ -54,8 +53,8 @@ public:
     static EventHandler onNewSubQuest(
             const Str& worldName,
             const Str& subQuestName,
-            const DebugArg& parentQuestName,
-            const DebugArg& parentGoal,
+            const DebugArg& parentQuestName, // can be _
+            const DebugArg& parentGoal, // can be _
             const DebugBlock& block
             ) noexcept;
 
@@ -68,13 +67,13 @@ public:
 
     static EventHandler onSearchLimitReached(
             const Str& worldName,
-            const DebugArg& questName, // can be empty
+            const DebugArg& questName, // can be _
             const DebugBlock& block
             ) noexcept;
     
     static EventHandler onSpaceLimitReached(
             const Str& worldName,
-            const DebugArg& questName, // can be empty
+            const DebugArg& questName, // can be _
             const DebugBlock& block
             ) noexcept;
 

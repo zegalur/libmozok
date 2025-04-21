@@ -1,6 +1,9 @@
-#include "libmozok/result.hpp"
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+#include <libmozok/result.hpp>
 #include <libmozok/parser.hpp>
 #include <libmozok/error_utils.hpp>
+
 #include <set>
 
 namespace mozok {

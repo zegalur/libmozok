@@ -149,11 +149,6 @@ Result errorExpectingCloseBracket(const Str& fileName, int line, int col) noexce
     return errorParserError(fileName, line, col, "Expecting close bracket `]` symbol.");
 }
 
-Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept {
-    return errorParserError(fileName, line, col, 
-            "Invalid status. Expecting DONE, INACTIVE, UNREACHABLE or ACTIVE keyword.");
-}
-
 
 // ================================ Server ================================== //
 
@@ -390,6 +385,11 @@ Result errorActionSetStatusParentGoalError(
             "Action `" + actionName + "` set status command goal index `"
             + Str(std::to_string(errorGoalIndx)) + "` of parent quest `"
             + questName + "` is invalid");
+}
+
+Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept {
+    return errorParserError(fileName, line, col, 
+            "Invalid status. Expecting DONE, INACTIVE, UNREACHABLE or ACTIVE keyword.");
 }
 
 

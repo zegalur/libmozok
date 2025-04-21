@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
@@ -51,7 +51,7 @@ public:
     ///         Otherwise, returns false.
     virtual bool hasWorld(const mozok::Str& worldName) const noexcept = 0;
 
-    /// @brief Returns a list of all created worlds.
+    /// @brief Returns a list of all active worlds.
     virtual mozok::StrVec getWorlds() const noexcept = 0;
 
     /// @}
@@ -97,7 +97,12 @@ public:
     /// @defgroup Script
     /// @{
 
-    /// ...
+    /// @brief Loads a `.qsf` into the server.
+    /// @param fileSystem Used to access text files by their names.
+    /// @param scriptFileName File name will be used for error messages.
+    /// @param scriptSrc Script source text.
+    /// @param applyInitActions If `true`, applies the actions from 
+    ///     the `init:` section of the script.
     virtual mozok::Result loadQuestScriptFile(
             mozok::FileSystem* fileSystem,
             const mozok::Str& scriptFileName,
@@ -153,6 +158,7 @@ public:
 
     /// @}
 
+
     //==========================================================================
     /// @defgroup Actions
     /// @{
@@ -172,7 +178,8 @@ public:
     /// @brief Applies an action to a world. Then it activates all inactive main 
     ///        quests with now consistent preconditions. In a case of an error,
     ///        it will return the error status, but it will not trigger the
-    ///        `onActionError` message.
+    ///        `onActionError` message. For `onActionError` message, use 
+    ///        `pushAction` instead.
     /// @param worldName The name of the world where action must be applied.
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
@@ -225,6 +232,7 @@ public:
         const mozok::Str& actionName,
         const mozok::StrVec& arguments
         ) const noexcept = 0;
+
 
     //==========================================================================
     /// @defgroup Messages

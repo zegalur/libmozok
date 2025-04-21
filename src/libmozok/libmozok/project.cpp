@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #include <libmozok/quest_manager.hpp>
 #include <libmozok/project.hpp>
@@ -768,6 +768,7 @@ public:
     }
 };
 
+/// @brief Parses `.quest` file into a quest world.
 Result parseQuestFile(
         World* world, 
         const Str& file, 

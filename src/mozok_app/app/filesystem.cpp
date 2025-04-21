@@ -1,4 +1,4 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
 #include "app/filesystem.hpp"
 
@@ -8,9 +8,10 @@
 namespace mozok {
 namespace app {
 
-StdFileSystem::StdFileSystem() : FileSystem() { /* empty */ }
+StdFileSystem::StdFileSystem() : FileSystem() 
+{ /* empty */ }
 
-Result StdFileSystem::getTextFile(const Str& path, Str& out) {
+Result StdFileSystem::getTextFile(const Str& path, Str& out) noexcept {
     std::ifstream file(path);
     if (file.is_open()) {
         std::string src = std::string(

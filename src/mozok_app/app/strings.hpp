@@ -1,6 +1,6 @@
 // Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
-// String constants, commonly used by the mozok app.
+// String constants commonly used by the mozok app.
 
 #pragma once
 
@@ -10,6 +10,7 @@
 namespace mozok {
 namespace app {
 
+/// @brief Standard error message printed by the debugger.
 const Str ERROR_MSG = "MOZOK_ERROR";
 
 enum HelpFlag {
@@ -46,7 +47,6 @@ const Str O_HELP_DESC = "Print (on standard output) the general help"
     " information on how to use the `mozok` tool.";
 const StrVec O_HELP_ARGS = {};
 
-
 const Str O_PAUSE_ON_ERR = "-p";
 const Str O_PAUSE_ON_ERR_FORMAT = "-p";
 const Str O_PAUSE_ON_ERR_BRIEF = "Pause the app on error.";
@@ -55,7 +55,6 @@ const Str O_PAUSE_ON_ERR_DESC = "With this option set, on error, instead"
     " and show the debug console.";
 const StrVec O_PAUSE_ON_ERR_ARGS = {};
 
-
 const Str O_PRINT_ON_OK = "-P";
 const Str O_PRINT_ON_OK_FORMAT = "-P <message>";
 const Str O_PRINT_ON_OK_BRIEF = "Print a <message> on success.";
@@ -63,7 +62,6 @@ const Str O_PRINT_ON_OK_DESC = O_PRINT_ON_OK_BRIEF;
 const StrVec O_PRINT_ON_OK_ARGS = 
     { "`<message>` - This message will be printed (on std output)"
       " if no errors wasn't occured during the simulation." };
-
 
 const Str O_SERVER_NAME = "-s";
 const Str O_SERVER_NAME_FORMAT = "-s <server_name>";
@@ -86,13 +84,10 @@ const StrVec O_VERBOSE_ARGS = {};
 
 /// @}
 
-
 // ------------------------------------------------------------------------- //
 
 /// @defgroup Commands
 /// @{
-
-
 
 const Str C_EXIT = "exit";
 const Str C_EXIT_FORMAT = "exit [<text>]";
@@ -104,7 +99,6 @@ const StrVec C_EXIT_ARGS =
         " the `exit <text>` message."
     };
 
-
 const Str C_PAUSE = "pause";
 const Str C_PAUSE_FORMAT = "pause [<breakpoint_name>]";
 const Str C_PAUSE_BRIEF = "Pauses the debugger and opens a debug terminal.";
@@ -115,13 +109,11 @@ const StrVec C_PAUSE_ARGS =
         " Useful when script has multiple `pause` commands." 
     };
 
-
 const Str C_CONTINUE = "continue"; 
 const Str C_CONTINUE_FORMAT = "continue";
 const Str C_CONTINUE_BRIEF = "Continue the simulation process.";
 const Str C_CONTINUE_DESC = C_CONTINUE_BRIEF;
 const StrVec C_CONTINUE_ARGS = {};
-
 
 const Str C_INFO = "info"; 
 const Str C_INFO_FORMAT = "info";
@@ -129,13 +121,11 @@ const Str C_INFO_BRIEF = "Print a general info about the current state.";
 const Str C_INFO_DESC = C_INFO_BRIEF;
 const StrVec C_INFO_ARGS = {};
 
-
 const Str C_PRINT = "print";
 const Str C_PRINT_FORMAT = "print [<text>]";
 const Str C_PRINT_BRIEF = "Prints a text message `print <text>`.";
 const Str C_PRINT_DESC = C_PRINT_BRIEF;
 const StrVec C_PRINT_ARGS = {};
-
 
 const Str C_WORLD = "world";
 const Str C_WORLD_FORMAT = "world <name>";
@@ -148,7 +138,6 @@ const StrVec C_WORLD_ARGS =
         " closes the app"
     };
 
-
 const Str C_LOAD = "load";
 const Str C_LOAD_FORMAT = "load <[world]> <file_path>";
 const Str C_LOAD_BRIEF = "Loads a quest project into a quest world.";
@@ -157,7 +146,6 @@ const StrVec C_LOAD_ARGS =
     { "`<[world]>` - The name of the world !in brackets!, into which we load a project"
     , "`<file_path>` - The path to the `.quest` project file"
     };
-
 
 const Str C_EXPECT = "expect";
 const Str C_EXPECT_FORMAT = "expect UNREACHABLE <[world]> <quest>";
@@ -200,7 +188,6 @@ const HelpMap HELP_MAP = {
     , MOZOK_HELP(GENERAL_COMMAND, C_PRINT)
     , MOZOK_HELP(TERMINAL_COMMAND, C_INFO)
     , MOZOK_HELP(TERMINAL_COMMAND, C_WORLD)
-    //, MOZOK_HELP(GENERAL_COMMAND, C_STD_WORLD)
     , MOZOK_HELP(TERMINAL_COMMAND, C_LOAD)
     , MOZOK_HELP(GENERAL_COMMAND, C_EXPECT)
     , MOZOK_HELP(GENERAL_COMMAND, C_PUSH)

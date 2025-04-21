@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
@@ -17,9 +17,7 @@
 #include <libmozok/state.hpp>
 #include <libmozok/quest_manager.hpp>
 
-
 namespace mozok {
-
 
 /// @brief A world is a collection of types, objects, relations, relation lists, 
 ///        actions, and quests. Together with a current game world state, they 

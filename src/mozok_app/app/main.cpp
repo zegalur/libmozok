@@ -1,25 +1,43 @@
 // Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
-// LibMozok's developing and debugging tool for quests.
-// For more information please read `/docs/mozok_app.md`
+/// @file main.cpp
+/// @brief LibMozok's developing and debugging tool for quests.
+/// 
+/// @details
+/// In games where quests can follow many different paths with multiple 
+/// possible goals, it can become very time-consuming to manually test all 
+/// the crucial actions a player might take, measure how long the planner 
+/// takes to find solutions, or identify which quests might become unreachable.
+///
+/// This tool helps automate that process. In the spirit of this library, 
+/// it allows developers to focus more on delivering an engaging non-linear 
+/// gameplay experience.
+/// 
+/// With this tool, you can:
+///     - Simulate all possible story branches.
+///     - Test the expected quests solvability of each timeline.
+///     - Detect if the planner takes too long to find a solution.
+///     - (In future) Visually see the decision tree and problem areas.
+///     - And more.
+///
+/// For more information please read `/docs/debugger.md`.
 
+#include <memory>
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <iterator>
-#include <memory>
-#include <sstream>
 #include <unordered_map>
 
 #include <libmozok/mozok.hpp>
 #include <libmozok/public_types.hpp>
 
-#include "app/app.hpp"
 #include "app/strings.hpp"
+#include "app/app.hpp"
 
 using namespace mozok;
 using namespace mozok::app;
 using namespace std;
-
 
 namespace {
 
@@ -28,7 +46,6 @@ std::unordered_map<Str, CommandFunc> commandMap;
 
 using OptionFunc = Result (*)(AppOptions&, int, char**, int&);
 std::unordered_map<Str, OptionFunc> optionMap;
-
 
 // ============================ Print Functions ============================ //
 
@@ -122,17 +139,16 @@ void print_CommandHelp(const Str& c) {
     }
 }
 
-[[nodiscard]] Result print_BadOptionFormat(const Str& option) {
+Result print_BadOptionFormat(const Str& option) {
     return Result::Error("Bad `" + option + "` option format."
                          " Call `help " + option + "`.");
 }
 
-[[nodiscard]] Result print_BadCommandFormat(const Str& command) {
+Result print_BadCommandFormat(const Str& command) {
     print_CallHelpMsg();
     return Result::Error("Bad `" + command + "` command format."
                          " Call `help " + command + "`.");
 }
-
 
 // =========================== Options Functions =========================== //
 
@@ -164,7 +180,6 @@ Result o_verbose(AppOptions& appOptions, int, char**, int&) {
     appOptions.verbose = true;
     return Result::OK();
 }
-
 
 // =========================== Command Functions =========================== //
 
@@ -214,6 +229,7 @@ public:
 
     bool onPause(App* app) noexcept override {
         while(true) {
+            // Read next debug command.
             cout << app->getCurrentPath() << " >> ";
             Str line;
             getline(cin, line);
@@ -228,8 +244,8 @@ public:
                 continue;
             }
 
+            // If possible, apply the command.
             const Str& command = tokens[0];
-
             if(command == C_CONTINUE)
                 break;
             if(commandMap.find(command) != commandMap.end()) {
@@ -241,7 +257,6 @@ public:
                 print_CallHelpMsg();
                 continue;
             }
-            
             if(command == C_EXIT)
                 return false;
         }
@@ -258,11 +273,12 @@ public:
 // ================================= Main ================================== //
 
 const int ERROR_CODE = 1;
+const int OK_CODE = 0;
 
 int main(int argc, char **argv) {
     if(argc < 2) {
         print_CallAppHelp();
-        return 0;
+        return ERROR_CODE;
     }
 
     AppOptions appOptions;
@@ -276,14 +292,14 @@ int main(int argc, char **argv) {
             print_OptionHelp(argv[2]);
         else
             print_CallAppHelp();
-        return 0;
+        return OK_CODE;
     }
 
     // Read the input script file.
     ifstream in(scriptFileName);
     if(in.is_open() == false) {
         print_Error("Can't open the file `" + scriptFileName + "`.");
-        return 0;
+        return ERROR_CODE;
     }
     stringstream in_buffer;
     in_buffer << in.rdbuf();
@@ -295,7 +311,6 @@ int main(int argc, char **argv) {
 
     // Setting up the map that maps command name into a command function.
     commandMap["help"] = &c_help;
-    //commandMap[C_INFO] = ;
     commandMap[C_EXIT] = &c_block_cmd;
     commandMap[C_CONTINUE] = nullptr;
     commandMap[C_WORLD] = &c_world;
@@ -338,8 +353,9 @@ int main(int argc, char **argv) {
             cout << appOptions.printOnOk << endl;
     } else {
         cout << status.getDescription() << endl;
+        return ERROR_CODE;
     }
 
-    return 0;
+    return OK_CODE;
 }
 

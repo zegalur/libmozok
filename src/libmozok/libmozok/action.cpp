@@ -1,6 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
-#include "libmozok/message_processor.hpp"
+#include <libmozok/message_processor.hpp>
 #include <libmozok/action.hpp>
 #include <libmozok/error_utils.hpp>
 

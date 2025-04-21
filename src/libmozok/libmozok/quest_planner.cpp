@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #include <libmozok/action.hpp>
 #include <libmozok/public_types.hpp>
@@ -316,7 +316,8 @@ QuestPlanPtr QuestPlanner::findQuestPlan(
     const GoalVec& goals = _quest->getQuest()->getGoals();
     QuestPlanPtr lastPlan;
     if(_quest->getLastActiveGoalIndx() >= 0)
-        for(GoalVec::size_type goalIndx = _quest->getLastActiveGoalIndx(); 
+        for(GoalVec::size_type goalIndx = GoalVec::size_type(
+                    _quest->getLastActiveGoalIndx()); 
                 goalIndx < goals.size(); 
                 ++goalIndx) {
             lastPlan = findGoalPlan(

@@ -1,4 +1,4 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
 #include "app/handler.hpp"
 #include "app/argument.hpp"

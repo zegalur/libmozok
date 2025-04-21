@@ -1,14 +1,15 @@
-# Tutorial project file.
-#
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
 # This file is a part of the LibMozok DEMO project, intended to demonstrate 
 # how the library can be integrated into a popular game engine. Also, it is a
 # good playground to test various features.
 
+# ================================ Main Quest ================================ #
+
+# Finish all the tutorials one by one.
+
 version 1 0
 project tutorial_main
-
-# ================================ Main Quest ================================ #
-# Finish all the tutorials one by one.
 
 main_quest FinishAllTutorials:
 	preconditions:

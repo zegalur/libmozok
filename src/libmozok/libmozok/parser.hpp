@@ -1,3 +1,5 @@
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
+
 #include <libmozok/public_types.hpp>
 #include <libmozok/result.hpp>
 
@@ -9,7 +11,8 @@ protected:
     /// @brief Input file content (with or without the comments).
     const Str _text;
 
-    /// @brief Removes comments.
+    /// @brief Removes comments and adds extra empty line at the end.
+    /// @return Returns a copy of the modified string.
     static Str prepareFunc(const Str& src) noexcept;
 
     /// @brief The name of the file.
@@ -28,10 +31,16 @@ protected:
     const char* _src;
 
 public:
+    /// @brief Creates a new `RecursiveDescentParser` instance.
+    /// @param fileName File name used in error messages.
+    /// @param file Text content of the text file to be parsed.
+    /// @param prepare If `true`, comments will be removed and an extra 
+    ///     newline will be added at the end of the file.
     RecursiveDescentParser(
         const Str& fileName,
         const Str& file,
-        const bool prepare) noexcept;
+        const bool prepare
+        ) noexcept;
 
     virtual ~RecursiveDescentParser();
 

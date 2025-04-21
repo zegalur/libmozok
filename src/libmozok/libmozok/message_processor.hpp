@@ -25,21 +25,30 @@ enum QuestStatus {
     MOZOK_QUEST_STATUS_UNKNOWN
 };
 
-/// @brief Error code, passed to the `onActionError`.
+/// @brief Error codes passed to `onActionError`.
 enum ActionError {
+    // No error.
     MOZOK_AE_NO_ERROR,
+
+    // Action with this name is not defined.
     MOZOK_AE_UNDEFINED_ACTION,
+
+    // Invalid number of action parameters.
     MOZOK_AE_ARITY_ERROR,
+
+    // One of the argument objects is undefined.
     MOZOK_AE_UNDEFINED_OBJECT,
+
+    // Type mismatch error.
     MOZOK_AE_TYPE_ERROR,
 
-    // Preconditions not hold.
+    // Preconditions are not satisfied.
     MOZOK_AE_PRECONDITIONS_ERROR,
 
     // Action is N/A and can't be applied.
     MOZOK_AE_NA_ACTION,
 
-    // Any other action error.
+    // Any other action-related error.
     MOZOK_OTHER_ERROR
 };
 

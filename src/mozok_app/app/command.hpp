@@ -1,9 +1,8 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
 #include "app/argument.hpp"
-
 #include <libmozok/mozok.hpp>
 
 namespace mozok {
@@ -13,20 +12,24 @@ class DebugCmd;
 using DebugCmdVec = Vector<DebugCmd>;
 
 class DebugCmd {
+
+    /// @brief Debug command type.
     enum Cmd {
-        SPLIT, // split command
-        EXPECT, // expect quest event
-        PUSH, // push action into the action queue
-        PAUSE, // pause debugger
-        PRINT, // print message
-        EXIT // exit debugger
+        SPLIT,  /// @brief Split command. Separates the split sub-blocks.
+        EXPECT, /// @brief Expect quest event.
+        PUSH,   /// @brief Pushes an action into the action queue.
+        PAUSE,  /// @brief Pauses debugger.
+        PRINT,  /// @brief Prints a text message.
+        EXIT    /// @brief Exit debugger.
     };
+
+    /// @brief What quest event to expect (for `expect` command).
     enum QuestEvent {
-        NONE, 
-        //REACHABLE, // all activated quests expected to be reachable
-        UNREACHABLE, // expect quest to be unreachable
-        GOAL_CHANGE, // ...
-        SUBQUEST // expect <quest> be a subquest for <parent> with <goal>
+        NONE,
+        //REACHABLE, /// All activated quests expected to be reachable by default.
+        UNREACHABLE, /// Expect quest to be unreachable.
+        GOAL_CHANGE, /// Expect a specific goal change event.
+        SUBQUEST     /// Expect <quest> be a subquest for  <parent> with <goal>.
     };
 
     const Cmd _cmd;

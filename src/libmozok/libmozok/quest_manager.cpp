@@ -1,6 +1,6 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
-#include "libmozok/message_processor.hpp"
+#include <libmozok/message_processor.hpp>
 #include <libmozok/quest_manager.hpp>
 #include <libmozok/quest_planner.hpp>
 
@@ -166,7 +166,7 @@ bool QuestManager::performPlanning(
                 worldName, quest->getName(), plan->status);
 
     // New goal?
-    if(plan->goalIndx != oldGoal)// || oldStatus == MOZOK_QUEST_STATUS_UNKNOWN)
+    if(plan->goalIndx != oldGoal)// || oldStatus == MOZOK_QUEST_STATUS_INACTIVE)
         messageProcessor.onNewQuestGoal(
                 worldName, quest->getName(), plan->goalIndx, oldGoal);
 

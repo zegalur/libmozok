@@ -28,7 +28,6 @@ Result errorExpectingOpenPar(const Str& fileName, int line, int col) noexcept;
 Result errorExpectingClosePar(const Str& fileName, int line, int col) noexcept;
 Result errorExpectingOpenBracket(const Str& fileName, int line, int col) noexcept;
 Result errorExpectingCloseBracket(const Str& fileName, int line, int col) noexcept;
-Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept;
 
 // Server
 Result errorServerWorkerIsRunning(const Str& serverName) noexcept;
@@ -75,6 +74,7 @@ Result errorActionArgError_InvalidType(const Str& actionName, const int indx, co
 Result errorActionPreconditionsFailed(const Str& serverWorldName, const Str& actionName) noexcept;
 Result errorActionSetStatusGoalError(const Str& serverWorldName, const Str& actionName, const Str& questName, const int errorGoalIndx) noexcept;
 Result errorActionSetStatusParentGoalError(const Str& serverWorldName, const Str& actionName, const Str& questName, const int errorGoalIndx) noexcept;
+Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept;
 
 // Quest
 Result errorQuestAlreadyExists(const Str& serverWorldName, const Str& actionName) noexcept;

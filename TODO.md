@@ -38,38 +38,39 @@ Libmozok TODO list.
     - [ ] Generate a tree representation in a popular format: 
         - [ ] Include information on how long planning took for each node
         - [ ] Connect nodes with identical hash values (states)
-    - [ ] `.qsf` quest script file:
-        - [ ] Add: Syntax highlight for the `.qsf` files
-            - [ ] Vim / NeoVim
-            - [ ] VSCode
-        - [x] Commands: `info`, `exit`, `pause` and `continue`
-        - [x] Blocks: `worlds:`, `projects:`, `init:`, `debug:`
-        - [ ] `std_world name` - sets the standard world name
-        - [ ] `load [world_name] file_name` - loads a quest project
-        - [ ] `run [command_file_name]` - executes a list of commands from a `qsf` file
-        - [x] `push [world] action(arg1,...)` - pushes an action into the action queue
-        - [x] `expect UNREACHABLE`
-        - [ ] `expect DONE <goal>`
-        - [ ] `assert [what]` - asserts a condition and raises an error if it fails.
-        - [x] Event handlers: `ACT`, `ACT_IF`, `ALWAYS`, `SPLIT`
-        - [x] Placeholder parameters `_`
-        - [ ] Options:
-            - [ ] Max wait time
-            - [ ] Color output
-        - [ ] Events:
-            - [x] `onInit`
-            - [ ] `onCheck`:
-                - [ ] `pushCheck` to `Server` (with data)
-                - [ ] `onCheck` event for `MessageProcessor` (with check status `true,false,error` and data)
-            - [x] `onAction`
-            - [ ] `onActionError`
-            - [x] `onNewMainQuest`
-            - [x] `onNewSubQuest`
-            - [ ] `onNewQuestState`
-            - [x] `onNewQuestStatus`
-            - [ ] `onNewQuestPlan`
-            - [x] `onSearchLimitReached`
-            - [x] `onSpaceLimitReached`
+- [ ] `.qsf` quest script file:
+    - [ ] Add: `generateQSFSaveFile` to `Server`
+    - [ ] Add: Syntax highlight for the `.qsf` files
+        - [ ] Vim / NeoVim
+        - [ ] VSCode
+    - [x] Commands: `info`, `exit`, `pause` and `continue`
+    - [x] Blocks: `worlds:`, `projects:`, `init:`, `debug:`
+    - [ ] `std_world name` - sets the standard world name
+    - [ ] `load [world_name] file_name` - loads a quest project
+    - [ ] `run [command_file_name]` - executes a list of commands from a `qsf` file
+    - [x] `push [world] action(arg1,...)` - pushes an action into the action queue
+    - [x] `expect UNREACHABLE`
+    - [ ] `expect DONE <goal>`
+    - [ ] `assert [what]` - asserts a condition and raises an error if it fails.
+    - [x] Event handlers: `ACT`, `ACT_IF`, `ALWAYS`, `SPLIT`
+    - [x] Placeholder parameters `_`
+    - [ ] Options:
+        - [ ] Max wait time
+        - [ ] Color output
+    - [ ] Events:
+        - [x] `onInit`
+        - [ ] `onCheck`:
+            - [ ] `pushCheck` to `Server` (with data)
+            - [ ] `onCheck` event for `MessageProcessor` (with check status `true,false,error` and data)
+        - [x] `onAction`
+        - [ ] `onActionError`
+        - [x] `onNewMainQuest`
+        - [x] `onNewSubQuest`
+        - [ ] `onNewQuestState`
+        - [x] `onNewQuestStatus`
+        - [ ] `onNewQuestPlan`
+        - [x] `onSearchLimitReached`
+        - [x] `onSpaceLimitReached`
 
 ### Done ✓
 

@@ -1,18 +1,21 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
-#include "libmozok/public_types.hpp"
+#include <libmozok/public_types.hpp>
 #include <libmozok/mozok.hpp>
 
 namespace mozok {
 namespace app {
 
+/// @brief Debug command argument.
 struct DebugArg {
+
+    /// @brief Debug command argument type.
     enum Type {
-        INT,
-        STR,
-        ANY
+        INT, /// Integer value (stored in `num`).
+        STR, /// String value (stored in `str`).
+        ANY  /// Any "_" value
     };
 
     const Type type;
@@ -27,8 +30,9 @@ struct DebugArg {
 using DebugArgs = Vector<DebugArg>;
 
 
-// Templates to make the pattern matching
+// ========================================================================= //
 
+// Templates to automate the pattern matching (see `match()` function).
 
 template<int L, typename... Ts>
 struct GetLen;
@@ -39,22 +43,18 @@ struct GetLen<L, StrVec> {
         return L + strs.size();
     }
 };
-
 template<int L>
 struct GetLen<L> {
     static inline int get_len() noexcept {
         return L;
     }
 };
-
 template<int L, typename T, typename... Ts>
 struct GetLen<L, T, Ts...> {
     static inline int get_len(const T&, const Ts&... args) noexcept {
         return GetLen<L+1, Ts...>::get_len(args...);
     }
 };
-
-
 
 template<int Indx, typename... Ts>
 struct MatchClass;
@@ -77,7 +77,6 @@ struct MatchClass<Indx, StrVec, Ts...> {
             && MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
     }
 };
-
 template<int Indx, typename... Ts>
 struct MatchClass<Indx, Str, Ts...> {
     static inline bool match_fn(
@@ -93,7 +92,6 @@ struct MatchClass<Indx, Str, Ts...> {
             && MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
     }
 };
-
 template<int Indx, typename... Ts>
 struct MatchClass<Indx, int, Ts...> {
     static inline bool match_fn(
@@ -109,7 +107,6 @@ struct MatchClass<Indx, int, Ts...> {
             && MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
     }
 };
-
 template<int Indx>
 struct MatchClass<Indx> {
     static inline bool match_fn(
@@ -119,6 +116,7 @@ struct MatchClass<Indx> {
     }
 };
 
+/// @brief Checks if debug command arguments matches the input arguments. 
 template<typename... Ts>
 inline bool match(const DebugArgs& args1, const Ts&... args2) noexcept {
     const DebugArgs::size_type l = DebugArgs::size_type(

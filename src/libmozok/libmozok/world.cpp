@@ -1,6 +1,6 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
-#include "libmozok/message_processor.hpp"
+#include <libmozok/message_processor.hpp>
 #include <libmozok/world.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/project.hpp>
@@ -89,7 +89,7 @@ Str World::generateSaveFile() noexcept {
 }
 
 
-// ============================== PROJECT =============================== //
+// =============================== PROJECT ================================== //
 
 Result World::addProject(
         const Str& projectFileName, const Str& projectSrc) noexcept {

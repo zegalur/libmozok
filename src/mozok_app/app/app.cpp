@@ -1,9 +1,11 @@
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
 #include "app/app.hpp"
 #include "app/block.hpp"
-#include "app/callback.hpp"
+#include "app/script.hpp"
 #include "app/command.hpp"
 #include "app/handler.hpp"
-#include "app/script.hpp"
+#include "app/callback.hpp"
 #include "app/filesystem.hpp"
 
 #include <libmozok/message_processor.hpp>
@@ -12,21 +14,24 @@
 #include <libmozok/server.hpp>
 
 #include <iostream>
-#include <memory>
 #include <ostream>
 #include <sstream>
-#include <chrono>
-#include <map>
 #include <string>
+#include <chrono>
+#include <memory>
+#include <map>
 
 namespace mozok {
 namespace app {
 
 namespace {
+/// @brief Converts world name and quest name into `world.quest` string.
 inline Str qname(const Str& w, const Str& q) noexcept {
     return w + Str(".") + q;
 }
 }
+
+// ============================== QuestRec ================================= //
 
 QuestRec::QuestRec(
         const Str& world, 
@@ -44,6 +49,27 @@ QuestRec::QuestRec(
     skippedActions(0)
 { /* empty */ }
 
+// ============================== PathHash ================================= //
+
+namespace {
+/// @brief Old `hash_combine` from boost.
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v) noexcept {
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+}
+
+std::size_t App::PathHash::operator()(const Path& path) const noexcept {
+    std::size_t h = 0;
+    for (const auto& p : path) {
+        hash_combine(h, p.first);
+        hash_combine(h, p.second);
+    }
+    return h;
+}
+
+// ================================ App ==================================== //
 
 App::App(const AppOptions& options) noexcept 
     : _options(options)
@@ -55,20 +81,16 @@ App::App(const AppOptions& options) noexcept
 App::~App() noexcept 
 { /* empty */ }
 
-
 App* App::create(const AppOptions &options, Result &status) noexcept {
     if(status.isError())
         return nullptr;
-    
     App* app = new App(options);
     status <<= app->_status;
     if(status.isError())
         return app;
-
     status <<= QSFParser::parseAndInit(app);
     if(status.isError())
         return app;
-
     return app;
 }
 
@@ -159,7 +181,7 @@ Result App::parseAndApplyCmd(const Str& command) noexcept {
 }
 
 Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
-    // Some commands uses first argument for the text messages.
+    // Some commands uses first argument for long text messages.
     Str m = "";
     if(cmd._args.size() > 0 && cmd._args.front().type == DebugArg::STR)
         m = cmd._args.front().str;
@@ -213,6 +235,7 @@ Result App::expectUnreachable(const DebugCmd& cmd) noexcept {
     if(_records.find(name) == _records.end())
         return errorUndefinedQuest(worldName, questName);
     _records[name]->expectDone = false;
+    // info message
     const Str pre = (_options.colorText ? "\033[96m" : "");
     const Str post = (_options.colorText ? "\033[0m" : "");
     infoMsg(pre + "Expect quest `[" + worldName + "] " + questName 
@@ -272,20 +295,19 @@ Result App::onEvent(
                 Path split = _currentPath;
                 split.push_back({hid,0});
                 for(SIZE_T i=0; i<h._block._splits.size(); ++i) {
-                    const Str path = pathStr(split);
-                    if(_alternatives.find(path) != _alternatives.end()) {
+                    if(_alternatives.find(split) != _alternatives.end()) {
                         // This split is among the alternatives. 
                         // Let's do the split.
                         _currentPath = split;
                         res <<= applySplitBlock(h._block, int(i));
                         break;
-                    } if(_donePaths.find(path) == _donePaths.end()) {
+                    } if(_donePaths.find(split) == _donePaths.end()) {
                         // Make this path a new possible alternative.
-                        _alternatives[path] = 0;
+                        _alternatives[split] = 0;
                         Path parent = split;
                         do {
                             parent.pop_back();
-                            _alternatives[pathStr(parent)]++;
+                            _alternatives[parent]++;
                         } while(parent.size() > 0);
                     }
                     split.back().second++;
@@ -450,7 +472,7 @@ void App::onNewQuestPlan(
 void App::onSearchLimitReached(
         const mozok::Str& worldName,
         const mozok::Str& questName,
-        const int /*searchLimitValue*/
+        const int /*limitValue*/
         ) noexcept {
     infoMsg("EVENT: onSearchLimitReached [" + worldName + "] " + questName);
     _status <<= onEvent(
@@ -460,7 +482,7 @@ void App::onSearchLimitReached(
 void App::onSpaceLimitReached(
         const mozok::Str& worldName,
         const mozok::Str& questName,
-        const int /*searchLimitValue*/
+        const int /*limitValue*/
         ) noexcept {
     infoMsg("EVENT: onSpaceLimitReached [" + worldName + "] " + questName);
     _status <<= onEvent(
@@ -655,6 +677,8 @@ void App::simulateNext() noexcept {
             isWaiting = false;
             if(getCurrentStatus().isError())
                 break;
+            if(_exit)
+                break;
         }
 
         if(getCurrentStatus().isError())
@@ -690,7 +714,6 @@ void App::simulateNext() noexcept {
         infoMsg("Info:\n" + getInfo());
         _callback->onError(this);
     }
-
     _mainQuests.clear();
     _allQuests.clear();
     _records.clear();
@@ -702,7 +725,8 @@ void App::simulateNext() noexcept {
 Result App::simulate(AppCallback* callback) noexcept {
     _callback = callback;
     _alternatives.clear();
-    _alternatives[getCurrentPath()] = 0;
+    _currentPath.clear();
+    _alternatives[_currentPath] = 0;
     _donePaths.clear();
     do {
         simulateNext();
@@ -710,28 +734,22 @@ Result App::simulate(AppCallback* callback) noexcept {
             break;
         if(_exit)
             break;
-
         Path p = _currentPath;
-
         // Delete this alternative when it's a leaf node.
-        if(_alternatives[getCurrentPath()] == 0) {
-            _alternatives.erase(pathStr(p));
-            _donePaths.insert(pathStr(p));
+        if(_alternatives[p] == 0) {
+            _alternatives.erase(p);
+            _donePaths.insert(p);
         }
         // Mark this timeline as completed. 
         // Remove all the parent alternatives without children.
         while(p.size() > 0) {
             p.pop_back();
-            _alternatives[pathStr(p)]--;
-            if(_alternatives[pathStr(p)] == 0) {
-                _alternatives.erase(pathStr(p));
-                _donePaths.insert(pathStr(p));
+            _alternatives[p]--;
+            if(_alternatives[p] == 0) {
+                _alternatives.erase(p);
+                _donePaths.insert(p);
             }
         }
-
-        //for(auto it=_alternatives.begin(); it!=_alternatives.end(); ++it)
-        //    std::cout << it->first << " = " << it->second << std::endl;
-        
         _currentPath.clear();
     } while(_alternatives.empty() == false);
     _callback = nullptr;

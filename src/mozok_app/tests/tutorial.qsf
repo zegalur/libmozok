@@ -1,7 +1,9 @@
-# ...
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This quests are from the `libmozok-godot` project. 
 
 version 1 0
-script script_name_here
+script tutorial_test
 
 # Defines a list of worlds.
 worlds:

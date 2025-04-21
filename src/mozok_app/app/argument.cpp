@@ -1,4 +1,4 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
 #include "app/argument.hpp"
 
@@ -16,7 +16,6 @@ DebugArg::DebugArg(const Str& _str) noexcept
 DebugArg::DebugArg(const int _num) noexcept
 : type(Type::INT), str(""), num(_num)
 { /* empty */ }
-
 
 }
 }

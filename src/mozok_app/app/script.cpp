@@ -1,19 +1,19 @@
-// ...
+// Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
 
-#include "app/script.hpp"
 #include "app/app.hpp"
-#include "app/argument.hpp"
 #include "app/block.hpp"
+#include "app/script.hpp"
 #include "app/command.hpp"
 #include "app/handler.hpp"
+#include "app/argument.hpp"
 #include "app/filesystem.hpp"
-#include "libmozok/filesystem.hpp"
-#include "libmozok/message_processor.hpp"
 
-#include <libmozok/server.hpp>
-#include <libmozok/error_utils.hpp>
+#include <libmozok/message_processor.hpp>
 #include <libmozok/public_types.hpp>
+#include <libmozok/error_utils.hpp>
+#include <libmozok/filesystem.hpp>
 #include <libmozok/result.hpp>
+#include <libmozok/server.hpp>
 #include <libmozok/script.hpp>
 
 #include <set>
@@ -41,7 +41,6 @@ const Str BLOCK_ACT = "ACT";
 const Str BLOCK_ACT_IF = "ACT_IF";
 const Str BLOCK_SPLIT = "SPLIT";
 const Str BLOCK_ALWAYS = "ALWAYS";
-
 const std::set<Str> ALLOWED_BLOCKS = {
         BLOCK_ACT,
         BLOCK_ACT_IF,
@@ -60,7 +59,7 @@ const Str QEVENT_SUBQUEST = "SUBQUEST";
 
 const DebugCmd ERROR_CMD = DebugCmd::print("ERROR");
 
-
+/// @brief QSF parser that parses both initialization and debug commands.
 class QuestScriptParser : public QuestScriptParser_Base {
     App* _app;
     Server* _server;
@@ -85,7 +84,6 @@ protected:
         res <<= _server->checkAction(true, worldName, actionName, args);
         return res;
     }
-
 
     DebugArg str_arg(Result &res) noexcept {
         if(_src[_pos] == '_') {

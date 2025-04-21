@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 // The puzzle solver automatically solves a puzzle described in a given .quest 
 // file. The puzzle's .quest file must contain only one main quest without 
