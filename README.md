@@ -222,7 +222,7 @@ Resulting SVG file:
 
 <center>
       <picture>
-            <img height="750px" alt="Simulation Graph" src="./imgs/simulation_example.svg">
+            <img height="750px" alt="Simulation Graph" src="./docs/imgs/simulation_example.svg">
       </picture>
 </center>
 
