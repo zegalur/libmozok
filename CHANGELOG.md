@@ -4,7 +4,7 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
-## [1.0.0] - 2025-04-21
+## [1.0.0] - 2025-04-23
 
 ### Added
 
@@ -12,6 +12,7 @@ All significant modifications to this project will be recorded in this file. The
 - Quest debugger tool (`mozok.exe`) for debugging non-linear quests:
     - Special QSF commands for describing all possible complex splits and timelines.
     - A "Tutorial" for verifying the debugger (based on tutorial quest from `libmozok-godot`).
+    - Ability to generate a visual representation of the simulation process.
 - `FileSystem` class to the public interface.
 - To `Server` public interface:
     - `loadQuestScriptFile`
