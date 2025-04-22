@@ -28,7 +28,7 @@
 
 Quests are modeled as a set of preconditions, goals, and actions. Players start in an initial state and, through actions applied to the world, work to achieve (or fail) the quest goals. Depending on the current state of the world, the library determines if a quest goal is achievable, builds a quest plan (a list of actions to achieve the goal), and, if necessary, automatically triggers sub-quests.
 
-To assist with world-building tasks, **LibMozok** introduces a specially designed `.quest` format for quest projects and very simple API to handle quest-related problems.
+To assist with world-building tasks, **LibMozok** introduces a specially designed `.quest` and `.qsf` formats for quest projects and scripts, very simple API to handle quest-related problems, and advanced quest debugging tool.
 
 ## Showcase
 
@@ -166,6 +166,66 @@ MoveLoad3 ( human, left, right, goat, wolf, cabbage )
 
 **Warning!** Libmozok was designed for planning quests in real-time for games, and was not intended to be a universal puzzle-solving library. That said, it is powerful enough to solve many hard puzzles, although it can take some time and memory to find a solution. An example of a complex puzzle is [game_of_fifteen.quest](./src/libmozok/tests/puzzles/game_of_fifteen.quest).
 
+## Example #3
+
+The third example demonstrates the power of `.qsf` scripts and the quest debugging tool (mozok). With this tool, you can generate a complete visualization of your non-linear gameplay — clearly revealing bottlenecks, slowdowns, unreachable states, and how your storylines split and evolve over time:
+
+```ini
+# ...
+
+# ======================== Header section ========================
+# Defines which worlds to create, which projects to load 
+# (and in what order), and how to properly initialize the game.
+
+worlds:
+    tut 
+projects:
+    [tut] tutorial_utils.quest
+    [tut] tutorial_controls.quest
+    [tut] tutorial_fighting.quest
+    [tut] tutorial_key.quest
+    [tut] tutorial_puzzle.quest
+    [tut] tutorial_main.quest
+init:
+    [tut] InitTutorials()
+
+# ...
+
+# ======================== Debug section ========================
+# Describes how to simulate and test all non-linear gameplay.
+
+onInit:
+ACT ON_INIT:
+    print ------------- Hello, world! ------------- 
+
+onNewMainQuest [tut] FinishAllTutorials:
+ACT TUTORIAL_STARTED:
+    print Tutorial quest started, enjoy!
+
+onNewQuestStatus [tut] PuzzleTutorial_GetHeart UNREACHABLE:
+ACT_IF BLOCK_EXIT:
+    push [tut] PTut_Cancel(pt_cell_00, puzzleTutorial, puzzleTutorial_GetHeart)
+
+onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
+SPLIT BLOCK_EXIT:
+    expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
+    push [tut] PTut_BlockExit()
+
+onAction [tut] ApplyTutorialAction(pickUpKeyAction):
+ACT ON_TST_ACTION:
+    print The key was picked up!
+
+# ...
+```
+
+Resulting SVG file:
+
+<center>
+      <picture>
+            <img height="750px" alt="Simulation Graph" src="./imgs/simulation_example.svg">
+      </picture>
+</center>
+
 # Further Reading
 
 - Getting Started:
@@ -174,6 +234,8 @@ MoveLoad3 ( human, left, right, goat, wolf, cabbage )
     - https://github.com/zegalur/libmozok-godot
 - Manual:
     - [`.quest` Format Reference](docs/quest-format-reference.md)
+    - [`.qsf` Format Reference](docs/qsf-format-reference.md)
+    - [How to use quest debugging tool](docs/debugger.md)
     - Doxygen auto-generated reference
 - Editor support:
     - [Vim/NeoVim Support Manual](.vim/README.md)
@@ -191,6 +253,8 @@ LibMozok is written in C++, using CMake as a build tool, and VSCode as the defau
     - Doxygen
 - Highlight support for `.quest` files:
     - VSCode (version 1.89 or higher)
+- Graph PDF and SVG representation:
+    - [`Graphviz`](https://graphviz.org/)
 
 # Installation
 

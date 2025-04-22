@@ -642,7 +642,7 @@ void App::recordEventMatch(
     node->type = GraphNode::Type::BLOCK;
     node->title = NTITLE_BLOCK;
     node->text.push_back(
-        "<b>" + handler._block.typeToStr() + "</b> " + handler._block._name);
+        "<b>" + handler._block.typeToStr() + " </b>" + handler._block._name);
     pushNode(node);
 }
 

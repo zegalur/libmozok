@@ -125,7 +125,7 @@ const Str C_EXIT = "exit";
 const Str C_EXIT_FORMAT = "exit [<text>]";
 const Str C_EXIT_BRIEF = "Immedianty closes the mozok app.";
 const Str C_EXIT_DESC = "Prints a message `exit [<text>]`"
-    " and immedianty closes the mozok app.";
+    " and immediately closes the mozok app.";
 const StrVec C_EXIT_ARGS = 
     { "`<text>` - If set, before exiting, it will print"
         " the `exit <text>` message."
