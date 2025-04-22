@@ -35,9 +35,10 @@ Libmozok TODO list.
     - [x] Add: `FileSystem` class as a part of public interface
     - [x] Add: `Result Server::loadQuestScriptFile(script, FileSystem&)` for parsing the "loading" part of script files (excluding debugging parts)
     - [ ] Auto-generate a help Markdown document into `docs`
-    - [ ] Generate a tree representation in a popular format: 
-        - [ ] Include information on how long planning took for each node
+    - [x] Generate a tree representation in a popular format: 
+        - [x] Include information on how long planning took for each node
         - [ ] Connect nodes with identical hash values (states)
+        - [ ] Connect identical `END` nodes
 - [ ] `.qsf` quest script file:
     - [ ] Add: `generateQSFSaveFile` to `Server`
     - [ ] Add: Syntax highlight for the `.qsf` files
@@ -56,7 +57,7 @@ Libmozok TODO list.
     - [ ] Add: `SPLIT_IF`, `ALWAYS_IF`, `ACT_IF_NOT`, `IF_NOT`, `SPLIT_IF_NOT`
     - [x] Placeholder parameters `_`
     - [ ] Options:
-        - [ ] Max wait time
+        - [x] Max wait time
         - [ ] Color output
     - [ ] Events:
         - [x] `onInit`
