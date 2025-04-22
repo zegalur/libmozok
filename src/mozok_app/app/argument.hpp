@@ -25,6 +25,8 @@ struct DebugArg {
     DebugArg() noexcept; // any
     DebugArg(const Str& str) noexcept;
     DebugArg(const int num) noexcept;
+
+    Str toStr() const noexcept;
 };
 
 using DebugArgs = Vector<DebugArg>;

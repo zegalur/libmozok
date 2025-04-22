@@ -45,6 +45,8 @@ public:
     static DebugBlock act_if(const Str& name, const DebugCmdVec& cmds) noexcept;
     static DebugBlock split(const DebugCmdVec& cmds) noexcept;
     static DebugBlock always(const Str& name, const DebugCmdVec& cmds) noexcept;
+
+    Str typeToStr() const noexcept;
 };
 
 }

@@ -45,5 +45,23 @@ DebugBlock DebugBlock::always(const Str& name, const DebugCmdVec& cmds) noexcept
     return DebugBlock(Type::ALWAYS, name, cmds);
 }
 
+Str DebugBlock::typeToStr() const noexcept {
+    switch(_type) {
+        case EMPTY:
+            return "EMPTY";
+        case ACT:
+            return "ACT";
+        case ACT_IF:
+            return "ACT_IF";
+        case SPLIT:
+            return "SPLIT";
+        case ALWAYS:
+            return "ALWAYS";
+        default:
+            break;
+    }
+    return "???";
+}
+
 }
 }

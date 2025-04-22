@@ -46,6 +46,9 @@ class DebugCmd {
     friend class DebugBlock;
 
 public:
+    Str questEventStr() const;
+    const DebugArgs& args() const;
+
     static DebugCmd split(const Str& splitName) noexcept;
     static DebugCmd pause(const Str& message) noexcept;
     static DebugCmd print(const Str& message) noexcept;

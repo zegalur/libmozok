@@ -141,7 +141,7 @@ void print_CommandHelp(const Str& c) {
 
 Result print_BadOptionFormat(const Str& option) {
     return Result::Error("Bad `" + option + "` option format."
-                         " Call `help " + option + "`.");
+                         " Call `-h " + option + "`.");
 }
 
 Result print_BadCommandFormat(const Str& command) {
@@ -180,6 +180,58 @@ Result o_verbose(AppOptions& appOptions, int, char**, int&) {
     appOptions.verbose = true;
     return Result::OK();
 }
+
+Result o_exportGraph(AppOptions& appOptions, int argc, char** argv, int& p) {
+    if(++p >= argc)
+        return print_BadOptionFormat(argv[p-1]);
+    appOptions.exportGraphTo = argv[p];
+    return Result::OK();
+}
+
+Result o_visibilityFlags(AppOptions& appOptions, int argc, char** argv, int& p) {
+    if(++p >= argc)
+        return print_BadOptionFormat(argv[p-1]);
+    int res = 0;
+    for(int i=0; argv[p][i]!='\0'; ++i)
+        switch(argv[p][i]) {
+            case 'p':
+                res |= AppOptions::ExportFlags::PUSH;
+                break;
+            case 'm':
+                res |= AppOptions::ExportFlags::META;
+                break;
+            case 'e':
+                res |= AppOptions::ExportFlags::EVENT;
+                break;
+            case 'x':
+                res |= AppOptions::ExportFlags::EXPECT;
+                break;
+            case 'P':
+                res |= AppOptions::ExportFlags::PLAN;
+                break;
+            case 'E':
+                res |= AppOptions::ExportFlags::ACTION_ERROR;
+                break;
+            case 'd':
+                res |= AppOptions::ExportFlags::DETAILS;
+                break;
+            case 'b':
+                res |= AppOptions::ExportFlags::BLOCK;
+                break;
+            default:
+                return print_BadOptionFormat(argv[p-1]);
+        }
+    appOptions.visibilityFlags = res;
+    return Result::OK();
+}
+
+Result o_maxWaitTime(AppOptions& appOptions, int argc, char** argv, int& p) {
+    if(++p >= argc)
+        return print_BadOptionFormat(argv[p-1]);
+    appOptions.maxWaitTime_ms = std::stoi(argv[p]);
+    return Result::OK();
+}
+
 
 // =========================== Command Functions =========================== //
 
@@ -325,6 +377,9 @@ int main(int argc, char **argv) {
     optionMap[O_PRINT_ON_OK] = &o_printOnOk;
     optionMap[O_SERVER_NAME] = &o_setServerName;
     optionMap[O_VERBOSE] = &o_verbose;
+    optionMap[O_EXPORT_GRAPH] = &o_exportGraph;
+    optionMap[O_EXPORT_FLAGS] = &o_visibilityFlags;
+    optionMap[O_MAX_WAIT_TIME] = &o_maxWaitTime;
 
     // Turning on the options.
     for(int p = 2; p < argc; ++p) {
@@ -334,7 +389,11 @@ int main(int argc, char **argv) {
             print_CallAppHelp();
             return ERROR_CODE;
         }
-        it->second(appOptions, argc, argv, p);
+        Result r = it->second(appOptions, argc, argv, p);
+        if(r.isError()) {
+            print_ErrorResult(r);
+            return ERROR_CODE;
+        }
     }
 
     // Create the simulation application.

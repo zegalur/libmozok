@@ -82,6 +82,38 @@ const Str O_VERBOSE_BRIEF = "Verbose output.";
 const Str O_VERBOSE_DESC = "Turn ON the verbose output mode.";
 const StrVec O_VERBOSE_ARGS = {};
 
+const Str O_EXPORT_GRAPH = "-g";
+const Str O_EXPORT_GRAPH_FORMAT = "-g <filename.gv>";
+const Str O_EXPORT_GRAPH_BRIEF = "Exports the simulation graph into a .gv file.";
+const Str O_EXPORT_GRAPH_DESC = O_EXPORT_GRAPH_BRIEF;
+const StrVec O_EXPORT_GRAPH_ARGS = 
+    { "`<filename.gv>` - Exports into this file in .gv (Graphviz DOT) format." };
+
+const Str O_EXPORT_FLAGS = "-f";
+const Str O_EXPORT_FLAGS_FORMAT = "-f <flags>";
+const Str O_EXPORT_FLAGS_BRIEF = "Graph export visibility flags (default: mb).";
+const Str O_EXPORT_FLAGS_DESC = 
+        O_EXPORT_FLAGS_BRIEF + " You can set multiple flags, for example: mpPd.";
+const StrVec O_EXPORT_FLAGS_ARGS = 
+    { "p - Push action blocks."
+    , "m - Meta blocks (PRINT, PAUSE, EXIT)."
+    , "e - Event blocks."
+    , "b - Command blocks (ACT_IF, ALWAYS etc.)"
+    , "x - Expect blocks."
+    , "P - Plan Accepted/Changed blocks."
+    , "E - Action error blocks."
+    , "d - Include details."
+    };
+
+const Str O_MAX_WAIT_TIME = "-w";
+const Str O_MAX_WAIT_TIME_FORMAT = "-w <max_wait_time_ms>";
+const Str O_MAX_WAIT_TIME_BRIEF = "Sets the maximum wait time in ms (default: 5000).";
+const Str O_MAX_WAIT_TIME_DESC = O_SERVER_NAME_BRIEF 
+        + " An error will occur if no events are received"
+        + " for a duration longer than this.";
+const StrVec O_MAX_WAIT_TIME_ARGS = 
+    { "`<max_wait_time_ms>` - Maximum wait time in milliseconds (positive integer)." };
+
 /// @}
 
 // ------------------------------------------------------------------------- //
@@ -180,6 +212,9 @@ const HelpMap HELP_MAP = {
     , MOZOK_HELP(APP_OPTION, O_SERVER_NAME)
     , MOZOK_HELP(APP_OPTION, O_NO_INIT)
     , MOZOK_HELP(APP_OPTION, O_VERBOSE)
+    , MOZOK_HELP(APP_OPTION, O_EXPORT_GRAPH)
+    , MOZOK_HELP(APP_OPTION, O_EXPORT_FLAGS)
+    , MOZOK_HELP(APP_OPTION, O_MAX_WAIT_TIME)
     
     // commands
     , MOZOK_HELP(GENERAL_COMMAND, C_EXIT)

@@ -16,6 +16,7 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <chrono>
 #include <memory>
@@ -192,20 +193,24 @@ Result App::applyDebugCmd(const DebugCmd& cmd) noexcept {
     switch(cmd._cmd) {
         case DebugCmd::PRINT:
             std::cout << msg(pre + "PRINT: " + post + m) << std::endl;
+            recordMeta("PRINT", m);
             break;
         case DebugCmd::PAUSE:
             std::cout << msg(pre + "PAUSE: " + post + m) << std::endl;
+            recordMeta("PAUSE", m);
             if(_callback->onPause(this) == false)
                 _exit = true;
             break;
         case DebugCmd::EXIT:
             std::cout << msg(pre + "EXIT: " + post + m) << std::endl;
+            recordMeta("EXIT", m);
             _exit = true;
             break;
         case DebugCmd::PUSH:
             pushAction(cmd, -1);
             break;
         case DebugCmd::EXPECT:
+            recordExpect(cmd);
             if(cmd._questEvent != DebugCmd::UNREACHABLE)
                 return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
             return expectUnreachable(cmd);
@@ -251,6 +256,8 @@ Result App::applySplitBlock(const DebugBlock& block, int split) noexcept {
     const Str post = (_options.colorText ? "\033[0m" : "");
     infoMsg(pre + "-=> Apply split block `" + splitBlockName + "`." + post);
 
+    recordSplit(splitBlockName);
+
     Result res;
     int start = block._splits[split] + 1;
     int end = block._cmds.size();
@@ -278,6 +285,8 @@ Str App::pathStr(const Path& path) const noexcept {
     return Str(ss.str());
 
 }
+
+// ----------------------------- EVENTS ------------------------------------ //
 
 template<typename ...Args>
 Result App::onEvent(
@@ -318,9 +327,11 @@ Result App::onEvent(
                     res <<= applyDebugBlock(h._block);
                 } else
                     removeHandler = false;
-            } else
+            } else {
+                recordEventMatch(h);
                 // Not a split block.
                 res <<= applyDebugBlock(h._block);
+            }
 
             if(removeHandler && h._block._type != DebugBlock::ALWAYS)
                 it = hset.erase(it);
@@ -347,6 +358,9 @@ void App::onActionError(
                     + (i != actionArguments.size()-1 ? "," : "");
     text += "). Error result = `" + errorResult.getDescription() + "`";
 
+    recordActionError(
+        worldName, actionName, actionArguments, errorResult, actionError, data);
+
     if(data < 0 || actionError != MOZOK_AE_PRECONDITIONS_ERROR) {
         _exit = true;
         errorMsg(text);
@@ -372,6 +386,7 @@ void App::onActionError(
         q->lastPlan_Actions = q->alternativePlan_Actions;
         q->lastPlan_Args = q->alternativePlan_Args;
         q->nextAction = 0;
+        recordPlanSwitch(worldName, q->questName);
     }
 }
 
@@ -380,6 +395,7 @@ void App::onNewMainQuest(
         const Str& questName
         ) noexcept {
     infoMsg("EVENT: onNewMainQuest [" + worldName + "] " + questName);
+    recordEvent("onNewMainQuest", worldName, {questName});
     QuestRecPtr rec(new QuestRec(worldName, questName, true, int(_records.size())));
     _mainQuests.push_back(rec);
     _records[qname(worldName, questName)] = rec;
@@ -395,6 +411,9 @@ void App::onNewSubQuest(
         ) noexcept {
     infoMsg("EVENT: onNewSubQuest [" + worldName + "] " 
             + questName + " " + parentQuestName + " " + std::to_string(goal));
+    recordEvent(
+            "onNewSubQuest", worldName, 
+            {questName, parentQuestName, std::to_string(goal)});
     QuestRecPtr rec(new QuestRec(worldName, questName, true, int(_records.size())));
     _records[qname(worldName, questName)] = rec;
     _records[qname(worldName, parentQuestName)]->subquests.push_back(rec);
@@ -419,19 +438,27 @@ void App::onNewQuestStatus(
         const QuestStatus questStatus
         ) noexcept {
     // Info message.
-    Str statusStr = questStatusToStr(questStatus);
-    Str doneStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_DONE);
-    Str failStr = questStatusToStr(QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE);
+    Str statusStr = questStatusToStr_Short(questStatus);
+    Str statusStrCopy = statusStr;
+    Str doneStr = questStatusToStr_Short(QuestStatus::MOZOK_QUEST_STATUS_DONE);
+    Str failStr = questStatusToStr_Short(QuestStatus::MOZOK_QUEST_STATUS_UNREACHABLE);
     if(_options.colorText && statusStr == doneStr)
         statusStr = "\033[92m" + statusStr + "\033[0m";
     if(_options.colorText && statusStr == failStr)
         statusStr = "\033[91m" + statusStr + "\033[0m";
     infoMsg("EVENT: onNewQuestStatus [" + worldName + "] " 
             + questName + " " + statusStr);
-    
+    if(statusStrCopy == doneStr)
+        statusStrCopy = "<font color='darkgreen'><b>" + statusStrCopy + "</b></font>";
+    if(statusStrCopy == failStr)
+        statusStrCopy = "<font color='red'><b>" + statusStrCopy + "</b></font>";
+   
+    recordEvent("onNewQuestStatus", worldName, {questName, statusStrCopy});
+
     _records[qname(worldName, questName)]->lastStatus = questStatus;
     _status <<= onEvent(
-        _onNewQuestStatus, worldName, questName, questStatusToStr(questStatus));
+            _onNewQuestStatus, worldName, 
+            questName, questStatusToStr(questStatus));
 }
 
 void App::onNewQuestGoal(
@@ -444,6 +471,10 @@ void App::onNewQuestGoal(
     ss << "EVENT: onNewQuestGoal [" << worldName << "] " << questName << " ";
     ss << newGoal << " " << oldGoal;
     infoMsg(ss.str());
+
+    recordEvent(
+            "onNewQuestGoal", worldName, 
+            {questName,std::to_string(newGoal),std::to_string(oldGoal)});
 
     // Reset the plan when goal changed.
     QuestRecPtr rec = _records[qname(worldName, questName)];
@@ -464,6 +495,7 @@ void App::onNewQuestPlan(
         rec->nextAction = 0;
         rec->lastPlan_Actions = actionList;
         rec->lastPlan_Args = actionArgsList;
+        recordNewPlanAccepted(worldName, questName);
     }
     rec->alternativePlan_Actions = actionList;
     rec->alternativePlan_Args = actionArgsList;
@@ -472,9 +504,12 @@ void App::onNewQuestPlan(
 void App::onSearchLimitReached(
         const mozok::Str& worldName,
         const mozok::Str& questName,
-        const int /*limitValue*/
+        const int limitValue
         ) noexcept {
     infoMsg("EVENT: onSearchLimitReached [" + worldName + "] " + questName);
+    recordEvent(
+            "onSearchLimitReached", worldName, 
+            {questName, std::to_string(limitValue)});
     _status <<= onEvent(
             _onSearchLimitReached, worldName, questName);
 }
@@ -482,12 +517,375 @@ void App::onSearchLimitReached(
 void App::onSpaceLimitReached(
         const mozok::Str& worldName,
         const mozok::Str& questName,
-        const int /*limitValue*/
+        const int limitValue
         ) noexcept {
     infoMsg("EVENT: onSpaceLimitReached [" + worldName + "] " + questName);
+    recordEvent(
+            "onSpaceLimitReached", worldName, 
+            {questName, std::to_string(limitValue)});
     _status <<= onEvent(
             _onSpaceLimitReached, worldName, questName);
 }
+
+// ----------------------------- GRAPH ------------------------------------- //
+
+namespace {
+const Str NTITLE_START = "START";
+const Str NTITLE_END = "END";
+const Str NTITLE_ERROR = "ERROR";
+const Str NTITLE_META = "META";
+const Str NTITLE_SPLIT = "SPLIT";
+const Str NTITLE_EXPECT = "EXPECT";
+const Str NTITLE_PUSH = "PUSH";
+const Str NTITLE_BLOCK = "BLOCK";
+const Str NTITLE_PLAN_ACCEPTED = "PLAN_ACCEPTED";
+const Str NTITLE_PLAN_CHANGED = "PLAN_CHANGED";
+const Str NTITLE_ACTION_ERROR = "ACTION_ERROR";
+}
+
+void App::recordReset() noexcept {
+    _root.reset(new GraphNode());
+    _root->type = GraphNode::Type::START;
+    _root->currentStart = std::chrono::system_clock::now();
+    _root->worstDuration = Duration_ms(0);
+    _root->title = NTITLE_START;
+    _root->text.push_back("File: "+_options.scriptFileName);
+    _root->text.push_back("Init: "+Str(_options.applyInitAction?"TRUE":"FALSE"));
+    _cursor = _root;
+}
+
+void App::recordStart() noexcept {
+    _cursor = _root;
+    _root->currentStart = std::chrono::system_clock::now();
+}
+
+void App::recordEnd() noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::END;
+    node->title = NTITLE_END;
+    pushNode(node);
+    //
+    // TODO: merge if necessary.
+    //
+}
+
+void App::recordError() noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::ERROR;
+    node->title = NTITLE_ERROR;
+    node->text.push_back("Status:");
+    node->text.push_back(_status.getDescription());
+    pushNode(node);
+}
+
+void App::recordMeta(
+        const Str& cmd, 
+        const Str& text
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::META;
+    node->title = NTITLE_META;
+    node->text.push_back(cmd);
+    node->text.push_back(text);
+    pushNode(node);
+}
+
+void App::recordExpect(
+        const DebugCmd& cmd
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::EXPECT;
+    node->title = NTITLE_EXPECT;
+    node->text.push_back(cmd.questEventStr());
+    for(const auto& a : cmd.args())
+        node->text.push_back(a.toStr());
+    pushNode(node);
+}
+
+void App::recordPush(
+        bool isNA,
+        const Str& worldName, 
+        const Str& actionName, 
+        const StrVec& args,
+        const int data
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::PUSH;
+    node->title = NTITLE_PUSH;
+    if(data >= 0)
+        node->text.push_back("(by " + _allQuests[data]->questName + ")");
+    if(isNA)
+        node->text.push_back("N/A");
+    node->text.push_back("[" + worldName + "]");
+    node->text.push_back(actionName);
+    node->text.insert(node->text.end(), args.begin(), args.end());
+    pushNode(node);
+}
+
+void App::recordEvent(
+        const Str& eventName,
+        const Str& worldName,
+        const StrVec& args
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::EVENT;
+    node->title = eventName;
+    node->text.push_back("[" + worldName + "] " + args.front());
+    node->text.insert(node->text.end(), args.begin() + 1, args.end());
+    pushNode(node);
+}
+
+void App::recordEventMatch(
+        const EventHandler& handler
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::BLOCK;
+    node->title = NTITLE_BLOCK;
+    node->text.push_back(
+        "<b>" + handler._block.typeToStr() + "</b> " + handler._block._name);
+    pushNode(node);
+}
+
+void App::recordNewPlanAccepted(
+        const Str& worldName,
+        const Str& questName
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::PLAN_ACCEPTED;
+    node->title = NTITLE_PLAN_ACCEPTED;
+    node->text.push_back("[" + worldName + "]");
+    node->text.push_back(questName);
+    pushNode(node);
+}
+
+void App::recordPlanSwitch(
+        const Str& worldName,
+        const Str& questName
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::PLAN_CHANGED;
+    node->title = NTITLE_PLAN_CHANGED;
+    node->text.push_back("[" + worldName + "]");
+    node->text.push_back(questName);
+    pushNode(node);
+}
+        
+void App::recordActionError(
+        const Str& worldName,
+        const Str& actionName,
+        const StrVec& args,
+        const Result& /*errorResult*/,
+        const mozok::ActionError actionError,
+        const int data
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::ACTION_ERROR;
+    node->title = NTITLE_ACTION_ERROR;
+    if(data >= 0)
+        node->text.push_back("(by " + _allQuests[data]->questName + ")");
+    node->text.push_back(actionErrorToStr(actionError));
+    //node->text.push_back("Result: " + errorResult.getDescription());
+    node->text.push_back("[" + worldName + "]" + actionName);
+    node->text.insert(node->text.end(), args.begin(), args.end());
+    pushNode(node);
+}
+
+void App::recordSplit(
+        const Str& name
+        ) noexcept {
+    GraphNodePtr node = makeShared<GraphNode>();
+    node->type = GraphNode::Type::SPLIT;
+    node->title = NTITLE_SPLIT;
+    node->text.push_back(name);
+    pushNode(node);
+
+}
+
+void App::pushNode(const GraphNodePtr& node) noexcept {
+    node->currentStart = std::chrono::system_clock::now();
+    Duration_ms d = std::chrono::duration_cast<Duration_ms>(
+            node->currentStart - _cursor->currentStart);
+    node->worstDuration = d;//std::max(d, node->worstDuration);
+
+    // Check if we have the same node among the children.
+    for(const GraphNodePtr& ch : _cursor->children) {
+        if(ch->type != node->type)
+            continue;
+        if(ch->title != node->title)
+            continue;
+        if(ch->text != node->text)
+            continue;
+        // Identical node was found.
+        // Update the worst duration value.
+        ch->worstDuration = std::max(ch->worstDuration, node->worstDuration);
+        ch->currentStart = node->currentStart;
+        _cursor = ch;
+        return;
+    }
+
+    // Visibility.
+    bool visible = false;
+    switch(node->type) {
+        case GraphNode::Type::START:
+            visible = true;
+            break;
+        case GraphNode::Type::END:
+            visible = true;
+            break;
+        case GraphNode::Type::PUSH:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::PUSH);
+            break;
+        case GraphNode::Type::EVENT:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::EVENT);
+            break;
+        case GraphNode::Type::BLOCK:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::BLOCK);
+            break;
+        case GraphNode::Type::SPLIT:
+            visible = true;
+            break;
+        case GraphNode::Type::META:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::META);
+            break;
+        case GraphNode::Type::EXPECT:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::EXPECT);
+            break; 
+        case GraphNode::Type::ERROR:
+            visible = true;
+            break;
+        case GraphNode::Type::ACTION_ERROR:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::ACTION_ERROR);
+            break;
+        case GraphNode::Type::PLAN_ACCEPTED:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::PLAN);
+            break;
+        case GraphNode::Type::PLAN_CHANGED:
+            visible = _options.visibilityFlags 
+                    & (int)(AppOptions::ExportFlags::PLAN);
+            break;
+        default:
+            break;
+    }
+
+    if(visible == false) {
+        // This node isn't visible.
+        // Only update the timings.
+        _cursor->worstDuration = std::max(
+                _cursor->worstDuration, node->worstDuration);
+        _cursor->currentStart = node->currentStart;
+        return;
+    }
+
+    // No identical child nodes were found.
+    _cursor->children.push_back(node);
+    node->parent = _cursor;
+    _cursor = node;
+}
+
+void App::exportGraph() noexcept {
+    if(_options.exportGraphTo.length() == 0)
+        return;
+
+    Queue<GraphNodePtr> open;
+    HashSet<GraphNodePtr> done;
+    open.push(_root);
+
+    std::map<GraphNode::Type,Str> typeColor;
+    typeColor[GraphNode::Type::START] = "MediumAquamarine";
+    typeColor[GraphNode::Type::END] = "MediumAquamarine";
+    typeColor[GraphNode::Type::PUSH] = "LightGreen";
+    typeColor[GraphNode::Type::EVENT] = "Plum";
+    typeColor[GraphNode::Type::BLOCK] = "LightBlue";
+    typeColor[GraphNode::Type::SPLIT] = "Yellow";
+    typeColor[GraphNode::Type::META] = "Khaki";
+    typeColor[GraphNode::Type::EXPECT] = "Aquamarine";
+    typeColor[GraphNode::Type::ERROR] = "LightCoral";
+    typeColor[GraphNode::Type::ACTION_ERROR] = "Pink";
+    typeColor[GraphNode::Type::PLAN_ACCEPTED] = "LightCyan";
+    typeColor[GraphNode::Type::PLAN_CHANGED] = "SkyBlue";
+
+    std::stringstream ss;
+    ss << "// Generated by LibMozok debugger." << std::endl;
+    ss << "// Script: " << _options.scriptFileName << std::endl;
+    ss << "digraph mozok {\n" << std::endl;
+    while(open.empty() == false) {
+        GraphNodePtr node = open.front();
+        open.pop();
+        done.insert(node);
+        for(const auto& ch : node->children)
+            open.push(ch);
+
+        Str color = "lightgray";
+        if(typeColor.find(node->type) != typeColor.end())
+            color = typeColor[node->type];
+        int dur = int(node->worstDuration.count());
+        int pv = 16 - std::min(16, (dur*16) / _options.maxWaitTime_ms);
+        Str p = std::to_string(pv);
+        if(pv >= 15) p = "f";
+        if(pv == 14) p = "e";
+        if(pv == 13) p = "d";
+        if(pv == 12) p = "c";
+        if(pv == 11) p = "b";
+        if(pv == 10) p = "a";
+        Str dcol = "#ff" + p+p+p+p;
+
+        // Add new node.
+        ss << "\tP" << (void*)(node.get());
+        ss << " [\n\t\tshape=plaintext" << std::endl;
+        ss << "\t\tlabel=<" << std::endl;
+        ss << "\t\t\t<table BORDER='1' CELLBORDER='1' CELLSPACING='0'>\n";
+        // Title
+        ss << "\t\t\t\t<tr><td COLOR='" << color << "' BGCOLOR='" << color << "'>"
+           << "<b>" << node->title << "</b></td>" 
+           << "<td BGCOLOR='" << dcol << "' COLOR='" << dcol << "'>" 
+           << dur << "<i>ms</i>" << "</td></tr>" << std::endl;
+        // Rows
+        int rows = 0;
+        for(const auto& t : node->text) {
+            rows++;
+            if((_options.visibilityFlags & int(AppOptions::DETAILS)) == 0)
+                if(rows > 2) {
+                    ss << "\t\t\t\t<tr><td COLOR='lightgray' COLSPAN='2'>" 
+                       << "...</td></tr>" << std::endl;
+                    break;
+                }
+            ss << "\t\t\t\t<tr><td COLOR='lightgray' COLSPAN='2'>" 
+               << t << "</td></tr>" << std::endl;
+        }
+        ss << "\t\t\t</table>" << std::endl;
+        ss << "\t\t> ];" << std::endl;
+
+        // Add connection to the parent node.
+        if(node->parent != nullptr) {
+            ss << "\tP" << (void*)(node->parent.get());
+            ss << " -> ";
+            ss << "P" << (void*)(node.get());
+            ss << ";" << std::endl;
+        }
+    }
+    ss << "\n}" << std::endl;
+
+    std::ofstream file;
+    file.open(_options.exportGraphTo, std::ios::out);
+    if(file.is_open() == false) {
+        _status <<= Result::Error(
+                "exportGraph(): Can't write into `" 
+                + _options.exportGraphTo + "`!");
+        return;
+    }
+
+    file << ss.str();
+    file.close();
+}
+
+// ---------------------------- ACTIONS ------------------------------------ //
 
 bool App::applyNext(QuestRecPtr& rec) noexcept {
     if(rec->lastStatus != QuestStatus::MOZOK_QUEST_STATUS_REACHABLE)
@@ -573,6 +971,8 @@ void App::pushAction(
     text += ")";
     infoMsg(text);
     
+    recordPush(isNA, worldName, actionName, args, data);
+
     if(isNA == false)
         _currentServer->pushAction(worldName, actionName, args, data);
     _status <<= onEvent(_onAction, worldName, actionName, args);
@@ -584,6 +984,8 @@ bool App::applyNextApplicableAction() noexcept {
             return true;
     return false;
 }
+
+// --------------------------- SIMULATION ---------------------------------- //
 
 App::CheckStatus App::checkQuestExpectations() noexcept {
     for(auto &r : _records) {
@@ -654,6 +1056,8 @@ void App::simulateNext() noexcept {
     if(_status.isError())
         return;
     
+    recordStart();
+
     // Activate `onInit` events.
     onEvent(_onInit);
 
@@ -710,10 +1114,13 @@ void App::simulateNext() noexcept {
     _currentServer->stopWorkerThread();
 
     if(_status.isError()) {
+        recordError();
         errorMsg("Oops! error has been occured during the simulation.");
         infoMsg("Info:\n" + getInfo());
         _callback->onError(this);
-    }
+    } else 
+        recordEnd();
+
     _mainQuests.clear();
     _allQuests.clear();
     _records.clear();
@@ -728,6 +1135,9 @@ Result App::simulate(AppCallback* callback) noexcept {
     _currentPath.clear();
     _alternatives[_currentPath] = 0;
     _donePaths.clear();
+
+    recordReset();
+
     do {
         simulateNext();
         if(_status.isError())
@@ -752,6 +1162,9 @@ Result App::simulate(AppCallback* callback) noexcept {
         }
         _currentPath.clear();
     } while(_alternatives.empty() == false);
+
+    exportGraph();
+
     _callback = nullptr;
     return _status;
 }

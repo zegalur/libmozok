@@ -3,6 +3,8 @@
 #include "app/command.hpp"
 #include "app/argument.hpp"
 
+#include <libmozok/public_types.hpp>
+
 namespace mozok {
 namespace app {
 
@@ -15,6 +17,26 @@ DebugCmd::DebugCmd(
     _questEvent(questEvent),
     _args(args)
 { /* empty */ }
+
+Str DebugCmd::questEventStr() const {
+    switch (_questEvent) {
+        case QuestEvent::NONE:
+            return "NONE";
+        case QuestEvent::SUBQUEST:
+            return "SUBQUEST";
+        case QuestEvent::GOAL_CHANGE:
+            return "GOAL_CHANGE";
+        case QuestEvent::UNREACHABLE:
+            return "UNREACHABLE";
+        default:
+            break;
+    }
+    return "???";
+}
+
+const DebugArgs& DebugCmd::args() const {
+    return _args;
+}
 
 DebugCmd DebugCmd::split(const Str& splitName) noexcept {
     return DebugCmd(Cmd::SPLIT, QuestEvent::NONE, {DebugArg(splitName)});

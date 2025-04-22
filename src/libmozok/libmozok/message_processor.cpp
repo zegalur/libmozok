@@ -22,6 +22,23 @@ Str questStatusToStr(const QuestStatus status) noexcept {
     }
 }
 
+Str questStatusToStr_Short(const QuestStatus status) noexcept {
+    switch(status) {
+        case MOZOK_QUEST_STATUS_INACTIVE:
+            return "INACTIVE";
+        case MOZOK_QUEST_STATUS_DONE:
+            return "DONE";
+        case MOZOK_QUEST_STATUS_REACHABLE:
+            return "REACHABLE";
+        case MOZOK_QUEST_STATUS_UNREACHABLE:
+            return "UNREACHABLE";
+        case MOZOK_QUEST_STATUS_UNKNOWN:
+            return "UNKNOWN";
+        default:
+            return "???";
+    }
+}
+
 Str actionErrorToStr(const ActionError code) noexcept {
     switch(code) {
         case MOZOK_AE_NO_ERROR:

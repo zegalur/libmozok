@@ -26,7 +26,8 @@ Result Result::Error(const mozok::Str& errorDescription) noexcept {
     Result res;
     res._type = MOZOK_ERROR;
     // TODO: make the colored 'error' label optional.
-    const Str errorLabel = "\033[1;31merror: \033[0m";
+    //const Str errorLabel = "\033[1;31merror: \033[0m";
+    const Str errorLabel = "error: ";
     res._description = errorLabel + errorDescription + "\n";
     return res;
 }

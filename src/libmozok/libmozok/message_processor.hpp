@@ -57,6 +57,11 @@ enum ActionError {
 /// @return Returns the corresponding `Str` value.
 Str questStatusToStr(const QuestStatus) noexcept;
 
+/// @brief Converts a `QuestStatus` value into the corresponding short `Str`.
+/// @param questStatus Quest status value.
+/// @return Returns the corresponding short `Str` value.
+Str questStatusToStr_Short(const QuestStatus) noexcept;
+
 /// @brief Converts an `ActionError` code into the corresponding `Str`.
 Str actionErrorToStr(const ActionError) noexcept;
 

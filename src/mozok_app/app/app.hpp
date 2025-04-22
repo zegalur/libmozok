@@ -7,11 +7,13 @@
 #include "app/command.hpp"
 #include "app/callback.hpp"
 
-#include <libmozok/result.hpp>
 #include <libmozok/message_processor.hpp>
-#include <libmozok/public_types.hpp>
 #include <libmozok/private_types.hpp>
+#include <libmozok/public_types.hpp>
+#include <libmozok/result.hpp>
 #include <libmozok/mozok.hpp>
+
+#include <chrono>
 
 namespace mozok {
 namespace app {
@@ -51,6 +53,24 @@ struct AppOptions {
     /// @brief If `true`, forced debugger to output the colored text messages 
     ///        for better readability.
     bool colorText = true;
+
+    /// @brief If non-empty, exports the simulation graph to a file with this name.
+    Str exportGraphTo = "";
+
+    /// @brief Graph export visibility flags.
+    enum ExportFlags {
+        PUSH = 1, /// Push action blocks
+        META = 2, /// Meta blocks (PRINT, PAUSE, EXIT).
+        EVENT = 4, /// Event blocks.
+        EXPECT = 8, /// Expect blocks.
+        PLAN = 16, /// Plan Accepted/Changed blocks.
+        ACTION_ERROR = 32, /// Action error blocks.
+        DETAILS = 64, /// Include details.
+        BLOCK = 128 /// Include blocks.
+    };
+
+    /// @brief Graph export visibility flags.
+    int visibilityFlags = ExportFlags::META | ExportFlags::BLOCK; 
 };
 
 // ============================== RECORD =================================== //
@@ -111,6 +131,40 @@ struct QuestRec {
             ) noexcept;
 };
 
+// =============================== GRAPH =================================== //
+
+struct GraphNode;
+using GraphNodePtr = SharedPtr<GraphNode>;
+
+using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+using Duration_ms = std::chrono::milliseconds;
+
+struct GraphNode {
+    enum Type {
+        START,
+        END,
+        PUSH,
+        EVENT,
+        BLOCK,
+        SPLIT,
+        META,
+        EXPECT,
+        ERROR,
+        ACTION_ERROR,
+        PLAN_ACCEPTED,
+        PLAN_CHANGED
+    };
+
+    Type type;
+    Vector<GraphNodePtr> children;
+    GraphNodePtr parent;
+    TimePoint currentStart;
+    Duration_ms worstDuration;
+    Str title;
+    StrVec text;
+};
+
+
 // ============================ APPLICATION ================================ //
 
 /// @brief Quest debugging tool. Simulates and debugs the process of solving 
@@ -123,6 +177,8 @@ class App : public MessageProcessor {
 
     /// @brief Current status.
     Result _status;
+
+    // --------------------------------------------------------------------- //
 
     /// @defgroup Events Event handles
     /// @{
@@ -154,6 +210,8 @@ class App : public MessageProcessor {
 
     /// @brief "<world>.<quest>" -> quest record.
     UnorderedMap<Str, QuestRecPtr> _records;
+    
+    // --------------------------------------------------------------------- //
     
     /// @}
 
@@ -194,12 +252,16 @@ class App : public MessageProcessor {
 
     /// @}
 
+    // --------------------------------------------------------------------- //
+    
     /// @brief Current callback object.
     AppCallback* _callback;
 
     /// @brief Immediately closes the app if `true`.
     bool _exit;
 
+    // --------------------------------------------------------------------- //
+    
     /// @defgroup Messages
     /// @{
     Str msg(const Str& text) const noexcept;
@@ -207,6 +269,8 @@ class App : public MessageProcessor {
     void errorMsg(const Str& msg) noexcept;
     /// @}
 
+    // --------------------------------------------------------------------- //
+    
     /// @defgroup Simulation Quest solving simulation.
     /// @{
     void simulateNext() noexcept;
@@ -214,6 +278,77 @@ class App : public MessageProcessor {
     bool applyNext(QuestRecPtr& rec) noexcept;
     /// @}
 
+    // --------------------------------------------------------------------- //
+    
+    /// @defgroup Graph
+    /// @{
+    
+    GraphNodePtr _root;
+    GraphNodePtr _cursor;
+
+    void exportGraph() noexcept;
+
+    void recordReset() noexcept;
+    void recordStart() noexcept;
+    void recordEnd() noexcept;
+    void recordError() noexcept;
+
+    void recordSplit(
+            const Str& name
+            ) noexcept;
+
+    void recordMeta(
+            const Str& cmd, 
+            const Str& text
+            ) noexcept;
+
+    void recordExpect(
+            const DebugCmd& cmd
+            ) noexcept;
+
+    void recordPush(
+            bool isNA,
+            const Str& worldName, 
+            const Str& actionName, 
+            const StrVec& args,
+            const int data
+            ) noexcept;
+
+    void recordEvent(
+            const Str& eventName,
+            const Str& worldName,
+            const StrVec& args
+            ) noexcept;
+
+    void recordEventMatch(
+            const EventHandler& handler
+            ) noexcept;
+
+    void recordNewPlanAccepted(
+            const Str& worldName,
+            const Str& questName
+            ) noexcept;
+
+    void recordPlanSwitch(
+            const Str& worldName,
+            const Str& questName
+            ) noexcept;
+            
+    void recordActionError(
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& actionArguments,
+            const Result& errorResult,
+            const mozok::ActionError actionError,
+            const int data
+            ) noexcept;
+
+    void pushNode(const GraphNodePtr& node) noexcept;
+
+    /// @}
+    
+    // --------------------------------------------------------------------- //
+    
     /// @defgroup Expectations
     /// @{
     
@@ -236,6 +371,8 @@ class App : public MessageProcessor {
 
     /// @}
 
+    // --------------------------------------------------------------------- //
+    
     Result applySplitBlock(const DebugBlock& block, int split) noexcept;
     Result expectUnreachable(const DebugCmd& cmd) noexcept;
     
