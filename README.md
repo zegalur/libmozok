@@ -244,7 +244,7 @@ Resulting SVG file:
 
 # Prerequisites
 
-LibMozok is written in C++, using CMake as a build tool, and VSCode as the default development environment. To set up the development environment, make sure you have the following prerequisites installed:
+LibMozok is written in C++, using CMake as a build tool, and VSCode or Vim/NeoVim as the default development environment. To set up the development environment, make sure you have the following prerequisites installed:
 
 - Core API Requirements:
     - C++11 compatible compiler
