@@ -16,6 +16,7 @@
     - [Showcase](#showcase) 
     - [Example #1](#example-1)
     - [Example #2](#example-2)
+    - [Example #3](#example-3)
 - [Further Reading](#further-reading)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
