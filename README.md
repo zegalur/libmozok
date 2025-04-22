@@ -220,11 +220,9 @@ ACT ON_TST_ACTION:
 
 Resulting SVG file:
 
-<center>
-      <picture>
-            <img height="750px" alt="Simulation Graph" src="./docs/imgs/simulation_example.svg">
-      </picture>
-</center>
+<picture>
+<img height="750px" alt="Simulation Graph" src="./docs/imgs/simulation_example.svg">
+</picture>
 
 # Further Reading
 
