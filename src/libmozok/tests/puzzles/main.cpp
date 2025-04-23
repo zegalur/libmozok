@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 // The puzzle solver automatically solves a puzzle described in a given .quest 
 // file. The puzzle's .quest file must contain only one main quest without 
@@ -109,7 +109,8 @@ int main(int argc, char **argv) {
 
     // Initialize the puzzle.
     // Puzzle project must contain Init() action.
-    status <<= server->applyAction(puzzle_name, init_action, {});
+    ActionError actionError;
+    status <<= server->applyAction(puzzle_name, init_action, {}, actionError);
     
     if(status.isError()) {
         cout << status.getDescription() << endl;
@@ -133,7 +134,8 @@ int main(int argc, char **argv) {
     for(StrVec::size_type i = 0; i < puzzleActions->size(); ++i) {
         const Str& actionName = puzzleActions->at(i);
         const StrVec& arguments = puzzleArgs->at(i);
-        status <<= server->applyAction(puzzle_name, actionName, arguments);
+        status <<= server->applyAction(
+                puzzle_name, actionName, arguments, actionError);
     }
 
     if(status.isError()) {

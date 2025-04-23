@@ -1,0 +1,50 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
+# ============================ Fighting Tutorial ============================= #
+
+# Master fighting techniques.
+
+version 1 0
+project tutorial_fighting
+
+type FightingTutorial : Tutorial
+object fightingTutorial : FightingTutorial
+
+type FightingTutorialAction : TutorialAction
+object killEnemyAction : FightingTutorialAction # Kill the enemy
+object blockAttackAction : FightingTutorialAction # Block 3 enemy attacks
+object takeHitAction : FightingTutorialAction # Take a direct hit
+object takeHeartAction : FightingTutorialAction # Take a heart
+object dieAction : FightingTutorialAction # Die
+
+quest FightingTutorial:
+	preconditions:
+		# none
+	goal:
+		TutorialFinished(fightingTutorial)
+	actions:
+		ApplyTutorialAction
+		FinishTutorial_5
+	objects:
+		fightingTutorial
+		killEnemyAction
+		blockAttackAction
+		takeHitAction
+		takeHeartAction
+		dieAction
+	subquests:
+		# none
+
+action N/A FightingTutorial:
+	prevTutorial : ControlsTutorial
+	tutorial : FightingTutorial
+	pre TutorialFinished(prevTutorial)
+	rem # none
+	add TutorialFinished(tutorial)
+
+
+

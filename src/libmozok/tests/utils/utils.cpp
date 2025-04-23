@@ -1,13 +1,13 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #include <utils/utils.hpp>
 
+#include <libmozok/message_processor.hpp>
+
 #include <iostream>
 #include <memory>
-#include <string.h>
 #include <sstream>
 #include <fstream>
-#include <chrono>
 
 using namespace std;
 using namespace mozok;
@@ -17,9 +17,13 @@ void DebugMessageProcessor::onActionError(
         const Str&, 
         const Str& /*actionName*/,
         const StrVec& /*actionArguments*/,
-        const Result& errorResult
+        const Result& errorResult,
+        const ActionError actionError,
+        const int data
         ) noexcept {
     cout << "> Action error: " << errorResult.getDescription() << endl;
+    cout << "> Action error code: " << actionErrorToStr(actionError) << endl;
+    cout << "> Action data: " << data << endl;
 }
 
 void DebugMessageProcessor::onNewMainQuest(
@@ -48,6 +52,18 @@ void DebugMessageProcessor::onNewQuestStatus(
          << " = " << questStatusToStr(questStatus) 
          << endl;
 }
+
+void DebugMessageProcessor::onNewQuestGoal(
+        const Str&,
+        const Str& questName,
+        const int newGoal,
+        const int oldGoal
+        ) noexcept {
+    cout << "> New quest goal: " << questName 
+         << " " << oldGoal << " -> " << newGoal
+         << endl;
+}
+
 
 void DebugMessageProcessor::onNewQuestPlan(
         const Str&, 

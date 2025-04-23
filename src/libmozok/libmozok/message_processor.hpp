@@ -25,11 +25,45 @@ enum QuestStatus {
     MOZOK_QUEST_STATUS_UNKNOWN
 };
 
+/// @brief Error codes passed to `onActionError`.
+enum ActionError {
+    // No error.
+    MOZOK_AE_NO_ERROR,
+
+    // Action with this name is not defined.
+    MOZOK_AE_UNDEFINED_ACTION,
+
+    // Invalid number of action parameters.
+    MOZOK_AE_ARITY_ERROR,
+
+    // One of the argument objects is undefined.
+    MOZOK_AE_UNDEFINED_OBJECT,
+
+    // Type mismatch error.
+    MOZOK_AE_TYPE_ERROR,
+
+    // Preconditions are not satisfied.
+    MOZOK_AE_PRECONDITIONS_ERROR,
+
+    // Action is N/A and can't be applied.
+    MOZOK_AE_NA_ACTION,
+
+    // Any other action-related error.
+    MOZOK_OTHER_ERROR
+};
+
 /// @brief Converts a `QuestStatus` value into the corresponding `Str`.
 /// @param questStatus Quest status value.
 /// @return Returns the corresponding `Str` value.
 Str questStatusToStr(const QuestStatus) noexcept;
 
+/// @brief Converts a `QuestStatus` value into the corresponding short `Str`.
+/// @param questStatus Quest status value.
+/// @return Returns the corresponding short `Str` value.
+Str questStatusToStr_Short(const QuestStatus) noexcept;
+
+/// @brief Converts an `ActionError` code into the corresponding `Str`.
+Str actionErrorToStr(const ActionError) noexcept;
 
 /// @brief Enables customized message handling through inheritance.
 /// LibMozok guarantee that message order is always logically consistent:
@@ -45,6 +79,8 @@ Str questStatusToStr(const QuestStatus) noexcept;
 ///      of the subquest.
 ///   -# `onNewSubQuest` of the parent quest is always before `onNewSubQuest` of 
 ///      the subquest.
+///   -# `onNewQuestGoal` is always before the `onNewQuestPlan` 
+///      (when goal was changed) but after `onNewQuestStatus`.
 class MessageProcessor {
 public:
     virtual ~MessageProcessor();
@@ -52,12 +88,17 @@ public:
     /// @brief An error occurred during an action application.
     /// @param worldName The name of the world from which this message was sent.
     /// @param actionName Action name.
+    /// @param actionArguments Action arguments.
     /// @param errorResult Error result.
+    /// @param actionError Action error code.
+    /// @param data The data pushed along with this action.
     virtual void onActionError(
         const mozok::Str& worldName, 
         const mozok::Str& actionName,
         const mozok::StrVec& actionArguments,
-        const mozok::Result& errorResult
+        const mozok::Result& errorResult,
+        const mozok::ActionError actionError,
+        const int data
         ) noexcept;
 
     /// @brief Called when a new main quest was found following an applied action.
@@ -97,6 +138,21 @@ public:
         const mozok::Str& worldName, 
         const mozok::Str& questName,
         const mozok::QuestStatus questStatus
+        ) noexcept;
+
+    /// @brief Triggered when the active goal of a quest changes.
+    ///        Quests that are just activated with the default goal (0) 
+    ///        do not trigger this event.
+    /// @param worldName The name of the world from which this message was sent.
+    /// @param questName The name of the quest.
+    /// @param newGoal The new goal index (starting from 0, but not called for
+    ///     quests just activated with the default goal (0)).
+    /// @param oldGoal The previous goal index (starting from 0).
+    virtual void onNewQuestGoal(
+        const mozok::Str& worldName,
+        const mozok::Str& questName,
+        const int newGoal,
+        const int oldGoal
         ) noexcept;
 
     /// @brief A new quest plan has been constructed during quest planning.

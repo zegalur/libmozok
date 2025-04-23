@@ -22,6 +22,45 @@ Str questStatusToStr(const QuestStatus status) noexcept {
     }
 }
 
+Str questStatusToStr_Short(const QuestStatus status) noexcept {
+    switch(status) {
+        case MOZOK_QUEST_STATUS_INACTIVE:
+            return "INACTIVE";
+        case MOZOK_QUEST_STATUS_DONE:
+            return "DONE";
+        case MOZOK_QUEST_STATUS_REACHABLE:
+            return "REACHABLE";
+        case MOZOK_QUEST_STATUS_UNREACHABLE:
+            return "UNREACHABLE";
+        case MOZOK_QUEST_STATUS_UNKNOWN:
+            return "UNKNOWN";
+        default:
+            return "???";
+    }
+}
+
+Str actionErrorToStr(const ActionError code) noexcept {
+    switch(code) {
+        case MOZOK_AE_NO_ERROR:
+            return "MOZOK_AE_NO_ERROR";
+        case MOZOK_AE_UNDEFINED_ACTION:
+            return "MOZOK_AE_UNDEFINED_ACTION";
+        case MOZOK_AE_ARITY_ERROR:
+            return "MOZOK_AE_ARITY_ERROR";
+        case MOZOK_AE_UNDEFINED_OBJECT:
+            return "MOZOK_AE_UNDEFINED_OBJECT";
+        case MOZOK_AE_TYPE_ERROR:
+            return "MOZOK_AE_TYPE_ERROR";
+        case MOZOK_AE_PRECONDITIONS_ERROR:
+            return "MOZOK_AE_PRECONDITIONS_ERROR";
+        case MOZOK_AE_NA_ACTION:
+            return "MOZOK_AE_NA_ACTION";
+        case MOZOK_OTHER_ERROR:
+            return "MOZOK_OTHER_ERROR";
+        default:
+            return "???";
+    }
+}
 
 MessageProcessor::~MessageProcessor() = default;
 
@@ -29,7 +68,9 @@ void MessageProcessor::onActionError(
         const Str& /*worldName*/, 
         const Str& /*actionName*/,
         const StrVec& /*actionArguments*/,
-        const Result& /*errorResult*/
+        const Result& /*errorResult*/,
+        const ActionError /*actionError*/,
+        const int /*data*/
         ) noexcept 
 { /* empty */ }
 
@@ -57,6 +98,14 @@ void MessageProcessor::onNewQuestStatus(
         const Str& /*worldName*/, 
         const Str& /*questName*/,
         const QuestStatus /*questStatus*/
+        ) noexcept
+{ /* empty */ }
+
+void MessageProcessor::onNewQuestGoal(
+        const Str& /*worldName*/,
+        const Str& /*questName*/,
+        const int /*newGoal*/,
+        const int /*oldGoal*/
         ) noexcept
 { /* empty */ }
 

@@ -1,10 +1,11 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
 #include <libmozok/public_types.hpp>
 #include <libmozok/result.hpp>
 #include <libmozok/message_processor.hpp>
+#include <libmozok/filesystem.hpp>
 
 namespace mozok {
 
@@ -46,9 +47,12 @@ public:
 
     /// @brief Checks if a world with the specified name exists.
     /// @param worldName The name of the world.
-    /// @return Returns true is a world with a specified name exists. 
+    /// @return Returns `true` if a world with a specified name exists. 
     ///         Otherwise, returns false.
     virtual bool hasWorld(const mozok::Str& worldName) const noexcept = 0;
+
+    /// @brief Returns a list of all active worlds.
+    virtual mozok::StrVec getWorlds() const noexcept = 0;
 
     /// @}
 
@@ -90,6 +94,72 @@ public:
 
 
     //==========================================================================
+    /// @defgroup Script
+    /// @{
+
+    /// @brief Loads a `.qsf` into the server.
+    /// @param fileSystem Used to access text files by their names.
+    /// @param scriptFileName File name will be used for error messages.
+    /// @param scriptSrc Script source text.
+    /// @param applyInitActions If `true`, applies the actions from 
+    ///     the `init:` section of the script.
+    virtual mozok::Result loadQuestScriptFile(
+            mozok::FileSystem* fileSystem,
+            const mozok::Str& scriptFileName,
+            const mozok::Str& scriptSrc,
+            bool applyInitActions
+            ) noexcept = 0;
+
+    /// @}
+
+
+    //==========================================================================
+    /// @defgroup Objects
+    /// @{
+
+    /// @brief Checks if a world has an object.
+    /// @param worldName The name of the world.
+    /// @param objectName The name of the object.
+    /// @return Returns `true` if this world has the object. 
+    ///         If world or objects doesn't exist, returns false.
+    virtual bool hasObject(
+            const mozok::Str& worldName,
+            const mozok::Str& objectName
+            ) noexcept = 0;
+
+    /// @}
+    
+    
+    //==========================================================================
+    /// @defgroup Quests
+    /// @{
+
+    /// @brief Checks if a world has a main quest with a specific name.
+    /// @param worldName The name of the world.
+    /// @param mainQuestName The name of the main quest.
+    /// @return Returns `true` if this world has the main quest. 
+    ///         If world or main quest doesn't exist, returns false.
+    virtual bool hasMainQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& mainQuestName
+            ) noexcept = 0;
+
+    /// @}
+
+    /// @brief Checks if a world has a subquest with a specific name.
+    /// @param worldName The name of the world.
+    /// @param subQuestName The name of the subquest.
+    /// @return Returns `true` if this world has the subquest. 
+    ///         If world or main quest doesn't exist, returns false.
+    virtual bool hasSubQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& subQuestName
+            ) noexcept = 0;
+
+    /// @}
+
+
+    //==========================================================================
     /// @defgroup Actions
     /// @{
 
@@ -107,15 +177,19 @@ public:
 
     /// @brief Applies an action to a world. Then it activates all inactive main 
     ///        quests with now consistent preconditions. In a case of an error,
-    ///        doesn't call `onActionError` message.
+    ///        it will return the error status, but it will not trigger the
+    ///        `onActionError` message. For `onActionError` message, use 
+    ///        `pushAction` instead.
     /// @param worldName The name of the world where action must be applied.
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
+    /// @param actionError Writes action error code here.
     /// @return Returns the status of the operation.
     virtual mozok::Result applyAction(
         const mozok::Str& worldName,
         const mozok::Str& actionName,
-        const mozok::StrVec& actionArguments
+        const mozok::StrVec& actionArguments,
+        ActionError& actionError
         ) noexcept = 0;
     
     /// @brief Pushes an action into action queue. Action then will be executed
@@ -123,11 +197,14 @@ public:
     /// @param worldName The name of the world where action must be applied.
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
+    /// @param data In a case of an error, this data will be passed to the 
+    ///         `onActionError` message.
     /// @return Returns the status of the operation.
     virtual mozok::Result pushAction(
         const mozok::Str& worldName,
         const mozok::Str& actionName,
-        const mozok::StrVec& actionArguments
+        const mozok::StrVec& actionArguments,
+        const int data
         ) noexcept = 0;
 
     /// @brief Returns the status of the action.
@@ -140,6 +217,21 @@ public:
         ) const noexcept = 0;
 
     /// @}
+
+    /// @brief Checks if action with this set of arguments is well defined.
+    ///        Optionally, checks if preconditions hold (in the current state).
+    /// @param doNotCheckPreconditions If `true` - skips preconditions check.
+    /// @param worldName The name of the world where we'll do the evaluation.
+    /// @param actionName The name of the action.
+    /// @param arguments A list of object names we'll use as arguments.
+    /// @return Returns error when world or any other name isn't defined, or
+    ///         when arity or types were wrong. 
+    virtual mozok::Result checkAction(
+        const bool doNotCheckPreconditions,
+        const mozok::Str& worldName,
+        const mozok::Str& actionName,
+        const mozok::StrVec& arguments
+        ) const noexcept = 0;
 
 
     //==========================================================================

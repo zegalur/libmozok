@@ -10,7 +10,6 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 #include <queue>
 #include <thread>
 #include <mutex>
@@ -33,7 +32,11 @@ using Pair = std::pair<F,S>;
 template<typename T>
 using Queue = std::queue<T>;
 
-template<typename K, typename V, typename H, typename E> 
+template<
+    typename K, 
+    typename V, 
+    typename H = std::hash<K>, 
+    typename E = std::equal_to<K>> 
 using HashMap = std::unordered_map<K, V, H, E>;
 
 template<

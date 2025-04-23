@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 // This tool solves complex quests that can contain subquests.
 // It is the simplest possible emulation of real game-play where the server
@@ -10,7 +10,6 @@
 #include <memory>
 #include <string>
 #include <sstream>
-#include <fstream>
 #include <chrono>
 #include <unordered_map>
 
@@ -78,7 +77,9 @@ public:
             const Str& /*worldName*/, 
             const Str& /*actionName*/,
             const StrVec& /*actionArguments*/,
-            const Result& errorResult
+            const Result& errorResult,
+            const ActionError /*actionError*/,
+            const int /*data*/
             ) noexcept override {
         _status <<= errorResult;
     }
@@ -248,7 +249,9 @@ public:
             cout << " )" << endl;
 
             // Push the action into a queue.
-            _status <<= server->pushAction(worldName, actionName, args);
+            ActionError actionError = MOZOK_AE_NO_ERROR;
+            _status <<= server->pushAction(
+                    worldName, actionName, args, actionError);
             return true;
         }
         return false;
@@ -300,8 +303,9 @@ int main(int argc, char **argv) {
     }
 
     // Start the worker thread and push the `Init` action.
+    ActionError actionError = MOZOK_AE_NO_ERROR;
     status <<= server->startWorkerThread();
-    status <<= server->pushAction(quest_name, init_name, {});
+    status <<= server->pushAction(quest_name, init_name, {}, actionError);
 
     // "Game loop" emulation.
     bool stopLoop = false;
@@ -381,7 +385,7 @@ int main(int argc, char **argv) {
 
     // Load the state from the generated save file.
     status <<= server2->addProject(quest_name, "saveFile", saveFile);
-    server2->applyAction(quest_name, "Load", {});
+    server2->applyAction(quest_name, "Load", {}, actionError);
     server2->performPlanning();
 
     // Process all the messages.

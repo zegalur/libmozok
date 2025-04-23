@@ -4,7 +4,34 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
-## [0.2.1] - 2024-04-12
+## [1.0.0] - 2025-04-23
+
+### Added
+
+- QSFs (Quest Script Files).
+- Quest debugger tool (`mozok.exe`) for debugging non-linear quests:
+    - Special QSF commands for describing all possible complex splits and timelines.
+    - A "Tutorial" for verifying the debugger (based on tutorial quest from `libmozok-godot`).
+    - Ability to generate a visual representation of the simulation process.
+- `FileSystem` class to the public interface.
+- To `Server` public interface:
+    - `loadQuestScriptFile`
+    - `getWorlds`
+    - `hasObject`
+    - `hasMainQuest`
+    - `hasSubQuest`
+    - `checkAction`
+- `onQuestGoal` event to `MessageProcessor`.
+
+### Changed
+
+- Basic recursive descent parser separated from the `project.cpp`.
+- Action data and action error codes:
+    - `applyAction` now outputs the action error code.
+    - `pushAction` now accepts an additional `int` data parameter.
+    - `onActionError` now has `data` and `actionError` parameters.
+
+## [0.2.1] - 2025-04-12
 
 ### Added
 
@@ -15,7 +42,7 @@ All significant modifications to this project will be recorded in this file. The
 
 - Improved quest solver test.
 
-## [0.2.0] - 2024-04-11
+## [0.2.0] - 2025-04-11
 
 ### Added
 

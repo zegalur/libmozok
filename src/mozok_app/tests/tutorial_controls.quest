@@ -1,0 +1,44 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
+# ============================ Controls Tutorial ============================= #
+
+# Basic character controls, including movement, hiding, and attacking.
+
+version 1 0
+project tutorial_controls
+
+type ControlsTutorial : Tutorial
+object controlsTutorial : ControlsTutorial
+
+type ControlsTutorialAction : TutorialAction
+object movementAction : ControlsTutorialAction # Move in all directions
+object attackAction : ControlsTutorialAction # Attack from all directions
+object hideAction : ControlsTutorialAction # Hide in all directions
+
+quest ControlsTutorial:
+	preconditions:
+		# none
+	goal:
+		TutorialFinished(controlsTutorial)
+	actions:
+		ApplyTutorialAction
+		FinishTutorial_3
+	objects:
+		controlsTutorial
+		movementAction
+		attackAction
+		hideAction
+	subquests:
+		# none
+
+action N/A ControlsTutorial:
+	tutorial : ControlsTutorial
+	pre # none
+	rem # none
+	add TutorialFinished(tutorial)
+
+

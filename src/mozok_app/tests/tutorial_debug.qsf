@@ -1,0 +1,68 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This file demonstrates the usage of special QSF debug commands.
+# When PuzzleTutorial_GetHeart is activated we split the timeline by blocking 
+# the exit, forcing this quest become unreachable in the alternative timeline.
+
+version 1 0
+script tutorial_debugger
+
+worlds: # none
+projects: # none
+init: # none
+
+# Triggered after all projects are loaded and init actions are applied,
+# but before the worker thread starts.
+onInit:
+ACT ON_INIT:
+    print ------------- Hello, world! ------------- 
+
+# Prints a message when `FinishAllTutorials` is activated.
+onNewMainQuest [tut] FinishAllTutorials:
+ACT TUTORIAL_STARTED:
+    print Tutorial quest started, enjoy!
+
+# Cancels the GetHeart subquest when it becomes unreachable.
+# This specific quest was designed that way. Normally, we don't need
+# to call additional commands to cancel subquests or force goal switches.
+# But it's a good demonstration of the ACT_IF block.
+onNewQuestStatus [tut] PuzzleTutorial_GetHeart UNREACHABLE:
+ACT_IF BLOCK_EXIT:
+    push [tut] PTut_Cancel(pt_cell_00, puzzleTutorial, puzzleTutorial_GetHeart)
+
+# Splits the timeline and blocks the exit when `_GetHeart` is activated.
+onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
+SPLIT BLOCK_EXIT:
+    # In this branch we expect this quest to fail.
+    expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
+    # As a consequence, we expect a goal change in the parent quest.
+    #expect GOAL_CHANGE [tut] PuzzleTutorial _ 1
+    # Block the exit with the stone that can't be moved.
+    push [tut] PTut_BlockExit()
+    #print First split.
+# Uncomment this section to add a second possible split for this event.
+# Only one split will activate per timeline.
+#SPLIT ANOTHER_ALTERNATIVE_TIMELINE:
+#    print Second split.
+
+# Exits the simulation when the search limit is reached.
+onSearchLimitReached [tut] _:
+ALWAYS SEARCH_LIMIT: 
+    exit ERROR: Search limit reached!
+
+# Exits the simulation when the space limit is reached.
+onSpaceLimitReached [tut] _:
+ALWAYS SPACE_LIMIT: 
+    exit ERROR: Space limit reached!
+
+# Triggered when action preconditions hold during the simulation.
+# WARNING: Not yet implemented!
+#onCheck [tut] KeyTutorial(fightingTutorial, keyTutorial):
+#ACT ON_TST_ACTION:
+#    print KeyTutorial preconditions holds.
+
+# Triggered when this specific action is pushed 
+# by the quest solver during simulation.
+onAction [tut] ApplyTutorialAction(pickUpKeyAction):
+ACT ON_TST_ACTION:
+    print The key was picked up!

@@ -1,0 +1,27 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This quests are from the `libmozok-godot` project. 
+
+version 1 0
+script tutorial_test
+
+# Defines a list of worlds.
+worlds:
+    tut # Tutorial world.
+
+# Defines a list of projects that need to be loaded.
+projects:
+    [tut] tutorial_utils.quest
+    [tut] tutorial_controls.quest
+    [tut] tutorial_fighting.quest
+    [tut] tutorial_key.quest
+    [tut] tutorial_puzzle.quest
+    [tut] tutorial_main.quest
+
+# The list of actions to properly initialize the game.
+init:
+    [tut] InitTutorials()
+
+# Defines a list of script files that will loaded by the debugger.
+debug:
+    tutorial_debug.qsf

@@ -1,11 +1,14 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/message_processor.hpp>
+#include <libmozok/public_types.hpp>
 #include <libmozok/server.hpp>
 
 #include <libmozok/private_types.hpp>
 #include <libmozok/error_utils.hpp>
 #include <libmozok/message_queue.hpp>
 #include <libmozok/world.hpp>
+#include <libmozok/script.hpp>
 
 namespace mozok {
 
@@ -15,6 +18,7 @@ struct ApplyCommand {
     const Str worldName;
     const Str actionName;
     const StrVec actionArguments;
+    const int data;
 };
 
 class ServerImpl : public mozok::Server {
@@ -74,16 +78,20 @@ class ServerImpl : public mozok::Server {
             _actionQueue.pop();
             queueLock.unlock();
 
+            ActionError actionError = MOZOK_AE_NO_ERROR;
             Result res = applyActionUnsafe(
                     nextCommand.worldName,
                     nextCommand.actionName,
-                    nextCommand.actionArguments);
+                    nextCommand.actionArguments,
+                    actionError);
             if(res.isError())
                 _messageQueue.onActionError(
                     nextCommand.worldName,
                     nextCommand.actionName, 
                     nextCommand.actionArguments,
-                    res);
+                    res, 
+                    actionError,
+                    nextCommand.data);
         }
 
         _isWorkerRunning.store(false);
@@ -92,12 +100,13 @@ class ServerImpl : public mozok::Server {
     Result applyActionUnsafe(
         const Str& worldName,
         const Str& actionName,
-        const StrVec& actionArguments
+        const StrVec& actionArguments,
+        ActionError& actionError
         ) noexcept {
         if(hasWorld(worldName) == false)
             return errorWorldDoesntExist(_serverName, worldName);
         return _worlds[worldName]->applyAction(
-                actionName, actionArguments, _messageQueue);
+                actionName, actionArguments, _messageQueue, actionError);
     }
 
     void performPlanningUnsafe() noexcept {
@@ -145,6 +154,13 @@ public:
         return (_worlds.find(worldName) != _worlds.end());
     }
 
+    StrVec getWorlds() const noexcept override {
+        StrVec r;
+        for(const auto& it : _worlds)
+            r.push_back(it.first);
+        return r;
+    }
+
     // ============================== PROJECT =============================== //
 
     Result addProject(
@@ -169,27 +185,75 @@ public:
         return errorNotImplemented(__FILE__, __LINE__, __FUNCTION__);
     }
 
+    // ============================== PROJECT =============================== //
+    
+    Result loadQuestScriptFile(
+            FileSystem* fileSystem,
+            const Str& scriptFileName,
+            const Str& scriptSrc,
+            bool applyInitActions
+            ) noexcept override {
+        return QuestScriptParser_Base::parseHeader(
+                this, fileSystem, scriptFileName, scriptSrc, applyInitActions);
+    }
+
+
+    // ============================== OBJECTS =============================== //
+    
+    bool hasObject(
+            const mozok::Str& worldName,
+            const mozok::Str& objectName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return false;
+        return _worlds[worldName]->hasObject(objectName);
+    }
+
+    // =============================== QUESTS =============================== //
+    
+    bool hasSubQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& subQuestName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return false;
+        return _worlds[worldName]->hasSubquest(subQuestName);
+    }
+
+    bool hasMainQuest(
+            const mozok::Str& worldName,
+            const mozok::Str& mainQuestName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return false;
+        return _worlds[worldName]->hasMainQuest(mainQuestName);
+    }
+
+    
     // ============================== ACTIONS =============================== //
 
     Result applyAction(
-        const Str& worldName,
-        const Str& actionName,
-        const StrVec& actionArguments
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& actionArguments,
+            ActionError& actionError
         ) noexcept override {
         if(_isWorkerJoined.load() == false)
             return errorServerWorkerIsRunning(_serverName);
-        return applyActionUnsafe(worldName, actionName, actionArguments);
+        return applyActionUnsafe(
+                worldName, actionName, actionArguments, actionError);
     }
 
     Result pushAction(
-        const Str& worldName,
-        const Str& actionName,
-        const StrVec& actionArguments
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& actionArguments,
+            const int data
         ) noexcept override {
         if(hasWorld(worldName) == false)
             return errorWorldDoesntExist(_serverName, worldName);
         _actionQueueMutex.lock();
-        _actionQueue.push({worldName, actionName, actionArguments});
+        _actionQueue.push({worldName, actionName, actionArguments, data});
         _actionQueueMutex.unlock();
         _actionQueueCV.notify_all();
         return Result::OK();
@@ -201,10 +265,25 @@ public:
             ) const noexcept override {
         if(hasWorld(worldName) == false)
             return ACTION_UNDEFINED;
+        if(_worlds.find(worldName)->second->hasAction(actionName) == false)
+            return ACTION_UNDEFINED;
         if(_worlds.find(worldName)->second->isActionNotApplicable(actionName))
             return ACTION_NOT_APPLICABLE;
         return ACTION_APPLICABLE;
     }
+
+    Result checkAction(
+            const bool doNotCheckPreconditions,
+            const Str& worldName,
+            const Str& actionName,
+            const StrVec& arguments
+            ) const noexcept override {
+        if(hasWorld(worldName) == false)
+            return errorWorldDoesntExist(_serverName, worldName);
+        return _worlds.find(worldName)->second->checkAction(
+                doNotCheckPreconditions, actionName, arguments);
+    }
+
 
     // ============================== MESSAGES ============================== //
 
@@ -250,6 +329,8 @@ public:
             return "error: Doesn't allowed while worker thread is running.";
         if(!hasWorld(worldName))
             return "error: Undefined world '" + worldName + "'.";
+        if(_messageQueue.size() != 0)
+            return "error: Doesn't allowed while message queue isn't empty.";
         return _worlds[worldName]->generateSaveFile();
     }
 

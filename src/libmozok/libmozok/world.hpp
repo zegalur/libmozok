@@ -1,4 +1,4 @@
-// Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
+// Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
 #pragma once
 
@@ -17,9 +17,7 @@
 #include <libmozok/state.hpp>
 #include <libmozok/quest_manager.hpp>
 
-
 namespace mozok {
-
 
 /// @brief A world is a collection of types, objects, relations, relation lists, 
 ///        actions, and quests. Together with a current game world state, they 
@@ -326,12 +324,28 @@ public:
     /// @param actionName The name of the action you want to apply.
     /// @param actionArguments Object names list (will be used as arguments).
     /// @param messageProcessor A message processor.
+    /// @param errorOutput Writes action error code in a case of an error.
     /// @return Returns the status of the operation.
     Result applyAction(
         const Str& actionName,
         const StrVec& actionArguments,
-        MessageProcessor& messageProcessor
+        MessageProcessor& messageProcessor,
+        ActionError& errorOutput
         ) noexcept;
+
+    /// @brief Checks if action with this set of arguments is well defined.
+    ///        Optionally, checks if preconditions hold (in the current state).
+    /// @param doNotCheckPreconditions If `true` - skips preconditions check.
+    /// @param actionName The name of the action.
+    /// @param arguments A list of object names we'll use as arguments.
+    /// @return Returns error when action or any other name isn't defined, or
+    ///         when arity or types were wrong. 
+    Result checkAction(
+        const bool doNotCheckPreconditions,
+        const Str& actionName,
+        const StrVec& actionArguments
+        ) const noexcept;
+
 
     /// @brief Adds a quest status command to an action.
     /// @param actionName Action name.

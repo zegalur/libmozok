@@ -1,0 +1,76 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
+# ============================== Tutorial Utils ============================== #
+
+# Various elements that are common and useful to all tutorials.
+
+version 1 0
+project tutorial_utils
+
+# Represents a small but complete tutorial.
+type Tutorial
+
+# Represent a part of a small tutorial.
+type TutorialAction
+
+
+# Marks a small tutorial as "Finished" (completed).
+rel TutorialFinished(Tutorial)
+
+# Marks a part of a small tutorial as "Applied" (completed).
+rel TutorialActionApplied(TutorialAction)
+
+# Marks a tutorial as reachable. This can be useful if you want to manually make 
+# some goals unreachable (see the PuzzleTutorial commentaries).
+rel TutorialIsReachable(Tutorial)
+
+
+# Mark the given tutorial action as applied.
+action ApplyTutorialAction:
+	tutorialAction : TutorialAction
+	pre # none
+	rem # none
+	add TutorialActionApplied(tutorialAction)
+
+# Finish a tutorial with 2 objectives.
+action FinishTutorial_2:
+	tutorial : Tutorial
+	action1 : TutorialAction
+	action2 : TutorialAction
+	pre TutorialActionApplied(action1)
+		TutorialActionApplied(action2)
+	rem # none
+	add TutorialFinished(tutorial)
+
+# Finish a tutorial with 3 objectives.
+action FinishTutorial_3:
+	tutorial : Tutorial
+	action1 : TutorialAction
+	action2 : TutorialAction
+	action3 : TutorialAction
+	pre TutorialActionApplied(action1)
+		TutorialActionApplied(action2)
+		TutorialActionApplied(action3)
+	rem # none
+	add TutorialFinished(tutorial)
+
+# Finish a tutorial with 5 objectives.
+action FinishTutorial_5:
+	tutorial : Tutorial
+	action1 : TutorialAction
+	action2 : TutorialAction
+	action3 : TutorialAction
+	action4 : TutorialAction
+	action5 : TutorialAction
+	pre TutorialActionApplied(action1)
+		TutorialActionApplied(action2)
+		TutorialActionApplied(action3)
+		TutorialActionApplied(action4)
+		TutorialActionApplied(action5)
+	rem # none
+	add TutorialFinished(tutorial)
+

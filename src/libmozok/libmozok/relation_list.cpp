@@ -53,7 +53,7 @@ Result RelationList::checkArgumentsCompatibility(
 
         if(include == false)
             return errorRListArgError_InvalidType(
-                    _name, i, arg->getName(), 
+                    _name, int(i), arg->getName(), 
                     typesetToStrVec(argTypeSet),
                     typesetToStrVec(rlistArgTypeSet));
     }

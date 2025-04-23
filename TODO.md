@@ -8,7 +8,6 @@ Libmozok TODO list.
 - [ ] Add: support arrays:
     - [ ] Add: `object arr[N,M,..] : Type` -> `arr_0_0`, `arr_0_1`, ...
     - [ ] Add: `rel(arr[i,j], arr[i+1, j])` -> `rel(arr_0_0, arr_1_0)` for all pairs of `(i,j)` that are consistent with the array size.
-- [ ] Add: onNewQuestGoal
 - [ ] Add: Error: The same object appears twice or more in the same statement.
 - [ ] Add: Warning: Action argument was not used.
 - [ ] Add: error codes for `libmozok::Result`
@@ -21,21 +20,7 @@ Libmozok TODO list.
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
-- [ ] Quest debugging tool `mozok`(`.exe`). The main purpose of this tool is to model all the ways quest worlds can evolve during any possible gameplay:
-    - [ ] Command files (`.qcf` quest command file) — files that describe how to properly load the quest world and all possible quest lines.
-    - [ ] `world [name]` - create a new quest world
-    - [ ] `load [world_name] [file_name]` - load a quest project
-    - [ ] `run [command_file_name]` - execute a list of commands from a file
-    - [ ] `apply [world].[action]([arg1],...)` - apply an action
-    - [ ] `add [world].[rel]([obj1],...)` - add a statement
-    - [ ] `rem [world].[rel]([obj1],...)` - remove a statent
-    - [ ] `expect [what]` - adds an expectaion, raise error if expectation fails. E.g. `expect quest FAIL [fullname]`, `expect goal_change ...`.
-    - [ ] `when_quest [event] [world].[quest_name] [debug_command]: ...` - sets a solver marker with a quest event as the condition (`NEW`, `DONE`, `UNREACHABLE`, `UNKNOWN`, `GOAL [id]`).
-    - [ ] `when: [<conditions>] [debug_command]: [<command list>]` - sets a solver marker using a list of statements as the condition
-        - [ ] Debug command `branch [name]` - creates a new branch (one even can have multiple branches). The debugger will try all branches by solving the quests up to the `[condition]`. Then it will first skip the `[<command list>]`, and in an alternative "timeline", execute the `[<command list>]`. This makes it possible to debug complex non-linear quests with multiple goals.
-        - [ ] Debug command `do [name]` - simply executes the command list when conditions are met, without branching
-    - [ ] Export debug results as tree using popular tree formats (e.g. Graphviz). Hopefully, it will help to visualize the overall structure and see the mistakes better
-
+    
 ### In Progress
 
 - [ ] Basic documentation
@@ -46,6 +31,48 @@ Libmozok TODO list.
     - [x] Add: `heuristic` setting to quest definition
     - [x] Implement *HSP* (Heuristic Search Planner) algorithm
     - [ ] Implement *GraphPlan* algorithm
+- [ ] Add: Quest debugging tool `mozok` (`.exe`):
+    - [x] Add: `FileSystem` class as a part of public interface
+    - [x] Add: `Result Server::loadQuestScriptFile(script, FileSystem&)` for parsing the "loading" part of script files (excluding debugging parts)
+    - [ ] Auto-generate a help Markdown document into `docs`
+    - [x] Generate a tree representation in a popular format: 
+        - [x] Include information on how long planning took for each node
+        - [ ] Connect nodes with identical hash values (states)
+        - [ ] Connect identical `END` nodes
+- [ ] `.qsf` quest script file:
+    - [ ] Add: `generateQSFSaveFile` to `Server`
+    - [ ] Add: Syntax highlight for the `.qsf` files
+        - [ ] Vim / NeoVim
+        - [ ] VSCode
+    - [x] Commands: `info`, `exit`, `pause` and `continue`
+    - [x] Blocks: `worlds:`, `projects:`, `init:`, `debug:`
+    - [ ] `std_world name` - sets the standard world name
+    - [ ] `load [world_name] file_name` - loads a quest project
+    - [ ] `run [command_file_name]` - executes a list of commands from a `qsf` file
+    - [x] `push [world] action(arg1,...)` - pushes an action into the action queue
+    - [x] `expect UNREACHABLE`
+    - [ ] `expect DONE <goal>`
+    - [ ] `assert [what]` - asserts a condition and raises an error if it fails.
+    - [x] Event handlers: `ACT`, `ACT_IF`, `ALWAYS`, `SPLIT`
+    - [ ] Add: `SPLIT_IF`, `ALWAYS_IF`, `ACT_IF_NOT`, `IF_NOT`, `SPLIT_IF_NOT`
+    - [x] Placeholder parameters `_`
+    - [ ] Options:
+        - [x] Max wait time
+        - [ ] Color output
+    - [ ] Events:
+        - [x] `onInit`
+        - [ ] `onCheck`:
+            - [ ] `pushCheck` to `Server` (with data)
+            - [ ] `onCheck` event for `MessageProcessor` (with check status `true,false,error` and data)
+        - [x] `onAction`
+        - [ ] `onActionError`
+        - [x] `onNewMainQuest`
+        - [x] `onNewSubQuest`
+        - [ ] `onNewQuestState`
+        - [x] `onNewQuestStatus`
+        - [ ] `onNewQuestPlan`
+        - [x] `onSearchLimitReached`
+        - [x] `onSpaceLimitReached`
 
 ### Done ✓
 
@@ -87,3 +114,4 @@ Libmozok TODO list.
     - [x] Add: MIT license
     - [x] Add: onNewQuestState
     - [x] Fix the highlighting for relation definitions with three or more arguments.
+    - [x] Add: `onNewQuestGoal(newGoal,oldGoal)` event

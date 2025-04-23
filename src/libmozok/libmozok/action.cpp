@@ -1,5 +1,6 @@
 // Copyright 2024 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/message_processor.hpp>
 #include <libmozok/action.hpp>
 #include <libmozok/error_utils.hpp>
 
@@ -65,35 +66,48 @@ bool Action::isGlobal() const noexcept {
 }
 
 Result Action::evaluateActionApplicability(
+        const bool doNotCheckPreconditions,
         const ObjectVec& arguments,
-        const StatePtr& state
+        const StatePtr& state,
+        ActionError& actionError
         ) const noexcept {
-    if(arguments.size() != _arguments.size())
+    if(arguments.size() != _arguments.size()) {
+        actionError = MOZOK_AE_ARITY_ERROR;
         return errorActionArgError_InvalidArity(
                 _name, (int)_arguments.size(), (int)arguments.size());
+    }
     
     for(ObjectVec::size_type i = 0; i < arguments.size(); ++i) {
         const ObjectPtr& object = arguments[i];
         const ObjectPtr& argument = _arguments[i];
-        if(!areTypesetsCompatible(object->getTypeSet(), argument->getTypeSet()))
+        if(!areTypesetsCompatible(object->getTypeSet(), argument->getTypeSet())) {
+            actionError = MOZOK_AE_TYPE_ERROR;
             return errorActionArgError_InvalidType(
-                    _name, i, object->getName(),
+                    _name, int(i), object->getName(),
                     typesetToStrVec(object->getTypeSet()),
                     typesetToStrVec(argument->getTypeSet()));
+        }
     }
 
-    const StatementVec preconditions = _pre.substitute(arguments);
-    if(state->hasSubstate(preconditions) == false)
-        return errorActionPreconditionsFailed(Str("???"), _name);
+    if(doNotCheckPreconditions == false) {
+        const StatementVec preconditions = _pre.substitute(arguments);
+        if(state->hasSubstate(preconditions) == false) {
+            actionError = MOZOK_AE_PRECONDITIONS_ERROR;
+            return errorActionPreconditionsFailed(Str("???"), _name);
+        }
+    }
     
+    actionError = MOZOK_AE_NO_ERROR;
     return Result::OK();
 }
 
 Result Action::applyAction(
         const ObjectVec& arguments, 
-        StatePtr& state
+        StatePtr& state,
+        ActionError &actionError
         ) const noexcept {
-    Result res = evaluateActionApplicability(arguments, state);
+    Result res = evaluateActionApplicability(
+            false, arguments, state, actionError);
     if(res.isError())
         return res;
 

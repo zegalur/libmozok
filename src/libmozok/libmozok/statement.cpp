@@ -117,7 +117,9 @@ std::size_t Statement::computeHash() const noexcept {
     for(ObjectVec::size_type i = 0; i < args.size(); ++i) {
         result += std::hash<ID>{}(
                 // 10007 and 100003 are both prime numbers.
-                _relation->getId() + i * 10007 + args[i]->getId() * 100003);
+                _relation->getId() 
+                + static_cast<ID>(i) * static_cast<ID>(10007) 
+                + args[i]->getId() * static_cast<ID>(100003));
     }
     return result;
 }

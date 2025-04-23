@@ -1,0 +1,41 @@
+# Copyright 2025 Pavlo Savchuk. Subject to the MIT license.
+
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
+# =============================== Key Tutorial =============================== #
+
+# Keys and doors.
+
+version 1 0
+project tutorial_key
+
+type KeyTutorial : Tutorial
+object keyTutorial : KeyTutorial
+
+type KeyTutorialAction : TutorialAction
+object pickUpKeyAction : KeyTutorialAction # Pick up a key.
+object openDoorAction : KeyTutorialAction # Open the door.
+
+quest KeyTutorial:
+	preconditions:
+		# none
+	goal:
+		TutorialFinished(keyTutorial)
+	actions:
+		ApplyTutorialAction
+		FinishTutorial_2
+	objects:
+		keyTutorial
+		pickUpKeyAction
+		openDoorAction
+	subquests:
+		# none
+
+action N/A KeyTutorial:
+	prevTutorial : FightingTutorial
+	tutorial : KeyTutorial
+	pre TutorialFinished(prevTutorial)
+	rem # none
+	add TutorialFinished(tutorial)

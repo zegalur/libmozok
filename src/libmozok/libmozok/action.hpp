@@ -10,6 +10,7 @@
 #include <libmozok/relation_list.hpp>
 #include <libmozok/statement.hpp>
 #include <libmozok/state.hpp>
+#include <libmozok/message_processor.hpp>
 
 namespace mozok {
 
@@ -91,21 +92,27 @@ public:
     bool isGlobal() const noexcept;
 
     /// @brief Evaluates the applicability with the given arguments and state.
+    /// @param doNotCheckPreconditions if `true` - skips preconditions check.
     /// @param arguments Argument objects.
     /// @param state A state.
+    /// @param actionError Outputs the action error code into this variable.
     /// @return Returns `Result::OK()` when the action can be applied.
     Result evaluateActionApplicability(
+            const bool doNotCheckPreconditions,
             const ObjectVec& arguments, 
-            const StatePtr& state
+            const StatePtr& state,
+            ActionError &actionError
             ) const noexcept;
 
     /// @brief Applies the action to the state.
     /// @param arguments Argument objects.
     /// @param state A state that will be modified by the action.
+    /// @param actionError Outputs the action error code into this variable.
     /// @return Returns `Result::OK()` when the action was successfully applied.
     Result applyAction(
             const ObjectVec& arguments, 
-            StatePtr& state
+            StatePtr& state,
+            ActionError &actionError
             ) const noexcept;
     
     /// @brief Applies the action to the state. It's crucial that the argument 
