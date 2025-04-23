@@ -83,7 +83,7 @@ Result Action::evaluateActionApplicability(
         if(!areTypesetsCompatible(object->getTypeSet(), argument->getTypeSet())) {
             actionError = MOZOK_AE_TYPE_ERROR;
             return errorActionArgError_InvalidType(
-                    _name, i, object->getName(),
+                    _name, int(i), object->getName(),
                     typesetToStrVec(object->getTypeSet()),
                     typesetToStrVec(argument->getTypeSet()));
         }

@@ -42,7 +42,7 @@ struct GetLen;
 template<int L>
 struct GetLen<L, StrVec> {
     static inline int get_len(const StrVec& strs) noexcept {
-        return L + strs.size();
+        return L + static_cast<int>(strs.size());
     }
 };
 template<int L>

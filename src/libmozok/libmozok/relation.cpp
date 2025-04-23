@@ -34,7 +34,7 @@ Result Relation::checkArgumentsCompatibility(const ObjectVec& arguments) const n
         const TypeSet argTypeSet = arg->getTypeSet();
         if(argTypeSet.find(_argTypes[i]) == argTypeSet.end())
             return errorRelArgError_InvalidType(
-                    _name, i, arg->getName(), 
+                    _name, int(i), arg->getName(), 
                     typesetToStrVec(argTypeSet), 
                     _argTypes[i]->getName());
     }

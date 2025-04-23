@@ -260,7 +260,7 @@ Result App::applySplitBlock(const DebugBlock& block, int split) noexcept {
 
     Result res;
     int start = block._splits[split] + 1;
-    int end = block._cmds.size();
+    int end = static_cast<int>(block._cmds.size());
     if(split < int(block._splits.size())-1)
         end = block._splits[split + 1];
     for(int i = start; i < end; ++i) {
@@ -302,7 +302,7 @@ Result App::onEvent(
             if(h._block._type == DebugBlock::SPLIT) {
                 // Split block.
                 Path split = _currentPath;
-                split.push_back({hid,0});
+                split.push_back({static_cast<int>(hid), 0});
                 for(SIZE_T i=0; i<h._block._splits.size(); ++i) {
                     if(_alternatives.find(split) != _alternatives.end()) {
                         // This split is among the alternatives. 

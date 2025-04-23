@@ -21,7 +21,7 @@ Vector<int> DebugBlock::getSplits(const DebugCmdVec& cmds) noexcept {
     Vector<int> res;
     for(DebugCmdVec::size_type i=0; i<cmds.size(); ++i)
         if(cmds[i]._cmd == DebugCmd::SPLIT)
-            res.push_back(i);
+            res.push_back(static_cast<int>(i));
     return res;
 }
 
