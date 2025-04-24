@@ -521,7 +521,7 @@ protected:
 
         while(name(event).isOk()) {
             Str worldName;
-            int p, c;
+            int p = _pos, c = _col;
 
             if(event != ON_INIT) {
                 res <<= space(1);

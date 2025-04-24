@@ -266,16 +266,47 @@ LibMozok is written in C++, using CMake as a build tool, and VSCode or Vim/NeoVi
 
 How to build and install **libmozok** (Release):
 
-1. Navigate to the build directory:<br /> 
-`cd [WorkDir]/libmozok/build`
+- **Windows** + VisualStudio compiler:
+    1. Navigate to the build directory:<br /> 
+    `cd [WorkDir]/libmozok/build`
+    2. Run CMake to configure the project:<br /> 
+    `cmake ../src`
+    3. Build the project:<br /> 
+    `cmake --build . --config Release`
+    4. Install the project:<br /> 
+    `cmake --install . --config Release`
+    5. You should now have the non-empty `lib/` and `include/libmozok/` directories inside the `install` directory.
+    6. Running tests:<br />
+    `ctest -C Release`
 
-2. Run CMake to configure the project:<br /> 
-`cmake ../src`
-3. Build the project:<br /> 
-`cmake --build . --config Release`
-4. Install the project:<br /> 
-`cmake --install . --config Release`
-5. You should now have the non-empty `lib/` and `include/libmozok/` directories inside the `install` directory.
+- **Windows** + MinGW:
+    1. Navigate to the build directory:<br /> 
+    `cd [WorkDir]/libmozok/build`
+    2. Run CMake to configure the project:<br /> 
+    `cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ../src`
+    3. Build the project:<br /> 
+    `cmake --build .`
+    4. Install the project:<br /> 
+    `cmake --install .`
+    5. You should now have the non-empty `lib/` and `include/libmozok/` directories inside the `install` directory.
+    6. Running tests:<br />
+    `ctest`
+
+
+- **Linux**:
+    1. Navigate to the build directory:<br /> 
+    `cd [WorkDir]/libmozok/build`
+    2. Run CMake to configure the project:<br /> 
+    `cmake -DCMAKE_BUILD_TYPE=Release ../src`
+    3. Build the project:<br /> 
+    `cmake --build .`
+    4. Install the project:<br /> 
+    `cmake --install .`
+    5. You should now have the non-empty `lib/` and `include/libmozok/` directories inside the `install` directory.
+    6. Running tests:<br />
+    `ctest`
+
+
 
 # References
 

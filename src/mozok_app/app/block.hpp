@@ -8,6 +8,8 @@
 namespace mozok {
 namespace app {
 
+class App;
+
 /// @brief Debug block consisting of a type, name and a list of debug commands.
 ///        Split sub-blocks are separated by split debug commands.
 class DebugBlock {

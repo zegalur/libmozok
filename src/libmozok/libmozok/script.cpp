@@ -5,7 +5,7 @@
 #include <libmozok/error_utils.hpp>
 #include <libmozok/server.hpp>
 
-#include <strstream>
+#include <sstream>
 
 namespace mozok {
 
@@ -23,13 +23,13 @@ const char* KEYWORD_INIT = "init";
 }
 
 Result QuestScriptParser_Base::errorMsg(const Str& msg) const {
-    std::strstream ss;
+    std::stringstream ss;
     ss << _file << ":" << (_line + 1) << ":" << (_col + 1) << ": " << msg;
     return Result::Error(ss.str());
 }
 
 Result QuestScriptParser_Base::errorMsg(const Str& msg, const int line) const {
-    std::strstream ss;
+    std::stringstream ss;
     ss << _file << ":" << (line + 1) << ":1: " << msg;
     return Result::Error(ss.str());
 }

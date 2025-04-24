@@ -11,6 +11,8 @@
 namespace mozok {
 namespace app {
 
+class App;
+
 class EventHandler;
 using EventHandlers = Vector<EventHandler>;
 using HandlerId = EventHandlers::size_type;

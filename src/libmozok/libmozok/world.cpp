@@ -621,7 +621,7 @@ Result World::addActionQuestStatusChange(
     // Check if parent quest goal is correct.
     const GoalVec::size_type pGoal = GoalVec::size_type(parentQuestGoal);
     if(parentQuest)
-        if(pGoal < 0 || pGoal >= parentQuest->getQuest()->getGoals().size())
+        if(parentQuestGoal < 0 || pGoal >= parentQuest->getQuest()->getGoals().size())
             return errorActionSetStatusParentGoalError(
                     _serverWorldName, actionName, parentQuestName, parentQuestGoal);
     
