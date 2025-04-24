@@ -36,9 +36,9 @@ projects:
 init:
     [tut] InitTutorials()
 
-# Defines a list of script files that will loaded by the debugger.
+# Defines a list of script files that will be loaded by the debugger.
 # This list and everything after the `init:` block will be ignored by
-# the `Server`.
+# the `Server::loadQuestScriptFile()`.
 debug:
     tutorial_debug.qsf
 ```
