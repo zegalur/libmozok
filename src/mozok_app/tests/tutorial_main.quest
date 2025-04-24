@@ -19,22 +19,26 @@ main_quest FinishAllTutorials:
 		TutorialFinished(fightingTutorial)
 		TutorialFinished(keyTutorial)
 		TutorialFinished(puzzleTutorial)
+		TutorialFinished(portalTutorial)
 	actions:
 		ControlsTutorial
 		FightingTutorial
 		KeyTutorial
 		PuzzleTutorial
+		PortalTutorial
 	objects:
 		controlsTutorial
 		fightingTutorial
 		keyTutorial
 		puzzleTutorial
+		portalTutorial
+		pt_cell_33
 	subquests:
 		ControlsTutorial
 		FightingTutorial
 		KeyTutorial
 		PuzzleTutorial
-
+		PortalTutorial
 
 action InitTutorials:
 	pre # none

@@ -186,6 +186,7 @@ projects:
     [tut] tutorial_fighting.quest
     [tut] tutorial_key.quest
     [tut] tutorial_puzzle.quest
+    [tut] tutorial_portal.quest
     [tut] tutorial_main.quest
 init:
     [tut] InitTutorials()
@@ -211,6 +212,12 @@ onNewSubQuest [tut] PuzzleTutorial_GetHeart _ _:
 SPLIT BLOCK_EXIT:
     expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
     push [tut] PTut_BlockExit()
+
+onNewSubQuest [tut] PortalTutorial _ _:
+SPLIT BLOCK_ENTRANCE:
+	expect UNREACHABLE [tut] PortalTutorial
+	expect UNREACHABLE [tut] FinishAllTutorials
+	push [tut] PTut_BlockEntrance()
 
 onAction [tut] ApplyTutorialAction(pickUpKeyAction):
 ACT ON_TST_ACTION:

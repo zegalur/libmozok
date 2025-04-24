@@ -70,7 +70,8 @@ struct AppOptions {
     };
 
     /// @brief Graph export visibility flags.
-    int visibilityFlags = ExportFlags::META | ExportFlags::BLOCK; 
+    int visibilityFlags = 
+            ExportFlags::META | ExportFlags::BLOCK | ExportFlags::EXPECT; 
 };
 
 // ============================== RECORD =================================== //

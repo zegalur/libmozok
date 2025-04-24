@@ -1,0 +1,71 @@
+# This file is a part of the LibMozok DEMO project, intended to demonstrate 
+# how the library can be integrated into a popular game engine. Also, it is a
+# good playground to test various features.
+
+# ============================= Portal Tutorial ============================== #
+
+version 1 0
+project finish_tutorial
+
+type PortalTutorial : Tutorial
+object portalTutorial : PortalTutorial
+
+# Blocks the entrance making the Portal quest impossible to achieve.
+action PTut_BlockEntrance:
+	pre # none
+	rem PTut_Free(pt_cell_33)
+	add PTut_BlockAt(pt_cell_33)
+
+# Move to the portal and finish the tutorial.
+action MoveToPortal:
+	entrance_cell : PTut_Entrance
+	tutorial : PortalTutorial
+	pre PTut_PlayerAt(entrance_cell)
+	rem # none
+	add TutorialFinished(tutorial)
+
+# Move to the portal and finish the tutorial map.
+quest PortalTutorial:
+	preconditions:
+		# none
+	goal:
+		TutorialFinished(portalTutorial)
+	actions:
+		MoveToPortal
+		PTut_MoveLeft
+		PTut_MoveRight
+		PTut_MoveUp
+		PTut_MoveDown
+		PTut_PushLeft
+		PTut_PushRight
+		PTut_PushUp
+		PTut_PushDown
+	objects:
+		portalTutorial
+		pt_cell_00
+		pt_cell_01
+		pt_cell_02
+		pt_cell_03
+			pt_cell_10
+			pt_cell_11
+			pt_cell_12
+			pt_cell_13
+		pt_cell_20
+		pt_cell_21
+		pt_cell_22
+		pt_cell_23
+			pt_cell_30
+			pt_cell_31
+			pt_cell_32
+			pt_cell_33
+	subquests:
+		# none
+
+action N/A PortalTutorial:
+	prevTutorial : PuzzleTutorial
+	tutorial : PortalTutorial
+	entrance : PTut_Entrance
+	pre TutorialFinished(prevTutorial)
+		PTut_Free(entrance)
+	rem # none
+	add TutorialFinished(tutorial)

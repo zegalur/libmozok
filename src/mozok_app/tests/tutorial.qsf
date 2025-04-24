@@ -16,6 +16,7 @@ projects:
     [tut] tutorial_fighting.quest
     [tut] tutorial_key.quest
     [tut] tutorial_puzzle.quest
+    [tut] tutorial_portal.quest
     [tut] tutorial_main.quest
 
 # The list of actions to properly initialize the game.

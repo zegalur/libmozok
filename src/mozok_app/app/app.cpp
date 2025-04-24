@@ -597,8 +597,13 @@ void App::recordExpect(
     node->type = GraphNode::Type::EXPECT;
     node->title = NTITLE_EXPECT;
     node->text.push_back(cmd.questEventStr());
-    for(const auto& a : cmd.args())
-        node->text.push_back(a.toStr());
+    if(cmd.args().size() == 2) {
+        const Str& worldName = cmd.args()[0].toStr();
+        const Str& questName = cmd.args()[1].toStr();
+        node->text.push_back("[" + worldName + "] " + questName);
+    } else
+        for(const auto& a : cmd.args())
+            node->text.push_back(a.toStr());
     pushNode(node);
 }
 

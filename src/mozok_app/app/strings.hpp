@@ -91,7 +91,7 @@ const StrVec O_EXPORT_GRAPH_ARGS =
 
 const Str O_EXPORT_FLAGS = "-f";
 const Str O_EXPORT_FLAGS_FORMAT = "-f <flags>";
-const Str O_EXPORT_FLAGS_BRIEF = "Graph export visibility flags (default: mb).";
+const Str O_EXPORT_FLAGS_BRIEF = "Graph export visibility flags (default: mbx).";
 const Str O_EXPORT_FLAGS_DESC = 
         O_EXPORT_FLAGS_BRIEF + " You can set multiple flags, for example: mpPd.";
 const StrVec O_EXPORT_FLAGS_ARGS = 

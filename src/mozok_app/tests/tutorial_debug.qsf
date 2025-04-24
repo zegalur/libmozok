@@ -45,6 +45,13 @@ SPLIT BLOCK_EXIT:
 #SPLIT ANOTHER_ALTERNATIVE_TIMELINE:
 #    print Second split.
 
+# Blocks the entrance to the puzzle room, making finishing tutorial impossible.
+onNewSubQuest [tut] PortalTutorial _ _:
+SPLIT BLOCK_ENTRANCE:
+	expect UNREACHABLE [tut] PortalTutorial
+	expect UNREACHABLE [tut] FinishAllTutorials
+	push [tut] PTut_BlockEntrance()
+
 # Exits the simulation when the search limit is reached.
 onSearchLimitReached [tut] _:
 ALWAYS SEARCH_LIMIT: 

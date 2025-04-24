@@ -76,6 +76,12 @@ SPLIT BLOCK_EXIT:
     expect UNREACHABLE [tut] PuzzleTutorial_GetHeart
     push [tut] PTut_BlockExit()
 
+onNewSubQuest [tut] PortalTutorial _ _:
+SPLIT BLOCK_ENTRANCE:
+    expect UNREACHABLE [tut] PortalTutorial
+    expect UNREACHABLE [tut] FinishAllTutorials
+    push [tut] PTut_BlockEntrance()
+
 onAction [tut] ApplyTutorialAction(pickUpKeyAction):
 ACT ON_TST_ACTION:
     print The key was picked up!

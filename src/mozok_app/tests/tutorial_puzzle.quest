@@ -19,6 +19,7 @@ object puzzleTutorial_GetHeart : PuzzleTutorial_GetHeart
 
 type PTut_Cell # Cell from the grid
 	type PTut_Finish : PTut_Cell # Destination cell
+	type PTut_Entrance : PTut_Cell # Entrance to the puzzle room
 type PTut_Block # Movable block
 
 type TMLF # Move Left From
@@ -55,7 +56,7 @@ object pt_cell_23 : PTut_Cell,TMLF,TMRT,TMUT,TMUF,TMDF,TMDT,TPLF,TPUF
 	object pt_cell_30 : PTut_Cell,TMLT,TMRF,TMUF,TMDT,TPRF,TPUF
 	object pt_cell_31 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUF,TMDT,TPRF,TPUF
 	object pt_cell_32 : PTut_Cell,TMLT,TMLF,TMRF,TMRT,TMUF,TMDT,TPLF,TPUF
-	object pt_cell_33 : PTut_Cell,TMLF,TMRT,TMUF,TMDT,TPLF,TPUF
+	object pt_cell_33 : PTut_Entrance,TMLF,TMRT,TMUF,TMDT,TPLF,TPUF
 
 # Horizontically adjacent cells (left, right).
 rel PTut_Adjacent_H(PTut_Cell, PTut_Cell)
