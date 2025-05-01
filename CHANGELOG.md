@@ -8,7 +8,12 @@ All significant modifications to this project will be recorded in this file. The
 
 ### Added
 
-- Including quest objects by type (in the quest's `objects:` section).
+- To `Server` public interface:
+    - `getObjects`
+    - `getObjectType`
+    - `getActions`
+    - `getActionType`
+- Ability to include objects by their type (in the quest's `objects:` section).
 
 ## [1.0.0] - 2025-04-23
 

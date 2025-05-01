@@ -1,5 +1,6 @@
 // Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/public_types.hpp>
 #include <libmozok/message_processor.hpp>
 #include <libmozok/world.hpp>
 #include <libmozok/error_utils.hpp>
@@ -190,6 +191,24 @@ Result World::addObject(
 
 bool World::hasObject(const Str& objectName) const noexcept {
     return _objectNameToId.find(objectName) != _objectNameToId.end();
+}
+
+StrVec World::getObjects() const noexcept {
+    StrVec res;
+    for(const auto& obj : _objects)
+        res.push_back(obj->getName());
+    return res;
+}
+
+StrVec World::getObjectType(const Str& objectName) const noexcept {
+    if(hasObject(objectName) == false)
+        return {};
+    const auto it = _objectNameToId.find(objectName);
+    const auto typeSet = _objects[it->second]->getTypeSet();
+    StrVec res;
+    for(const auto& t : typeSet)
+        res.push_back(t->getName());
+    return res;
 }
 
 Result World::constructArguments(
@@ -629,6 +648,30 @@ Result World::addActionQuestStatusChange(
             {quest, status, goal, parentQuest, parentQuestGoal});
     
     return Result::OK();
+}
+
+StrVec World::getActions() const noexcept {
+    StrVec res;
+    for(const auto& a : _actions)
+        res.push_back(a->getName());
+    return res;
+}
+
+Vector<StrVec> World::getActionType(
+        const mozok::Str& actionName
+        ) const noexcept {
+    if(hasAction(actionName) == false)
+        return {};
+    Vector<StrVec> res;
+    const auto &a = _actions[_actionNameToId.find(actionName)->second];
+    for(const auto& arg : a->getArguments()) {
+        StrVec avec;
+        avec.push_back(arg->getName());
+        for(const auto& t : arg->getTypeSet())
+            avec.push_back(t->getName());
+        res.push_back(avec);
+    }
+    return res;
 }
 
 

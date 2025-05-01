@@ -244,6 +244,16 @@ public:
     ///         Returns `false` if no object with such a name was defined.
     bool hasObject(const Str& objectName) const noexcept;
 
+    /// @brief Returns a list of all objects from this world.
+    StrVec getObjects() const noexcept;
+
+    /// @brief Returns a list of all types that this object inherits from 
+    ///        or can be considered as. If object doesn't exists,
+    ///        returns an empty array.
+    StrVec getObjectType(
+            const Str& objectName
+            ) const noexcept;
+
     // ============================= RELATION =============================== //
 
     /// @brief Defines a new relation.
@@ -346,7 +356,6 @@ public:
         const StrVec& actionArguments
         ) const noexcept;
 
-
     /// @brief Adds a quest status command to an action.
     /// @param actionName Action name.
     /// @param questName The name of the quest whose status will be changed.
@@ -363,6 +372,15 @@ public:
             const Str& parentQuestName = "",
             int parentQuestGoal = 0
             ) noexcept;
+    
+    /// @brief Returns a list of world actions.
+    StrVec getActions() const noexcept;
+
+    /// @brief Returns a type of an action as a vector of [name, types...]
+    ///        If action doesn't exists, returns an empty array.
+    Vector<StrVec> getActionType(
+        const mozok::Str& actionName
+        ) const noexcept;
 
     // =============================== QUEST ================================ //
 

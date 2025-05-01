@@ -209,6 +209,23 @@ public:
         return _worlds[worldName]->hasObject(objectName);
     }
 
+    StrVec getObjects(
+            const Str& worldName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return {};
+        return _worlds[worldName]->getObjects();
+    }
+
+    StrVec getObjectType(
+            const Str& worldName,
+            const Str& objectName
+            ) noexcept override {
+        if(hasWorld(worldName) == false)
+            return {};
+        return _worlds[worldName]->getObjectType(objectName);
+    }
+
     // =============================== QUESTS =============================== //
     
     bool hasSubQuest(
@@ -284,6 +301,24 @@ public:
                 doNotCheckPreconditions, actionName, arguments);
     }
 
+    StrVec getActions(
+            const mozok::Str& worldName
+            ) const noexcept override {
+        if(hasWorld(worldName) == false)
+            return {};
+        const auto& it = _worlds.find(worldName);
+        return it->second->getActions();
+    }
+
+    Vector<StrVec> getActionType(
+            const Str& worldName,
+            const Str& actionName
+            ) const noexcept override {
+        if(hasWorld(worldName) == false)
+            return {};
+        const auto& it = _worlds.find(worldName);
+        return it->second->getActionType(actionName);
+    }
 
     // ============================== MESSAGES ============================== //
 

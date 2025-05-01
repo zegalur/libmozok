@@ -127,6 +127,20 @@ public:
             const mozok::Str& objectName
             ) noexcept = 0;
 
+    /// @brief Returns a list of all objects from a world.
+    ///        If world doesn't exists, returns an empty array.
+    virtual StrVec getObjects(
+            const mozok::Str& worldName
+            ) noexcept = 0;
+
+    /// @brief Returns a list of all types that this object inherits from 
+    ///        or can be considered as. If world or object doesn't exists,
+    ///        returns an empty array.
+    virtual StrVec getObjectType(
+            const mozok::Str& worldName,
+            const mozok::Str& objectName
+            ) noexcept = 0;
+
     /// @}
     
     
@@ -143,8 +157,6 @@ public:
             const mozok::Str& worldName,
             const mozok::Str& mainQuestName
             ) noexcept = 0;
-
-    /// @}
 
     /// @brief Checks if a world has a subquest with a specific name.
     /// @param worldName The name of the world.
@@ -216,8 +228,6 @@ public:
         const mozok::Str& actionName
         ) const noexcept = 0;
 
-    /// @}
-
     /// @brief Checks if action with this set of arguments is well defined.
     ///        Optionally, checks if preconditions hold (in the current state).
     /// @param doNotCheckPreconditions If `true` - skips preconditions check.
@@ -233,6 +243,20 @@ public:
         const mozok::StrVec& arguments
         ) const noexcept = 0;
 
+    /// @brief Returns a list of actions from a world. If world doesn't exists,
+    ///        returns an empty list.
+    virtual mozok::StrVec getActions(
+        const mozok::Str& worldName
+        ) const noexcept = 0;
+
+    /// @brief Returns a type of an action as a vector of [name, types...].
+    ///        If world or action doesn't exists, returns an empty array.
+    virtual mozok::Vector<mozok::StrVec> getActionType(
+        const mozok::Str& worldName,
+        const mozok::Str& actionName
+        ) const noexcept = 0;
+
+    /// @}
 
     //==========================================================================
     /// @defgroup Messages
