@@ -132,6 +132,8 @@ quest MoveToCursedCave:
         town
         forest
         cave
+        # To include every object of some type, just write a type name. E.g.
+        #Location
     subquests:
         # none
 
