@@ -211,19 +211,19 @@ public:
 
     StrVec getObjects(
             const Str& worldName
-            ) noexcept override {
+            ) const noexcept override {
         if(hasWorld(worldName) == false)
             return {};
-        return _worlds[worldName]->getObjects();
+        return _worlds.find(worldName)->second->getObjects();
     }
 
     StrVec getObjectType(
             const Str& worldName,
             const Str& objectName
-            ) noexcept override {
+            ) const noexcept override {
         if(hasWorld(worldName) == false)
             return {};
-        return _worlds[worldName]->getObjectType(objectName);
+        return _worlds.find(worldName)->second->getObjectType(objectName);
     }
 
     // =============================== QUESTS =============================== //

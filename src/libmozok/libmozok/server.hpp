@@ -131,7 +131,7 @@ public:
     ///        If world doesn't exists, returns an empty array.
     virtual StrVec getObjects(
             const mozok::Str& worldName
-            ) noexcept = 0;
+            ) const noexcept = 0;
 
     /// @brief Returns a list of all types that this object inherits from 
     ///        or can be considered as. If world or object doesn't exists,
@@ -139,7 +139,7 @@ public:
     virtual StrVec getObjectType(
             const mozok::Str& worldName,
             const mozok::Str& objectName
-            ) noexcept = 0;
+            ) const noexcept = 0;
 
     /// @}
     
