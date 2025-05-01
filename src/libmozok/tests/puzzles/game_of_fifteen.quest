@@ -323,39 +323,8 @@ main_quest PlaceTheTiles_H_SIMPLE:
         Flip1
         Flip2
     objects:
-        # cells
-        cell_11
-        cell_12
-        cell_13
-        cell_14
-        cell_21
-        cell_22
-        cell_23
-        cell_24
-        cell_31
-        cell_32
-        cell_33
-        cell_34
-        cell_41
-        cell_42
-        cell_43
-        cell_44
-        # tiles
-        tile_1
-        tile_2
-        tile_3
-        tile_4
-        tile_5
-        tile_6
-        tile_7
-        tile_8
-        tile_9
-        tile_10
-        tile_11
-        tile_12
-        tile_13
-        tile_14
-        tile_15
+        Cell
+        Tile
     subquests:
         # none
 
@@ -392,38 +361,7 @@ main_quest PlaceTheTiles_H_HSP:
         Flip1
         Flip2
     objects:
-        # cells
-        cell_11
-        cell_12
-        cell_13
-        cell_14
-        cell_21
-        cell_22
-        cell_23
-        cell_24
-        cell_31
-        cell_32
-        cell_33
-        cell_34
-        cell_41
-        cell_42
-        cell_43
-        cell_44
-        # tiles
-        tile_1
-        tile_2
-        tile_3
-        tile_4
-        tile_5
-        tile_6
-        tile_7
-        tile_8
-        tile_9
-        tile_10
-        tile_11
-        tile_12
-        tile_13
-        tile_14
-        tile_15
+        Cell
+        Tile
     subquests:
         # none

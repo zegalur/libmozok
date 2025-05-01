@@ -712,16 +712,39 @@ Result World::addQuest(
 
     if(hasActionsError) res <<= errorQuestActionsError();
 
+    bool hasObjectsError = false;
     ObjectVec objects;
+    ObjectSet added;
     for(const Str& objectName : questObjectNames) {
-        if(hasObject(objectName) == true) 
-            objects.push_back(getObject(objectName));
-        else {
-            res <<= errorUndefinedObject(getServerWorldName(), objectName);
-            hasActionsError = true;
+        if(objectName.length()>0 && objectName[0]>='A' && objectName[0]<='Z') {
+            // A type name.
+            if(hasType(objectName) == false) {
+                res <<= errorUndefinedType(getServerWorldName(), objectName);
+                hasObjectsError = true;
+            } else {
+                for(const auto& obj : _objects)
+                    if(areTypesetsCompatible(
+                            obj->getTypeSet(), {getType(objectName)}) == true)
+                        if(added.count(obj) == 0) {
+                            objects.push_back(obj);
+                            added.insert(obj);
+                        }
+            }
+        } else {
+            // An object name.
+            if(hasObject(objectName) == true) {
+                const auto& obj = getObject(objectName);
+                if(added.count(obj) == 0) {
+                    objects.push_back(obj);
+                    added.insert(obj);
+                }
+            } else {
+                res <<= errorUndefinedObject(getServerWorldName(), objectName);
+                hasObjectsError = true;
+            }
         }
     }
-    if(hasActionsError) res <<= errorQuestActionsError();
+    if(hasObjectsError) res <<= errorQuestObjectsError();
     
     QuestVec subquests;
     bool hasSubquestsError = false;

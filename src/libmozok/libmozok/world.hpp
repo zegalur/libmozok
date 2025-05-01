@@ -377,6 +377,7 @@ public:
     ///           ... ].
     /// @param questActionNames The list of previously defined allowed actions.
     /// @param questObjectNames The list of previously defined relevant objects.
+    ///         A type name will include every known object of this type.
     /// @param questSubquestNames The list of previously defined subquest names.
     /// @param useActionTree If `true`, force to use action tree.
     /// @return Returns the status of the operation.

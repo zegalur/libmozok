@@ -85,6 +85,7 @@ Result errorUndefinedMainQuest(const Str& serverWorldName, const Str& questName)
 Result errorQuestPreconditionsError() noexcept;
 Result errorQuestGoalError(const int goalIndx) noexcept;
 Result errorQuestActionsError() noexcept;
+Result errorQuestObjectsError() noexcept;
 Result errorQuestSubquestsError() noexcept;
 Result errorQuestActionIsGlobal(const Str& questName, const Str& actionName) noexcept;
 

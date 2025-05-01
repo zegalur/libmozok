@@ -439,6 +439,10 @@ Result errorQuestActionsError() noexcept {
     return Result::Error("Quest `actions:` section error. See the previous error(s).");
 }
 
+Result errorQuestObjectsError() noexcept {
+    return Result::Error("Quest `objects:` section error. See the previous error(s).");
+}
+
 Result errorQuestSubquestsError() noexcept {
     return Result::Error("Quest `subquests:` section error. See the previous error(s).");
 }

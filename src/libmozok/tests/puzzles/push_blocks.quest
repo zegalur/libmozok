@@ -285,22 +285,7 @@ main_quest PuzzleTutorial:
         PTut_Finish
     objects:
         puzzleTutorial
-        pt_cell_00
-        pt_cell_01
-        pt_cell_02
-        pt_cell_03
-            pt_cell_10
-            pt_cell_11
-            pt_cell_12
-            pt_cell_13
-        pt_cell_20
-        pt_cell_21
-        pt_cell_22
-        pt_cell_23
-            pt_cell_30
-            pt_cell_31
-            pt_cell_32
-            pt_cell_33
+        PTut_Cell
     subquests:
         # none
 

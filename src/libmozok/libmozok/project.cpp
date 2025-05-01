@@ -673,7 +673,7 @@ public:
         res <<= colon_with_spaces();
         res <<= next_line();
         if(res.isError()) return res;
-        res <<= name_list(objects, LOWER);
+        res <<= name_list(objects, BOTH);
 
         StrVec subquests;
         res <<= empty_lines();
