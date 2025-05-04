@@ -245,7 +245,23 @@ Result RecursiveDescentParser::bracket_open() noexcept {
 
 Result RecursiveDescentParser::bracket_close() noexcept {
     if(_src[_pos] != ']')
-        return errorExpectingOpenBracket(_file, _line, _col);
+        return errorExpectingCloseBracket(_file, _line, _col);
+    ++_pos;
+    ++_col;
+    return Result::OK();
+}
+
+Result RecursiveDescentParser::curly_bracket_open() noexcept {
+    if(_src[_pos] != '{')
+        return errorExpectingOpenCurlyBracket(_file, _line, _col);
+    ++_pos;
+    ++_col;
+    return Result::OK();
+}
+
+Result RecursiveDescentParser::curly_bracket_close() noexcept {
+    if(_src[_pos] != '}')
+        return errorExpectingCloseCurlyBracket(_file, _line, _col);
     ++_pos;
     ++_col;
     return Result::OK();

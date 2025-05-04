@@ -20,7 +20,6 @@ Libmozok TODO list.
 - [ ] Use `std::move()` to transfer ownership of resources and reduce unnecessary copy operations where possible. Additionally, use `const T` (together with `std::move()`) instead of `const T&` in function signatures to indicate that data has been copied.
 - [ ] Ensure the order of the `status ...` commands in the save file matches the order in which they were triggered during the game-play.
 - [ ] Add: tags support for quicker navigation in vim/nvim for `.quest` files.
-- [ ] Add: action groups (`action ActionName { group_1, group_2 }:`, then in `actions:` use `{ group_1 }`)
     
 ### In Progress
 
@@ -116,3 +115,4 @@ Libmozok TODO list.
     - [x] Add: onNewQuestState
     - [x] Fix the highlighting for relation definitions with three or more arguments.
     - [x] Add: `onNewQuestGoal(newGoal,oldGoal)` event
+    - [x] Add: action groups (`action ActionName { group_1, group_2 }:`, then in `actions:` use `group_1`)

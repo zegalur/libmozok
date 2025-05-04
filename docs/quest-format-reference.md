@@ -75,9 +75,13 @@ rlist InitialState:
 
 # ======== ACTIONS ======== #
 
+# Defines a new action group (name starts from a lower case letter).
+agroup movement
+
 # Actions define how we can interact with the world.
 # Action names always start with an uppercase letter.
-action MoveTo:
+# In this case action also will be included into `movement` action group.
+action MoveTo {movement}:
     # Arguments:
     prevLocation : Location
     newLocation : Location
@@ -126,7 +130,8 @@ quest MoveToCursedCave:
         At(cave)
     actions:
         # The (vertical) list of allowed actions:
-        MoveTo
+        # In this case we use an action group to include movement actions.
+        movement
     objects:
         # The (vertical) list of allowed objects:
         town
@@ -227,6 +232,7 @@ Keywords are reserved words and must not be used in naming.
 | `include` | *Reserved but not functional yet.*
 | `rel` | Defines a new relation.
 | `rlist` | Defines a new relation list.
+| `agroup` | Defines a new action group.
 | `action` | Defines a new action.
 | `N/A` | Marks an action as *Not Applicable*.
 | `pre` | Marks the beginning of an action's preconditions block.

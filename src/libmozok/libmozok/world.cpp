@@ -1,5 +1,6 @@
 // Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/action.hpp>
 #include <libmozok/public_types.hpp>
 #include <libmozok/message_processor.hpp>
 #include <libmozok/world.hpp>
@@ -385,6 +386,18 @@ bool World::hasRelationList(const Str& relationListName) const noexcept {
 
 // ================================ ACTION ================================== //
 
+Result World::addActionGroup(const Str& actionGroupName) noexcept {
+    if(hasActionGroup(actionGroupName) == true)
+        return errorActionGroupAlreadyExists(
+                getServerWorldName(), actionGroupName);
+    _actionGroups[actionGroupName] = {};
+    return Result::OK();
+}
+
+bool World::hasActionGroup(const Str& actionGroupName) const noexcept {
+    return _actionGroups.find(actionGroupName) != _actionGroups.end();
+}
+
 const ActionPtr& World::getAction(const Str& actionName) const noexcept {
     if(hasAction(actionName)) 
         return _actions[_actionNameToId.find(actionName)->second];
@@ -393,6 +406,7 @@ const ActionPtr& World::getAction(const Str& actionName) const noexcept {
 
 Result World::addAction(
         const Str& actionName,
+        const StrVec& actionGroups,
         const bool isNotApplicable,
         const Vector<StrVec> &arguments,
         const Vector<StrVec> &preList,
@@ -404,6 +418,10 @@ Result World::addAction(
     if(hasAction(actionName))
         return (errorActionAlreadyExists(getServerWorldName(), actionName)
                 <<= definitionError);
+    for(const auto& groupName : actionGroups)
+        if(hasActionGroup(groupName) == false)
+            return (errorUndefinedActionGroup(getServerWorldName(), groupName))
+                    <<= definitionError;
     
     Result res;
 
@@ -434,6 +452,10 @@ Result World::addAction(
     ActionPtr newAction = makeShared<Action>(
             actionName, newActionId, isNotApplicable, argObjects, pre, rem, add);
     _actions.push_back(newAction);
+
+    // Add action to the action groups.
+    for(const auto& groupName : actionGroups)
+        _actionGroups[groupName].push_back(newAction);
 
     return Result::OK();
 }
@@ -736,13 +758,34 @@ Result World::addQuest(
     }
 
     ActionVec actions;
+    ActionSet addedActions;
     bool hasActionsError = false;
     for(const Str& actionName : questActionNames) {
-        if(hasAction(actionName) == true) 
-            actions.push_back(getAction(actionName));
-        else {
-            res <<= errorUndefinedAction(getServerWorldName(), actionName);
-            hasActionsError = true;
+        if(actionName.length()>0 && actionName[0]>='A' && actionName[0]<='Z') {
+            // Action name.
+            if(hasAction(actionName) == true) {
+                const auto& action = getAction(actionName);
+                if(addedActions.count(action) == 0) {
+                    actions.push_back(action);
+                    addedActions.insert(action);
+                }
+            } else {
+                res <<= errorUndefinedAction(getServerWorldName(), actionName);
+                hasActionsError = true;
+            }
+        } else {
+            // Action group name.
+            if(hasActionGroup(actionName) == false) {
+                res <<= errorUndefinedActionGroup(getServerWorldName(), actionName);
+                hasActionsError = true;
+            } else {
+                const auto& agroup = _actionGroups[actionName];
+                for(const auto& action : agroup)
+                    if(addedActions.count(action) == 0) {
+                        actions.push_back(action);
+                        addedActions.insert(action);
+                    }
+            }
         }
     }
 

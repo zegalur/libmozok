@@ -17,6 +17,7 @@ namespace mozok {
 class Action;
 using ActionPtr = SharedPtr<const Action>;
 using ActionVec = Vector<ActionPtr>;
+using ActionSet = HashSet<ActionPtr>;
 
 /// @brief Through actions, player alter the state and progress towards quest goals.
 /// Each action comprises a name, arguments, preconditions, and effects. 

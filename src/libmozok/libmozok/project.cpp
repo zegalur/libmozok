@@ -1,5 +1,6 @@
 // Copyright 2024-2025 Pavlo Savchuk. Subject to the MIT license.
 
+#include <libmozok/public_types.hpp>
 #include <libmozok/quest_manager.hpp>
 #include <libmozok/project.hpp>
 #include <libmozok/world.hpp>
@@ -19,6 +20,7 @@ namespace {
     const char* KEYWORD_OBJECTS = "objects";
     const char* KEYWORD_REL = "rel";
     const char* KEYWORD_RLIST = "rlist";
+    const char* KEYWORD_AGROUP = "agroup";
     const char* KEYWORD_ACTION = "action";
     const char* KEYWORD_PRE = "pre";
     const char* KEYWORD_REM = "rem";
@@ -399,12 +401,59 @@ public:
         }
         return Result::OK();
     }
+    
+    /// @brief Parses an action group definition.
+    /// @return Returns 'Result::OK()' if the reading operation was successful.
+    ///         Otherwise, return a detailed error message.
+    Result action_group_definition() noexcept {
+        Str groupName;
+        Result res;
+        res <<= name(groupName, Case::LOWER);
+        res <<= space(0);
+        res <<= next_line();
+        if(res.isError())
+            return res;
+        res <<= _world->addActionGroup(groupName);
+        if(res.isError())
+            res <<= errorParserError(_file, _line, _col, 
+                                     "Action group error. See prev. error.");
+        return res;
+    }
+
+    /// @brief Parses action groups.
+    Result action_groups(StrVec& out) noexcept {
+        Result res;
+        out.clear();
+        if(curly_bracket_open().isError())
+            return Result::OK();
+
+        Str groupName;
+        do {
+            res <<= space(0);
+            res <<= name(groupName, Case::LOWER);
+            if(res.isError())
+                return res <<= errorParserError(
+                        _file, _line, _col, 
+                        "Expecting action group name. See prev. error");
+            if(_world->hasActionGroup(groupName) == false)
+                return res <<= errorParserError(
+                        _file, _line, _col, 
+                        "Undefined action group `" + groupName + "`.");
+            out.push_back(groupName);
+            res <<= space(0);
+        } while(comma().isOk());
+
+        res <<= space(0);
+        res <<= curly_bracket_close();
+        return res;
+    }
 
     /// @brief Parses an action definition.
     /// @return Returns 'Result::OK()' if the reading operation was successful.
     ///         Otherwise, return a detailed error message.
     Result action_definition() noexcept {
         Str actionName;
+        StrVec actionGroups;
         bool isNotApplicable = false;
         Result res;
 
@@ -412,6 +461,8 @@ public:
         res <<= space(0);
 
         res <<= name(actionName, UPPER);
+        res <<= space(0);
+        res <<= action_groups(actionGroups);
         res <<= colon_with_spaces();
         if(res.isError())
             return res;
@@ -512,7 +563,9 @@ public:
         }
 
         res <<= _world->addAction(
-                actionName, isNotApplicable, arguments, preList, remList, addList);
+                actionName, actionGroups, 
+                isNotApplicable, arguments, 
+                preList, remList, addList);
 
         for(StrVec::size_type i = 0; i < quests.size(); ++i)
             if(parentQuests.find(quests[i]) == parentQuests.end()) {
@@ -664,7 +717,7 @@ public:
         res <<= colon_with_spaces();
         res <<= next_line();
         if(res.isError()) return res;
-        res <<= name_list(actions, UPPER);
+        res <<= name_list(actions, BOTH);
 
         StrVec objects;
         res <<= empty_lines();
@@ -749,6 +802,8 @@ public:
                 res <<= relation_definition();
             else if(nextCommand == KEYWORD_RLIST)
                 res <<= rlist_definition();
+            else if(nextCommand == KEYWORD_AGROUP)
+                res <<= action_group_definition();
             else if(nextCommand == KEYWORD_ACTION)
                 res <<= action_definition();
             else if(nextCommand == KEYWORD_QUEST)

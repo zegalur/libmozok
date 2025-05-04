@@ -96,6 +96,9 @@ class World {
     ///        non-negative identifier."
     UnorderedMap<Str, ID> _actionNameToId;
 
+    /// @brief Maps action group name into a list of group actions.
+    UnorderedMap<Str, ActionVec> _actionGroups;
+
     /// @brief Maps the name of a main quest to its corresponding index in the 
     ///        `_mainQuests` array. This index serves as the quest's unique 
     ///        non-negative identifier."
@@ -294,8 +297,20 @@ public:
         
     // ============================== ACTION ================================ //
 
+    /// @brief Defines a new action group.
+    /// @param actionGroupName Action group's unique name.
+    /// @return Returns the status of the operation.
+    Result addActionGroup(const Str& actionGroupName) noexcept;
+
+    /// @brief Checks if world has an action group with a given name.
+    /// @param actionGroupName Action group name.
+    /// @return Returns `true` if an action group with a given name is defined.
+    ///         Returns `false` if no action group with such a name was defined.
+    bool hasActionGroup(const Str& actionGroupName) const noexcept;
+
     /// @brief Defines a new action.
     /// @param actionName Action's unique name.
+    /// @param actionGroups Action's action groups.
     /// @param isNotApplicable Is this action not applicable. Not applicable 
     ///         actions cannot be applied with 'World::applyAction()'.
     /// @param arguments A list of action arguments in this format: 
@@ -309,6 +324,7 @@ public:
     /// @return Returns the status of the operation.
     Result addAction(
             const Str& actionName,
+            const StrVec& actionGroups,
             const bool isNotApplicable,
             const Vector<StrVec> &arguments,
             const Vector<StrVec> &preList,
@@ -394,6 +410,7 @@ public:
     ///           (goal_2) [ [A,obj3,...], [B,obj4,...], ... ],
     ///           ... ].
     /// @param questActionNames The list of previously defined allowed actions.
+    ///         An action group name will include known actions from this group.
     /// @param questObjectNames The list of previously defined relevant objects.
     ///         A type name will include every known object of this type.
     /// @param questSubquestNames The list of previously defined subquest names.

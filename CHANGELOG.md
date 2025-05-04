@@ -4,6 +4,15 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-05-04
+
+### Added 
+
+- Action groups to `.quest` projects:
+    - `agroup <action_group_name>`
+    - `action <ActionName> [{<agroup_1>, <agroup_2>}]:`
+    - Now instead of listing actions in `actions:` section, we can also use action group names to include all every action from a group.
+
 ## [1.1.0] - 2025-05-01
 
 ### Added

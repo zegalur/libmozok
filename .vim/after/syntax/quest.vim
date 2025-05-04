@@ -16,7 +16,7 @@ syn keyword questKeywordType type contained
 
 " === Quests ===
 syn region questMainQuestDef start="^\s*main_quest\>\s\+" end="$" contains=questMainQuestName,questComment,questKeywordMainQuest oneline
-syn region questActionObjectList start="^\s*actions\>" end="^\s*subquests\>" keepend contains=questObjectName,questActionName,questComment,questQuestParam
+syn region questActionObjectList start="^\s*actions\>" end="^\s*subquests\>" keepend contains=questAGroupName,questActionName,questComment,questQuestParam
 syn keyword questKeywordMainQuest main_quest contained
 syn match questMainQuestName "\<\u[a-zA-Z0-9_]*\>" contained
 
@@ -37,8 +37,13 @@ syn keyword questKeywordRel rel contained
 syn keyword questKeywordRList rlist contained
 syn match questRelName "\<\u[a-zA-Z0-9_]*\>" contained
 
+" === Action Groups ===
+syn region questAGroupDef start="^\s*agroup\>\s\+" end="$" contains=questAGroupName,questKeywordAGroup oneline
+syn keyword questKeywordAGroup agroup contained
+syn match questAGroupName "\<\l[a-zA-Z0-9_]*\>" contained
+
 " === Actions ===
-syn region questActionDef start="^\s*action\>\s\+" end="\ze:" contains=questActionName,questNA,questKeywordAction oneline
+syn region questActionDef start="^\s*action\>\s\+" end="\ze:" contains=questActionName,questAGroupName,questNA,questKeywordAction oneline
 syn keyword questKeywordAction action contained
 syn match questActionName "\<\u[a-zA-Z0-9_]*\>" contained
 
@@ -75,6 +80,7 @@ hi def link questKeywordType    Keyword
 hi def link questKeywordObject  Keyword
 hi def link questKeywordRel     Keyword
 hi def link questKeywordRList   Keyword
+hi def link questKeywordAGroup  Keyword
 hi def link questKeywordAction  Keyword
 hi def link questKeywordQuest     String
 hi def link questKeywordMainQuest String
@@ -83,6 +89,7 @@ hi def link questActionBlock    Keyword
 hi def link questTypeName       Type
 hi def link questObjectName     Identifier
 hi def link questRelName        Function
+hi def link questAGroupName     String
 hi def link questActionName     Number
 hi def link questMainQuestName  Underlined
 

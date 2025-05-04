@@ -156,6 +156,16 @@ public:
     ///         Otherwise, return a detailed error message.
     Result bracket_close() noexcept;
 
+    /// @brief Parses a open curly bracket '{' symbol.
+    /// @return Returns 'Result::OK()' if the reading operation was successful.
+    ///         Otherwise, return a detailed error message.
+    Result curly_bracket_open() noexcept;
+
+    /// @brief Parses a closed curly bracket '}' symbol.
+    /// @return Returns 'Result::OK()' if the reading operation was successful.
+    ///         Otherwise, return a detailed error message.
+    Result curly_bracket_close() noexcept;
+
     /// @brief Parses a vertical list of names.
     /// @param out The parsed list will be added into this variable.
     /// @param firstLetterCase First letter case (`UPPER`, `LOWER`, `BOTH`).

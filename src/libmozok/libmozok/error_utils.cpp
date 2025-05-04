@@ -149,6 +149,14 @@ Result errorExpectingCloseBracket(const Str& fileName, int line, int col) noexce
     return errorParserError(fileName, line, col, "Expecting close bracket `]` symbol.");
 }
 
+Result errorExpectingOpenCurlyBracket(const Str& fileName, int line, int col) noexcept {
+    return errorParserError(fileName, line, col, "Expecting open braket `{` symbol.");
+}
+
+Result errorExpectingCloseCurlyBracket(const Str& fileName, int line, int col) noexcept {
+    return errorParserError(fileName, line, col, "Expecting close bracket `}` symbol.");
+}
+
 
 // ================================ Server ================================== //
 
@@ -392,6 +400,17 @@ Result errorActionInvalidStatus(const Str& fileName, int line, int col) noexcept
             "Invalid status. Expecting DONE, INACTIVE, UNREACHABLE or ACTIVE keyword.");
 }
 
+Result errorActionGroupAlreadyExists(
+        const Str& serverWorldName, const Str& groupName) noexcept {
+    return errorActionError(serverWorldName, 
+            "Action group `" + groupName + "` already exist.");
+}
+
+Result errorUndefinedActionGroup(
+        const Str& serverWorldName, const Str& groupName) noexcept {
+    return errorActionError(serverWorldName, 
+            "Undefined action groups `" + groupName + "`.");
+}
 
 // ================================ Quest =================================== //
 
