@@ -267,12 +267,26 @@ Result RecursiveDescentParser::curly_bracket_close() noexcept {
     return Result::OK();
 }
 
-Result RecursiveDescentParser::name_list(StrVec &out, Case firstLetterCase) noexcept {
+Result RecursiveDescentParser::name_list(
+        StrVec &out, 
+        Case firstLetterCase,
+        const Str& prefixes
+        ) noexcept {
     Result res;
     while(true) {
         Str newName;
         res <<= empty_lines();
         res <<= space(1);
+
+        Str prefix = "";
+        if (prefixes.find(_src[_pos]) != Str::npos) {
+            Str new_prefix = " ";
+            new_prefix[0] = _src[_pos];
+            prefix = new_prefix;
+            ++_pos;
+            ++_col;
+        }
+
         res <<= name(newName, firstLetterCase);
         res <<= space(0);
         res <<= next_line();
@@ -283,7 +297,7 @@ Result RecursiveDescentParser::name_list(StrVec &out, Case firstLetterCase) noex
             return Result::OK();
         }
 
-        out.push_back(newName);
+        out.push_back(prefix + newName);
     }
     return Result::OK();
 }

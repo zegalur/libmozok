@@ -717,7 +717,7 @@ public:
         res <<= colon_with_spaces();
         res <<= next_line();
         if(res.isError()) return res;
-        res <<= name_list(actions, BOTH);
+        res <<= name_list(actions, BOTH, "-");
 
         StrVec objects;
         res <<= empty_lines();

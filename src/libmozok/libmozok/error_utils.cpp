@@ -440,7 +440,7 @@ Result errorUndefinedMainQuest(const Str& serverWorldName, const Str& questName)
 
 Result errorQuestCantDefine(const Str& serverWorldName, const Str& questName) noexcept {
     return errorActionError(serverWorldName, 
-            "Can't define action `" + questName + "`. See the previous error.");
+            "Can't define quest `" + questName + "`. See the previous error.");
 }
 
 Result errorQuestPreconditionsError() noexcept {

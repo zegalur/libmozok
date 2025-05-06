@@ -132,6 +132,8 @@ quest MoveToCursedCave:
         # The (vertical) list of allowed actions:
         # In this case we use an action group to include movement actions.
         movement
+        # To exclude action from the list, use `-` prefix:
+        #-actionName
     objects:
         # The (vertical) list of allowed objects:
         town

@@ -4,6 +4,12 @@ All significant modifications to this project will be recorded in this file. The
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-05-06
+
+### Added
+
+- Action exclusion syntax for `.quest` files (use `-actionName` in the `actions:` section).
+
 ## [1.2.0] - 2025-05-04
 
 ### Added 

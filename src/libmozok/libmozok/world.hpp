@@ -411,6 +411,7 @@ public:
     ///           ... ].
     /// @param questActionNames The list of previously defined allowed actions.
     ///         An action group name will include known actions from this group.
+    ///         An "-action_name" will exclude the `action_name` action.
     /// @param questObjectNames The list of previously defined relevant objects.
     ///         A type name will include every known object of this type.
     /// @param questSubquestNames The list of previously defined subquest names.

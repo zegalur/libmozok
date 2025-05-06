@@ -243,12 +243,20 @@ main_quest MakeSword_NoSubQuests:
 
 # ==========================
 
+action N/A BuyHammer:
+    hammerObj : Hammer
+    pre
+    rem
+    add HasObject(hammerObj)
+
 quest BuyHammer:
     preconditions:
         # none
     goal:
         HasObject(hammer)
     actions:
+        BuyHammer # We include this to show how to use "-" prefix.
+        -BuyHammer # By using `-` we exclude the action from the list.
         TravelTo
         Sleep
         Work
@@ -268,12 +276,6 @@ quest BuyHammer:
         price_100
     subquests:
         # none
-
-action N/A BuyHammer:
-    hammerObj : Hammer
-    pre
-    rem
-    add HasObject(hammerObj)
 
 
 quest BuyAnvil:

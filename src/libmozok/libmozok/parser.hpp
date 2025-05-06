@@ -169,9 +169,14 @@ public:
     /// @brief Parses a vertical list of names.
     /// @param out The parsed list will be added into this variable.
     /// @param firstLetterCase First letter case (`UPPER`, `LOWER`, `BOTH`).
+    /// @param prefixes A list of allowed prefixes ("-" will parse "-[name]").
     /// @return Returns 'Result::OK()' if the reading operation was successful.
     ///         Otherwise, return a detailed error message.
-    Result name_list(StrVec &out, Case firstLetterCase) noexcept;
+    Result name_list(
+            StrVec &out, 
+            Case firstLetterCase,
+            const Str& prefixes = ""
+            ) noexcept;
 
 };
 

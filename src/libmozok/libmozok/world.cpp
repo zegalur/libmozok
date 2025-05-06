@@ -761,6 +761,22 @@ Result World::addQuest(
     ActionSet addedActions;
     bool hasActionsError = false;
     for(const Str& actionName : questActionNames) {
+        if(actionName[0] == '-') {
+            // Exclude action.
+            const Str exclude = actionName.substr(1);
+            if(hasAction(exclude) == false) {
+                res <<= errorUndefinedAction(getServerWorldName(), exclude);
+                hasActionsError = true;
+            } else {
+                const auto& action = getAction(exclude);
+                if(addedActions.count(action) > 0) {
+                    addedActions.erase(addedActions.find(action));
+                    actions.erase(
+                            std::find(actions.begin(), actions.end(), action));
+                }
+            }
+            continue;
+        }
         if(actionName.length()>0 && actionName[0]>='A' && actionName[0]<='Z') {
             // Action name.
             if(hasAction(actionName) == true) {
