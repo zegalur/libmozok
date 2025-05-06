@@ -7,6 +7,7 @@
 #include "app/handler.hpp"
 #include "app/callback.hpp"
 #include "app/filesystem.hpp"
+#include "libmozok/public_types.hpp"
 
 #include <libmozok/message_processor.hpp>
 #include <libmozok/private_types.hpp>
@@ -491,7 +492,16 @@ void App::onNewQuestPlan(
     QuestRecPtr &rec = _records[qname(worldName, questName)];
     if(rec->nextAction < 0) {
         // accept the plan
-        infoMsg("       New plan accepted for ["+worldName+"] "+questName);
+        infoMsg("       New plan accepted for ["+worldName+"] "+questName+":");
+        StrVec::size_type printed = 0;
+        for(const auto& action : actionList) {
+            printed++;
+            infoMsg("       - " + action);
+            if(printed > 3)
+                break;
+        }
+        if(printed != actionList.size())
+            infoMsg("       ...");
         rec->nextAction = 0;
         rec->lastPlan_Actions = actionList;
         rec->lastPlan_Args = actionArgsList;
