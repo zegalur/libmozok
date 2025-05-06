@@ -7,8 +7,8 @@
 #include "app/handler.hpp"
 #include "app/callback.hpp"
 #include "app/filesystem.hpp"
-#include "libmozok/public_types.hpp"
 
+#include <libmozok/public_types.hpp>
 #include <libmozok/message_processor.hpp>
 #include <libmozok/private_types.hpp>
 #include <libmozok/error_utils.hpp>
