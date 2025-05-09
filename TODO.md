@@ -5,6 +5,7 @@ Libmozok TODO list.
 ### Todo
 
 - [ ] Add: support for commas in quest object, action, and sub-quest lists.
+- [ ] Add: list all in rlist (`...` - substitute and list all possible objects): `RelationName(arg1, ..., ...)` 
 - [ ] Add: support arrays:
     - [ ] Add: `object arr[N,M,..] : Type` -> `arr_0_0`, `arr_0_1`, ...
     - [ ] Add: `rel(arr[i,j], arr[i+1, j])` -> `rel(arr_0_0, arr_1_0)` for all pairs of `(i,j)` that are consistent with the array size.
