@@ -1,0 +1,13 @@
+# main.qsf
+version 1 0
+script main
+
+worlds: 
+    # The list of quest worlds (first letter is a lowercase):
+    #example_world
+projects:
+    # The list of `.quest` project files:
+    #[example_world] path/to/example.quest
+init:
+    # The list of init-actions:
+    #[example_world] ExampleInitAction(arg1,arg2)

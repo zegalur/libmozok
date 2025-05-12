@@ -1,0 +1,10 @@
+# main.qsf
+version 1 0
+script main
+
+worlds: 
+    tut
+projects:
+    [tut] room_light.quest
+init:
+    [tut] Init_RoomLight()
