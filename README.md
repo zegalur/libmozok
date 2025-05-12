@@ -235,7 +235,7 @@ Resulting SVG file:
 # Further Reading
 
 - Getting Started:
-    - *Under Construction*
+    - [1. Getting Started](docs/01-getting-started.md)
 - Demo Projects:
     - https://github.com/zegalur/libmozok-godot
 - Manual:

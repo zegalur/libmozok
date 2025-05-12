@@ -1,0 +1,37 @@
+# room_light.quest
+version 1 0
+project room_light
+
+type Room
+
+object living_room_ : Room
+
+rel LightOff(Room)
+rel LightOn(Room)
+
+
+action TurnLightOn:
+    room : Room
+    pre LightOff(room)
+    rem LightOff(room)
+    add LightOn(room)
+
+
+main_quest TurnLivingRoomLightOn:
+    preconditions:
+        LightOff(living_room_)
+    goal:
+        LightOn(living_room_)
+    actions:
+        TurnLightOn
+    objects:
+        living_room_
+    subquests:
+        # none
+
+
+action Init_RoomLight:
+    pre # none
+    rem # none
+    add LightOff(living_room_)
+
