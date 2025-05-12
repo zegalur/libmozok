@@ -6,8 +6,18 @@ All files used in this tutorial are available in the `docs/code` directory.
 
 ## Table of Contents
 
-- [...]
-- [...]
+1. [Before We Start](#before-we-start)
+2. [Quest Description](#quest-description)
+3. [Main QSF](#main-qsf)
+4. [Quest Worlds](#quest-worlds)
+5. [Quest Projects](#quest-projects)
+6. [Game Model](#game-model)
+    1. [Objects & Types](#objects--types)
+    2. [Relations](#relations)
+    3. [Actions](#actions)
+    4. [Quests](#quests)
+    5. [Initialization](#initialization)
+7. [Final Project File](#final-project-file)
 
 ## Before we start
 
@@ -23,7 +33,6 @@ Let's start with a very simple quest:
 ```
 You wake up in a dark room.  
 Turn ON the room light.
-
 ```
 For our first quest, we won’t make any assumptions beyond this basic setup. It will be as minimal as possible - just enough to get everything working.
 
@@ -31,7 +40,7 @@ For our first quest, we won’t make any assumptions beyond this basic setup. It
 
 Create a directory where you’ll store all files for this tutorial. Let’s assume it’s <tut>/01/. Inside that directory, create a main.qsf file with the following content:
 
-```ini
+```nim
 # main.qsf
 version 1 0
 script main
@@ -62,7 +71,7 @@ The -v flag enables verbose output, and -P OK tells mozok to print OK if the sim
 
 A *quest world* contains all objects, relations, actions, and quests. Each world is independent, and a game may contain multiple worlds. In our case, we only need one:
 
-```ini
+```nim
 ...
 worlds:
     tut
@@ -81,7 +90,7 @@ A *quest project* defines a part of a quest world. Projects are written in .ques
 
 Create `room_light.quest` with the following:
 
-```ini
+```nim
 # room_light.quest
 version 1 0
 project room_light
@@ -90,7 +99,7 @@ project room_light
 ```
 Then include this file in the `projects:` section of `main.qsf`:
 
-```ini
+```nim
 ...
 projects:
     [tut] room_light.quest
@@ -104,7 +113,7 @@ The world is built using types, objects, relations, and actions.
 
 **Objects** are things in the game. Every object exists as a single instance and has a unique name. The name should start with a lowercase letter. It's not mandatory, but by convention, we end object names with an underscore (_). **Types** categorize objects and may inherit from other types. Type has a unique name (start with uppercase letter):
 
-```ini
+```nim
 type Type1
 type Type2
 type Type3 : Type1, Type2
@@ -115,7 +124,7 @@ object obj_2_ : Type3
 In the example above, the objects `obj_1_` and `obj_2_` have different typesets, though they share some types in common. A **typeset** is the complete set of type names associated with an object. For `obj_1_`, the typeset is `{Type1, Type2}`, and for `obj_2_`, it's `{Type1, Type2, Type3}`. You can think of a typeset as the union of all types assigned to the object.
 
 The specific types and objects you'll need depend entirely on how you choose to model your game. In our case, let's define:
-```ini
+```nim
 type Room
 object living_room_ : Room
 ```
@@ -130,7 +139,7 @@ rel RelationName(ArgType1, ArgType2)
 ```
 
 In our case, we only need one relation, but for demonstration purposes, let's define two:
-```ini
+```nim
 rel LightOff(Room)
 rel LightOn(Room)
 ```
@@ -144,7 +153,7 @@ When a relation is applied to specific objects in the game state, it becomes a s
 * `rem` : statements to remove
 * `add` : statements to add
 Here’s the one we need:
-```
+```nim
 action TurnLightOn:
     room : Room
     pre LightOff(room)
@@ -156,7 +165,7 @@ When invoked, this action checks if `LightOff(living_room_)` is present, removes
 All action parameters will be unique objects. You cannot use the same object twice in one action call like `Action(obj_, obj_)`.
 
 The `pre`, `rem`, and `add` sections are always required, even if your action doesn't use them. In that case, simply leave them empty or include a `# none` comment. For example:
-```
+```nim
 action Test:
     obj : Type
     pre # none
@@ -181,7 +190,7 @@ There are two types:
 - **Subquests**: triggered by `N/A` (non-applicable) actions inside already activated quest (will be covered later)
 
 For now, we’ll just use one main quest:
-```
+```nim
 main_quest TurnLivingRoomLightOn:
     preconditions:
         LightOff(living_room_)
@@ -199,7 +208,7 @@ main_quest TurnLivingRoomLightOn:
 
 We also need to define an initialization action to set the starting state:
 
-```
+```nim
 action Init_RoomLight:
     pre # none
     rem # none
@@ -210,7 +219,7 @@ This is a global action, because it uses a global object name (`living_room_`) i
 ### Final project file
 
 Here’s the full content of `room_light.quest`:
-```
+```nim
 # room_light.quest
 version 1 0
 project room_light
@@ -252,7 +261,7 @@ action Init_RoomLight:
 
 Update `main.qsf` to include the initialization action:
 
-```
+```nim
 ...
 init:
     [tut] Init_RoomLight()
