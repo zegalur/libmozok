@@ -9,6 +9,8 @@
 		{"include": "#relation_def"},
 		{"include": "#rlist_def"},
 		{"include": "#action_def"},
+		{"include": "#agroup_def"},
+        {"include": "#agroup_usage"},
 		{"include": "#arg_def"},
 		{"include": "#call"},
 		{"include": "#main_quest"},
@@ -38,6 +40,10 @@
 			"match": "[A-Z][a-zA-Z0-9\\_]*",
 			"name": "keyword.control.quest"
 		},
+        "agroup_name": {
+            "match": "[a-z][a-zA-Z0-9\\_]*",
+            "name": "entity.name.namespace"
+        },
 		"type_def": {
             "begin": "^\\s*(type)\\s",
 			"end": "$",
@@ -72,12 +78,25 @@
                 "2": {"name": "entity.name.function.quest"}}
 		},
 		"action_def": {
-            "match": "^\\s*(action)\\s+(N/A\\s+)?([A-Z][a-zA-Z0-9\\_]*)\\s*:",
+            "match": "^\\s*(action)\\s+(N/A\\s+)?([A-Z][a-zA-Z0-9\\_]*)\\s*",
             "captures": {
 				"1": {"name": "keyword.quest"},
 				"2": {"name": "keyword.quest"},
                 "3": {"name": "keyword.control.quest"}}
 		},
+        "agroup_def": {
+            "begin": "^\\s*(agroup)\\s",
+            "end": "$",
+			"beginCaptures": {"1": { "name": "keyword.quest" }},
+			"patterns": [
+				{"include": "#comment"},
+				{"include": "#agroup_name"}]
+        },
+        "agroup_usage":{
+            "begin": "{",
+            "end": "}",
+            "patterns": [ {"include": "#agroup_name"} ]
+        },
 		"arg_def": {
             "begin": "^\\s+([a-z\\_][a-zA-Z0-9\\_]*)\\s*:\\s*([A-Z][a-zA-Z0-9\\_]*)",
 			"end": "$",
@@ -111,7 +130,8 @@
 			"endCaptures": {"1": {"name": "keyword.quest"}},
 			"patterns": [
 				{"include": "#comment"},
-				{"include": "#action_name"}]
+				{"include": "#action_name"},
+                {"include": "#agroup_name"}]
 		}
 	}	
 }
