@@ -4,13 +4,13 @@ This is a manual for Vim/NeoVim users.
 
 ## Table of Contents
 
-- [Vim or NeoVim Syntax Highlight Support for `.quest` Files](#vim-or-neovim-syntax-highlight-support-for-quest-files)
+- [Vim or NeoVim Syntax Highlight Support for `.quest` and `.qsf` Files](#vim-or-neovim-syntax-highlight-support-for-quest-files)
 - [CMake Workflow](#cmake-workflow)
   - [cmake-tools.nvim](#cmake-toolsnvim)
 
-## Vim or NeoVim Syntax Highlight Support for `.quest` Files
+## Vim or NeoVim Syntax Highlight Support for `.quest` and `.qsf` Files
 
-To install syntax highlighting for LibMozok `.quest` project files, copy the `after` directory into your Vim/NeoVim "init" directory (e.g., `[User]/AppData/Local/nvim` on Windows for NeoVim).
+To install syntax highlighting for LibMozok `.quest` and `.qsf` formats, copy the `after` directory into your Vim/NeoVim "init" directory (e.g., `[User]/AppData/Local/nvim` on Windows for NeoVim).
 
 ## CMake Workflow
 
