@@ -10,16 +10,32 @@
     "Programming Languages"
   ],
   "contributes": {
-    "languages": [{
+    "languages": [
+    {
       "id": "mozok-quest",
       "aliases": ["LibMozok Quest File", "mozok-quest"],
       "extensions": [".quest"],
       "configuration": "./language-configuration.json"
-    }],
-    "grammars": [{
+    },
+    {
+      "id": "mozok-qsf",
+      "aliases": ["LibMozok QSF", "mozok-qsf"],
+      "extensions": [".qsf"],
+      "configuration": "./language-configuration.json"
+    }
+    ],
+
+    "grammars": [
+    {
       "language": "mozok-quest",
       "scopeName": "source.quest",
       "path": "./syntaxes/mozok-quest.tmLanguage.json"
-    }]
+    },
+    {
+      "language": "mozok-qsf",
+      "scopeName": "source.qsf",
+      "path": "./syntaxes/mozok-qsf.tmLanguage.json"
+    }
+    ]
   }
 }

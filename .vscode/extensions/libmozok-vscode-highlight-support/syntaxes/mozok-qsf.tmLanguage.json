@@ -1,0 +1,86 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "LibMozok QSF",
+	"scopeName": "source.qsf",
+	"patterns": [
+		{"include": "#world_defs"},
+		{"include": "#comment"},
+		{"include": "#keywords"},
+		{"include": "#integer"},
+		{"include": "#events"},
+		{"include": "#blocks"},
+		{"include": "#world_ref"},
+		{"include": "#action"},
+		{"include": "#msg_cmd"}
+	],
+	"repository": {
+		"comment": {
+			"match": "#.*$",
+			"name": "comment.line.number-sign.qsf"
+		},
+		"keywords": {
+			"match": "\\b(version|script|worlds|projects|init|debug|push|expect|UNREACHABLE|DONE)\\b",
+			"name": "keyword.qsf"
+		},
+		"integer": {
+			"match": "\\s[0-9]+",
+			"name": "constant.numeric"
+		},
+		"world_name": {
+			"match": "\\b[a-z][a-zA-Z0-9\\_]*\\b",
+			"name": "entity.name.type.qsf"
+		},
+		"world_def": {
+			"match": "^\\s+[a-z][a-zA-Z0-9\\_]*",
+			"name": "entity.name.type.qsf"
+		},
+		"events": {
+			"match": "\\b(onInit|onNewMainQuest|onNewQuestStatus|onNewSubQuest|onSearchLimitReached|onSpaceLimitReached|onAction|onCheck)\\b",
+			"name": "variable.other.event"
+		},
+		"blocks": {
+			"match": "\\b(ACT|ACT_IF|SPLIT|ALWAYS)\\b",
+			"name": "entity.name.function.preprocessor.qsf"
+		},
+		"world_ref": {
+			"begin": "\\[",
+			"end": "\\]",
+			"patterns": [ {"include": "#world_name"} ]
+		},
+		"world_defs": {
+			"begin": "^(worlds):",
+			"end": "^(projects):",
+			"beginCaptures": {"1": {"name": "keyword.qsf"}},
+			"endCaptures": {"1": {"name": "keyword.qsf"}},
+			"contentName": "meta.worlds.qsf",
+			"patterns": [
+				{"include": "#comment"},
+				{"include": "#world_def"}]
+		},
+		"action_name": {
+			"match": "[A-Z][a-zA-Z0-9\\_]*",
+			"name": "keyword.control.qsf"
+		},
+		"obj_name": {
+			"match": "[a-z][a-zA-Z0-9\\_]*",
+			"name": "variable.qsf"
+		},
+		"action": {
+			"begin": "\\s*\\[([a-z][a-zA-Z0-9\\_]*)\\]\\s*([A-Z][a-zA-Z0-9\\_]*)\\s*\\(",
+			"end": "\\)",
+			"beginCaptures": {
+				"1": {"name": "entity.name.type.qsf"},
+				"2": {"name": "keyword.control.qsf"}
+			},
+			"patterns": [
+				{"include": "#action_name"},
+				{"include": "#obj_name"}]
+		},
+		"msg_cmd": {
+			"begin": "^\\s*(print|exit|pause)\\s+",
+			"end": "$",
+			"beginCaptures": { "1": {"name": "keyword.qsf"} },
+			"name": "string.qsf"
+		}
+	}	
+}
