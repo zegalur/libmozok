@@ -16,7 +16,7 @@ syn keyword questKeywordType type contained
 
 " === Quests ===
 syn region questMainQuestDef start="^\s*main_quest\>\s\+" end="$" contains=questMainQuestName,questComment,questKeywordMainQuest oneline
-syn region questActionObjectList start="^\s*actions\>" end="^\s*subquests\>" keepend contains=questAGroupName,questActionName,questComment,questQuestParam
+syn region questActionObjectList start="^\s*actions\>" end="^\s*subquests\>" keepend contains=questAGroupName,questActionExcl,questActionName,questComment,questQuestParam
 syn keyword questKeywordMainQuest main_quest contained
 syn match questMainQuestName "\<\u[a-zA-Z0-9_]*\>" contained
 
@@ -46,6 +46,7 @@ syn match questAGroupName "\<\l[a-zA-Z0-9_]*\>" contained
 syn region questActionDef start="^\s*action\>\s\+" end="\ze:" contains=questActionName,questAGroupName,questNA,questKeywordAction oneline
 syn keyword questKeywordAction action contained
 syn match questActionName "\<\u[a-zA-Z0-9_]*\>" contained
+syn match questActionExcl "-\u[a-zA-Z0-9_]*" contained
 
 
 " === Other Keywords ===
@@ -91,6 +92,7 @@ hi def link questObjectName     Identifier
 hi def link questRelName        Function
 hi def link questAGroupName     String
 hi def link questActionName     Number
+hi def link questActionExcl     Error
 hi def link questMainQuestName  Underlined
 
 let b:current_syntax = "quest"
