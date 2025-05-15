@@ -235,8 +235,8 @@ Resulting SVG file:
 # Further Reading
 
 - Tutorials:
-    1. [Getting Started](docs/01-getting-started.md)
-    2. [Goals & Subquests](docs/02-goals_and_subquests.md)
+    - [1. Getting Started](docs/01-getting-started.md)
+    - [2. Goals & Subquests](docs/02-goals_and_subquests.md)
 - Demo Projects:
     - https://github.com/zegalur/libmozok-godot
 - Manual:
