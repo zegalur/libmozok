@@ -1,0 +1,11 @@
+# main.qsf
+version 1 0
+script main
+
+worlds: 
+    game
+projects:
+    [game] save_family.quest
+init:
+    [game] Init()
+

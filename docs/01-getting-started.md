@@ -38,7 +38,7 @@ For our first quest, we won’t make any assumptions beyond this basic setup. It
 
 ## Main QSF
 
-Create a directory where you’ll store all files for this tutorial. Let’s assume it’s <tut>/01/. Inside that directory, create a main.qsf file with the following content:
+Create a directory where you’ll store all files for this tutorial. Let’s assume it’s `<tut>/01/`. Inside that directory, create a `main.qsf` file with the following content:
 
 ```nim
 # main.qsf
@@ -286,4 +286,6 @@ OK
 
 Success! We’ve created and completed our first quest. As you can see, the quest was activated, a valid plan was found, and it was completed by applying the `TurnLightOn(living_room_)` action.
 
-[Next](...)
+<hr>
+
+**Next Tutorial:** [Goals & Subquests](02-goals_and_subquests.md)
