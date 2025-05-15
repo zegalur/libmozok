@@ -18,9 +18,9 @@ struct DebugArg {
         ANY  /// Any "_" value
     };
 
-    const Type type;
-    const Str str;
-    const int num;
+    Type type;
+    Str str;
+    int num;
 
     DebugArg() noexcept; // any
     DebugArg(const Str& str) noexcept;
@@ -70,13 +70,15 @@ struct MatchClass<Indx, StrVec, Ts...> {
             ) noexcept {
         if(strs.size() == 0)
             return MatchClass<Indx,Ts...>::match_fn(args, args2...);
-        StrVec strsCopy(strs.begin()+1, strs.end());
-        if(args[Indx].type == DebugArg::ANY)
-            return MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
         if(args[Indx].type != DebugArg::STR)
             return false;
+        StrVec rest_strs(strs.begin()+1, strs.end());
+        DebugArgs rest_args(args.begin(), args.end());
+        rest_args.erase(rest_args.begin() + Indx);
+        if(args[Indx].type == DebugArg::ANY)
+            return MatchClass<Indx,StrVec,Ts...>::match_fn(rest_args, rest_strs, args2...);
         return args[Indx].str == strs.front() 
-            && MatchClass<Indx+1,Ts...>::match_fn(args, args2...);
+            && MatchClass<Indx,StrVec,Ts...>::match_fn(rest_args, rest_strs, args2...);
     }
 };
 template<int Indx, typename... Ts>
