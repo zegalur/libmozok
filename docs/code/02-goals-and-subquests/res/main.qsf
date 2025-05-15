@@ -1,0 +1,20 @@
+# main.qsf
+version 1 0
+script main
+
+worlds: 
+    game
+projects:
+    [game] save_family.quest
+init:
+    [game] Init()
+
+
+onAction [game] GoTo(john_, home_, hospital_):
+SPLIT STEAL_ANTIDOTE:
+    push [game] StealItem(thief_, antidote_, hospital_)
+
+
+onAction [game] GoTo(john_, hospital_, market_):
+SPLIT WRONG_ANTIDOTE:
+    push [game] SwitchItem(old_man_, antidote_2_, wrong_antidote_)
