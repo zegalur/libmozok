@@ -395,4 +395,4 @@ and `<libmozok-godot>/demo/addons/mozok_utils/utils_screen.gd` for the generator
 
 ## Further Reading
 
-[Further Reading List](./README.md#further-reading)
+[Further Reading List](../README.md#further-reading)
