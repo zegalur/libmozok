@@ -1,0 +1,254 @@
+# save_family.quest
+version 1 0
+project save_family
+
+type Place
+    type Protectable : Place
+
+type Locatable
+    type Item : Locatable
+        type Antidote : Item
+    type Character : Locatable
+        type Player : Character
+        type Wife : Character
+
+object john_ : Player
+object anne_ : Wife
+object thief_ : Character
+object old_man_ : Character
+
+object home_ : Protectable
+object forest_ : Place
+object hospital_ : Place
+object market_ : Place
+
+object antidote_ : Antidote
+object antidote_2_ : Antidote
+object wrong_antidote_ : Item
+
+
+# A locatable object {1} is at the place {2}.
+rel At(Locatable, Place)
+
+# A character is healthy.
+rel Healthy(Character)
+
+# A character is infected.
+rel Infected(Character)
+
+# A safe place.
+rel Safe(Place)
+
+# A protectable place is protected.
+rel Protected(Protectable)
+
+# A path exists from place {1} to place {2}.
+rel Path(Place, Place)
+
+rel Escaped(Character)
+
+# Character {1} has item {2}.
+rel Has(Character, Item)
+
+rel Dead(Character)
+
+rlist Path2:
+    a : Place
+    b : Place
+    Path(a, b)
+    Path(b, a)
+
+
+action Init:
+    pre # none
+    rem # none
+    add Path2(forest_, home_)
+        Safe(home_)
+        At(john_, forest_)
+        At(anne_, forest_)
+        Healthy(john_)
+        Infected(anne_)
+        At(antidote_, hospital_)
+        Path2(home_, hospital_)
+        Path2(hospital_, market_)
+        At(old_man_, market_)
+        Has(old_man_, antidote_2_)
+
+
+action TakeInfected:
+    player : Player
+    character : Character
+    from : Place
+    to : Place
+    pre Healthy(player)
+        Infected(character)
+        At(player, from)
+        At(character, from)
+        Path(from, to)
+    rem At(player, from)
+        At(character, from)
+    add At(player, to)
+        At(character, to)
+
+
+action N/A SaveInfected:
+    player : Player
+    character : Character
+    safe_place : Place
+    pre Healthy(player)
+        Infected(character)
+        At(player, safe_place)
+        At(character, safe_place)
+        Safe(safe_place)
+    rem Infected(character)
+    add Healthy(character)
+
+
+action Protect:
+    player : Player
+    wife : Wife
+    place : Protectable
+    pre Healthy(player)
+        Healthy(wife)
+        At(player, place)
+        At(wife, place)
+    rem # none
+    add Protected(place)
+
+
+action GoTo:
+    player : Player
+    from : Place
+    to : Place
+    pre Healthy(player)
+        At(player, from)
+        Path(from, to)
+    rem At(player, from)
+    add At(player, to)
+
+
+action Take:
+    player : Player
+    item : Item
+    place : Place
+    pre At(player, place)
+        At(item, place)
+    rem At(item, place)
+    add Has(player, item)
+
+
+action Heal:
+    player : Player
+    antidote : Antidote
+    place : Place
+    character : Character
+    pre Has(player, antidote)
+        Infected(character)
+        At(player, place)
+        At(character, place)
+    rem Has(player, antidote)
+        Infected(character)
+    add Healthy(character)
+
+
+action StealItem:
+    character : Character
+    item : Item
+    place : Place
+    pre At(item, place)
+    rem At(item, place)
+    add Has(character, item)
+
+
+action BuyItem:
+    player : Player
+    character : Character
+    item : Item
+    place : Place
+    pre At(player, place)
+        At(character, place)
+        Has(character, item)
+    rem Has(character, item)
+    add Has(player, item)
+
+
+action SwitchItem:
+    character : Character
+    item_1 : Item
+    item_2 : Item
+    pre Has(character, item_1)
+    rem Has(character, item_1)
+    add Has(character, item_2)
+
+
+action KillInfected:
+    player : Player
+    character : Character
+    place : Place
+    pre At(player, place)
+        At(character, place)
+        Infected(character)
+    rem Infected(character)
+    add Dead(character)
+
+
+action Escape:
+    player : Player
+    wife : Wife
+    pre Dead(wife)
+    rem # none
+    add Escaped(player)
+
+
+quest SaveWife:
+    preconditions:
+        At(anne_, home_)
+        At(john_, home_)
+        Infected(anne_)
+    goal:
+        Healthy(anne_)
+    goal:
+        Dead(anne_)
+    actions:
+        GoTo
+        Take
+        Heal
+        BuyItem
+        KillInfected
+    objects:
+        john_
+        anne_
+        old_man_
+        forest_
+        home_
+        hospital_
+        market_
+        antidote_
+        antidote_2_
+    subquests:
+        # none
+
+
+main_quest SaveFamily:
+    preconditions:
+        # none
+    goal:
+        Healthy(anne_)
+        Protected(home_)
+    goal:
+        Escaped(john_)
+    actions:
+        TakeInfected
+        SaveInfected
+        Protect
+        GoTo
+        Escape
+    objects:
+        john_
+        anne_
+        forest_
+        home_
+        hospital_
+        market_
+    subquests:
+        SaveWife

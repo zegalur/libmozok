@@ -4,7 +4,7 @@ In this tutorial, we’ll introduce **subquests** and **multiple quest goals**.
 
 All files used in this tutorial are available in the `docs/code` directory.
 
-## Table if Contents
+## Table of Contents
 
 1. [Before We Start](#before-we-start)  
 2. [Quest Description](#quest-description)  
