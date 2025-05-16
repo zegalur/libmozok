@@ -288,4 +288,4 @@ Success! We’ve created and completed our first quest. As you can see, the ques
 
 <hr>
 
-**Next Tutorial:** [Goals & Subquests](02-goals_and_subquests.md)
+**Next Tutorial:** [Goals & Subquests](02-goals-and-subquests.md)
