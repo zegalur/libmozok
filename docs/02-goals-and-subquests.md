@@ -19,7 +19,6 @@ All files used in this tutorial are available in the `docs/code` directory.
 7. [Alternative Timeline](#alternative-timeline)  
 8. [Event Splitting](#event-splitting)  
 9. [Even More Details](#even-more-details)  
-10. [Next](#next)  
 
 ## Before We Start
 
@@ -585,7 +584,5 @@ The resulting simulation tree with three timelines:
 </picture>
 
 <hr>
-
-## Next
 
 **Next Tutorial:** [Integration](03-integration.md)
